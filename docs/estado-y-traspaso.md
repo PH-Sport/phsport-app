@@ -14,6 +14,13 @@
 > cuatro incoherencias que habrían hecho perder el primer día en un equipo nuevo:
 > la versión de Node, una variable de entorno que no existe, la lista de
 > variables y la versión de React.
+>
+> **Y se subió a `main` el mismo día**, en contra de la costumbre de dejar
+> reposar lo nuevo en `preview`. El motivo: son tres commits de documentación
+> —más `.nvmrc` y la plantilla de entorno—, sin una línea de código, y quien
+> clona el repositorio aterriza en `main`. Dejarlo solo en `preview` significaba
+> que el primer contacto desde el equipo nuevo seguiría siendo con las
+> instrucciones equivocadas, que es justo lo que se venía a arreglar.
 
 ---
 

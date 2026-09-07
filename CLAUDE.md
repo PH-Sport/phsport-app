@@ -68,17 +68,24 @@ diagnóstico resultó falso. Eso es justo lo que evita repetir el camino largo.
 ## Arrancar en un equipo nuevo
 
 ```bash
+nvm use                       # Node 22.18, fijado en .nvmrc
 npm install
 npx playwright install        # los motores no viajan con el repo
 npm run dev
 ```
 
 Hace falta un `.env.local` que **no está versionado** (lo bloquea `.gitignore`).
-Necesita `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` y
-`NEXT_PUBLIC_APP_URL`; hay plantilla en `.env.example`. Sin él la app no arranca:
-pídeselo a Mario en vez de inventarlo.
+Son cuatro variables y la plantilla comentada está en `.env.example`; de dónde
+sale cada valor, en `docs/operaciones-y-entorno.md`. Sin él la app no arranca:
+pídeselas a Mario en vez de inventarlas.
 
-Node 24, npm 11.
+**Node 22.18** (`.nvmrc`), npm 10. Si algún documento dice «Node 24», está
+caducado: el proyecto nunca se ha construido sobre esa versión en local. En
+Vercel manda lo que tenga configurado el proyecto, que no tiene por qué
+coincidir — mirar el panel antes de culpar a la versión.
+
+**Al mudarse de equipo hay un guion paso a paso** en
+`docs/operaciones-y-entorno.md`, apartado «Mudarse a otro equipo».
 
 ## Comandos
 
@@ -110,6 +117,28 @@ e2e/                 Playwright
 **La lógica que merece test vive en `lib/utils/`, en funciones puras**, y el hook
 solo hace el fetch. Ese es el patrón del proyecto: si algo necesita pruebas,
 sácalo ahí en vez de testear el componente.
+
+## Cómo se trabaja aquí
+
+**Despacito y con buena letra.** Los cambios grandes van por fases pequeñas con
+validación entre pasos, nunca de golpe. No es manía: este proyecto arrastra deuda
+de una etapa de aprendizaje, y los intentos de cambiar mucho a la vez acabaron
+rompiendo cosas que no se estaban tocando. Ir deprisa aquí sale caro.
+
+En la práctica:
+
+- Antes de un refactor de varios pasos, explicar el orden y el porqué de ese
+  orden, y esperar confirmación.
+- Después de cada fase, pasar tipos, lint y build, y contarlo antes de seguir.
+- Las abstracciones se sacan del uso real, no se inventan «por si acaso».
+- Cuando una decisión afecte al alcance o a la prioridad, preguntar con opciones
+  concretas, no en abierto.
+- **Exhaustividad antes que velocidad.** Si aparece un problema estructural en
+  una zona, dar por hecho que el patrón se repite en otras: auditar antes de
+  seguir maquillando.
+- **Varios intentos estéticos fallidos sobre el mismo elemento significan que el
+  problema es estructural**, no de criterio. Parar y diagnosticar el componente
+  en vez de seguir moviendo colores y espaciados.
 
 ## Convenciones
 
@@ -143,3 +172,19 @@ diseñadores. Lee cuanto quieras; para escribir, pregunta.
 Playwright: se puede cargar una página, medir cajas, leer estilos calculados y
 capturar, en cuatro motores. Un fallo de maquetación se diagnosticó en minutos
 así, después de cuatro intentos fallidos razonando sobre el motor sin verlo.
+
+**Las capturas de referencia se hicieron en Windows.** Las dos que hay en
+`e2e/__capturas__/` se generaron en la máquina de Windows de Mario. macOS y Linux
+dibujan las tipografías de otra forma, así que **en otro sistema esos dos tests
+fallan sin que haya ningún fallo real**. No es una regresión: es la línea base,
+que es específica del sistema. Si se trabaja desde otro equipo, comparar el
+diff visual a ojo y, si solo cambia el grosor del texto, regenerarlas ahí con
+`npm run e2e:capturas` — asumiendo que a partir de entonces fallarán en Windows.
+
+**Un componente de shadcn no admite media controla.** Si expone
+`defaultOpen` + `open` + `onOpenChange` y solo le pasas `onOpenChange`, avisa al
+padre de cada cambio pero su estado interno nunca se mueve: se queda tieso hasta
+que recargas. O usas solo `defaultOpen` (y dejas que él persista, que casi
+siempre ya lo hace por cookie), o pasas `open` **y** `onOpenChange` y llevas tú
+el estado. Mezclar rompe el contrato. Pasó de verdad con la sidebar, que exigía
+recargar para verse el despliegue.

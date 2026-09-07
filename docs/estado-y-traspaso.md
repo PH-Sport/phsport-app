@@ -1,10 +1,19 @@
 # Estado del proyecto y traspaso
 
-> **Actualizado:** 2026-08-22, al subir a producción los 95 commits que llevaban
-> meses en `preview`. `main` y `preview` van a la par.
+> **Actualizado:** 2026-09-07, al preparar el salto a otro equipo. Lo de fondo
+> sigue siendo del 2026-08-22, cuando se subieron a producción los 95 commits que
+> llevaban meses en `preview`: `main` y `preview` van a la par.
 > **Para qué sirve:** que quien retome —persona o Claude Code, en cualquier
 > máquina— sepa dónde está cada cosa, por qué se decidió así y qué falta. Las
-> convenciones de trabajo están en `CLAUDE.md`.
+> convenciones de trabajo están en `CLAUDE.md`; los servicios, claves y correo
+> que hay detrás, en `docs/operaciones-y-entorno.md`.
+>
+> **Qué se hizo el 2026-09-07:** el proyecto dejó de depender de la memoria local
+> de una sola máquina. Se volcó al repositorio todo lo operativo que vivía solo
+> ahí, se añadieron dos pendientes que no constaban (§6 y §7) y se corrigieron
+> cuatro incoherencias que habrían hecho perder el primer día en un equipo nuevo:
+> la versión de Node, una variable de entorno que no existe, la lista de
+> variables y la versión de React.
 
 ---
 
@@ -348,7 +357,62 @@ de crear invitación y el esquema zod de la API, así que no es un `ALTER` suelt
 Mientras tanto, el cast protege: un valor que no sea `ADMIN` o `DESIGNER` hace
 fallar el alta en vez de colar un rol inventado.
 
-### 6. Ideas anotadas, sin decidir
+### 6. Modo debug para cuentas de desarrollador
+
+**En espera desde el 2026-07-13**, con el análisis hecho y una pregunta sin
+responder. Se anota aquí porque hasta hoy vivía solo en la memoria local de una
+máquina, y volver a derivarlo cuesta una sesión entera.
+
+**La motivación:** el conmutador «Ver como» se queda corto para probar la app de
+verdad. No hay forma de disparar una notificación a demanda, por ejemplo.
+
+**El matiz que lo cambia todo:** «Ver como» es un **disfraz de solo frontend**.
+Inyecta la identidad fingida en el contexto de React, pero **la sesión real
+sigue siendo la de administrador**: el servidor y las políticas de la base te
+siguen viendo como admin. Sirve para *mirar* la interfaz de un diseñador, **no**
+para probar permisos. Cualquier cosa que se construya encima debe ir con doble
+cerrojo —el indicador en la base **y** una comprobación en servidor—, nunca
+fiándose del cliente.
+
+**Lo que ya se exploró, para no repetirlo:** el indicador de desarrollador vive
+en el perfil desde la migración 035; ya hay un patrón probado de superficie que
+solo se dibuja para esas cuentas, y se reutilizaría tal cual. Las notificaciones
+se insertan restringidas a admin, llegan solas por realtime filtrado por usuario,
+y las crean disparadores de base de datos más una ruta de alta en lote.
+
+**El menú de capacidades que se barajó**, de más a menos valor por esfuerzo:
+
+1. **Banco de pruebas de notificaciones** — un formulario que inserta una
+   notificación y llega al instante por el canal que ya existe. Es el que
+   resuelve el dolor concreto y el más barato.
+2. Disparar también el correo y el push desde ese mismo envío.
+3. Inspector de estado: identidad efectiva, indicadores, entorno, versión, caché.
+4. Simular eventos de dominio («listo para revisar», «entrega cerca»).
+5. Semilla y borrado de datos de prueba.
+
+**La pregunta de alcance, sin responder:** ¿solo el banco de notificaciones
+(recomendado: resuelve el problema real, riesgo bajo, y crece después), o una
+cabina de desarrollador completa de una vez? Retomar por ahí.
+
+### 7. Un sistema de ayuda para toda la app
+
+**Anotado el 2026-07-02 y aparcado a propósito.** Mario quiere, más adelante, un
+apartado de ayuda y consejos que cubra **la aplicación entera**, no una
+funcionalidad suelta: «cada día se hace más grande y van surgiendo nuevas
+necesidades», y cada cosa nueva trae dudas de uso.
+
+**Por qué se aparcó:** se decidió expresamente no meterlo dentro del rediseño de
+la creación de diseños. Es más grande que una funcionalidad —¿panel fijo?,
+¿buscador?, ¿visitas guiadas?— y tiene sus propias preguntas de diseño sin
+resolver. En su lugar, aquel trabajo se quedó con una ayuda contextual acotada.
+
+**Cuando se retome, arrancar por el planteamiento, no por el código.** Preguntas
+abiertas: ¿panel permanente, avisos en contexto, o ambos? ¿Convive con la ayuda
+contextual que ya existe o la sustituye? ¿Hay ya bastantes puntos de fricción
+identificados para justificarlo, o conviene esperar a ver qué dudas genera en
+producción lo que se acaba de publicar?
+
+### 8. Ideas anotadas, sin decidir
 
 - **Llevar el aviso de semanas futuras a Diseños.** Hoy solo está en Inicio.
   Requiere pensar dónde: esa página no tiene subtítulo y la semana vive en dos
@@ -378,5 +442,12 @@ fallar el alta en vez de colar un rol inventado.
   aparece un tinte raro, mirar ahí.
 - **Los dos «2ª PORTUGAL - J2» no son un duplicado**: son dos piezas del mismo
   partido, para jugadores distintos. El modelo lo permite y es correcto.
-- **El README está desactualizado** en la parte de «Comunicaciones»: describe un
-  chat por diseño que retiró la migración 031.
+- **Lo que hay detrás de la app —cuentas, claves, correo, DNS— está en
+  `docs/operaciones-y-entorno.md`.** Ahí viven las dos cosas que más tiempo han
+  costado y que no se deducen del código: que hay **dos emisores de correo
+  independientes**, y que el proyecto de Vercel que se ve desde las herramientas
+  **no es el que despliega**.
+- **Aviso retirado el 2026-09-07:** este documento decía que el README estaba
+  desactualizado en un apartado de «Comunicaciones». Ya no lo está —ese apartado
+  no existe—, así que la nota se quedó mintiendo ella. Queda escrito porque es el
+  fallo típico de esta clase de avisos: envejecen antes que aquello que señalan.

@@ -27,7 +27,7 @@ tema claro/oscuro que sigue al dispositivo.
 
 ## Stack
 
-- **Frontend:** Next.js 15 (App Router), React 19, TypeScript
+- **Frontend:** Next.js 15 (App Router), React 18, TypeScript
 - **Estilos:** Tailwind CSS, shadcn/ui, Framer Motion
 - **Backend:** Supabase — PostgreSQL con RLS, Auth, Realtime, Storage, Edge Functions
 - **IA:** Claude (Anthropic) para el agente de alta de diseños
@@ -35,17 +35,19 @@ tema claro/oscuro que sigue al dispositivo.
 
 ## Puesta en marcha
 
-Requiere **Node 24** y acceso al proyecto de Supabase.
+Requiere **Node 22** (hay `.nvmrc`) y acceso al proyecto de Supabase.
 
 ```bash
+nvm use                    # o instalar Node 22 a mano
 npm install
 npx playwright install     # solo si vas a ejecutar tests de navegador
 cp .env.example .env.local # y rellenar
 npm run dev
 ```
 
-`.env.local` no está versionado. Necesita `NEXT_PUBLIC_SUPABASE_URL`,
-`NEXT_PUBLIC_SUPABASE_ANON_KEY` y `NEXT_PUBLIC_APP_URL`.
+`.env.local` no está versionado y **no se puede reconstruir desde aquí**: las
+claves hay que copiarlas de otra máquina o sacarlas de los paneles. Los valores y
+de dónde sale cada uno están en `docs/operaciones-y-entorno.md`.
 
 > **No hay entorno de staging:** la configuración local apunta a la base de datos
 > de producción. Lo que se escriba lo ven los diseñadores.
@@ -93,5 +95,6 @@ docs/               estado del proyecto, planes y auditorías
 |---|---|
 | `CLAUDE.md` | Convenciones y trampas conocidas |
 | `docs/estado-y-traspaso.md` | Dónde está cada cosa, decisiones y pendientes |
+| `docs/operaciones-y-entorno.md` | Cuentas, claves, correo y DNS: lo que no vive en el código |
 | `docs/testing-navegadores.md` | Matriz de Playwright y lo que **no** cubre |
 | `docs/inventario-estado-actual.md` | Mapa capa por capa (junio 2026) |

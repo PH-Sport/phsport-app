@@ -20,19 +20,31 @@ Seis piezas, y ninguna se deduce del repositorio:
 
 | Servicio | Qué hace aquí | Dónde se administra |
 |---|---|---|
-| **GitHub** | El repositorio | `PH-Sport/ph-sport-dashboard` |
+| **GitHub** | El repositorio | `PH-Sport/phsport-app` |
 | **Vercel** | Construye y despliega la app | Panel de Vercel (ojo con el scope, abajo) |
-| **Supabase** | Base de datos, auth, realtime, storage y edge functions | Proyecto «Dashboard - PH Sport» |
+| **Supabase** | Base de datos, auth, realtime, storage y edge functions | Proyecto «Dashboard - PHSPORT» |
 | **Cloudflare** | DNS de `phsport.app` (SPF, DKIM, DMARC) | Panel de Cloudflare |
 | **Resend** | Envío de correo, para los dos emisores | Panel de Resend |
 | **Anthropic** | El agente que interpreta el encargo al crear diseños | Consola de Anthropic |
 
-### GitHub: el repositorio se movió
+### GitHub: el repositorio se movió, y luego se renombró
 
-Vive en **`PH-Sport/ph-sport-dashboard`**, dentro de la organización. Antes estaba
-en la cuenta personal (`RodzCantCode/ph-sport-dev`) y **la URL antigua sigue
-redirigiendo**, así que un clon viejo funciona pero apunta a donde no debe. En un
-equipo nuevo, clonar de la dirección buena y no de un enlace guardado.
+Vive en **`PH-Sport/phsport-app`**, dentro de la organización. Arrastra nombres
+viejos que siguen redirigiendo: `RodzCantCode/ph-sport-dev`, de cuando estaba en
+la cuenta personal, y `PH-Sport/ph-sport-dashboard`, hasta el 2026-09-07.
+
+Dos motivos para el nombre nuevo. El proyecto dejó de ser solo el dashboard de
+diseño —la idea es que acabe siendo la app general de la casa—, y la marca pasó
+de «PH Sport» a **PHSPORT**, sin espacio ni guion. De ahí `phsport-app`, a juego
+con el proyecto de Vercel. **La organización de GitHub sigue llamándose
+`PH-Sport` y se queda así a propósito:** renombrarla movería la URL de los cuatro
+repositorios a la vez.
+
+**Las redirecciones de GitHub son cómodas y traicioneras.** Un clon viejo sigue
+funcionando, así que nada se rompe y nadie se entera de que apunta al nombre
+antiguo — que es exactamente cómo un proyecto de Vercel se quedó enganchado al
+repositorio de la cuenta personal. En un equipo nuevo, clonar de la dirección
+buena y no de un enlace guardado; en un clon existente, `git remote set-url`.
 
 ### Vercel: el proyecto que se ve desde las herramientas no es el bueno
 
@@ -56,7 +68,7 @@ commit.
 
 ### Supabase: no hay CI, las migraciones se aplican a mano
 
-Proyecto **«Dashboard - PH Sport»**, referencia `zhuluiqpakuwehibjyva`. Es la
+Proyecto **«Dashboard - PHSPORT»**, referencia `zhuluiqpakuwehibjyva`. Es la
 única organización y el único proyecto. **No hay `supabase/config.toml` ni
 ninguna automatización**: cada migración se aplica a mano, por el editor SQL o
 por la herramienta.
@@ -214,7 +226,7 @@ trampa correspondiente en `CLAUDE.md`.
 
 En orden, porque el orden importa:
 
-1. **Clonar de la dirección buena:** `PH-Sport/ph-sport-dashboard`. Si reutilizas
+1. **Clonar de la dirección buena:** `PH-Sport/phsport-app`. Si reutilizas
    un clon antiguo, comprueba a dónde apunta el remoto.
 2. **Node 22.18** — `nvm use` lo coge de `.nvmrc`. No instales Node 24 aunque lo
    diga algún documento viejo.

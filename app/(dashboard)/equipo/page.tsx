@@ -18,6 +18,7 @@ import { useTeamData, type DesignerWithDesigns } from '@/lib/hooks/use-team-data
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { DesignDetailSheet } from '@/components/features/designs/design-detail-sheet';
 import { UrgencyDot, getUrgency } from '@/components/ui/urgency-dot';
+import { HelpHint } from '@/components/ui/help-hint';
 import { RowSeparator } from '@/components/ui/row';
 import { cn } from '@/lib/utils';
 import { sumWeight } from '@/lib/services/designs/weekly-load';
@@ -81,10 +82,16 @@ function DesignerPlate({
             </p>
           </div>
         </button>
+        {/* El «?» solo acompaña a la sobrecarga, que es el término que levanta
+            la pregunta («¿reasigno?»); el 4/8 de arriba se lee solo. Ponerlo en
+            cada placa serían cuatro interrogaciones repitiendo lo mismo. */}
         {overloaded && (
-          <span className="shrink-0 rounded-full bg-status-warning/15 px-2.5 py-1 text-[11px] md:text-[10px] font-semibold uppercase tracking-wider text-status-warning">
-            Sobrecarga
-          </span>
+          <>
+            <span className="shrink-0 rounded-full bg-status-warning/15 px-2.5 py-1 text-[11px] md:text-[10px] font-semibold uppercase tracking-wider text-status-warning">
+              Sobrecarga
+            </span>
+            <HelpHint tipId="carga-capacidad" align="end" className="-ml-1.5" />
+          </>
         )}
       </div>
 

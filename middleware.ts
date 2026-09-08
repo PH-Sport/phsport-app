@@ -15,5 +15,6 @@ export const config = {
     '/mi-semana/:path*',
     '/ajustes/:path*',
     '/equipo/:path*',
+    '/ayuda/:path*',
   ],
 }

@@ -29,6 +29,7 @@ import {
 import { autoTitleFor, effectiveTitle, type DesignCard } from '@/lib/utils/design-cards';
 import type { Designer } from '@/lib/hooks/use-designers';
 import { WEIGHT_COLORS } from './weight-chip';
+import { HelpHint } from '@/components/ui/help-hint';
 import { CardSummaryRow } from './card-summary-row';
 
 export interface DesignCardItemProps {
@@ -106,7 +107,12 @@ export function DesignCardItem({
         <div className="space-y-4 border-t border-border/60 px-4 py-4">
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
             <div className="space-y-1.5">
-              <Label className="text-xs">Tipo</Label>
+              {/* El desplegable ya enseña un número por tipo (el peso). Aquí se
+                  explica de dónde sale y por qué decide a quién le toca. */}
+              <div className="flex items-center gap-1.5">
+                <Label className="text-xs">Tipo</Label>
+                <HelpHint tipId="peso-por-tipo" align="start" />
+              </div>
               <Select
                 value={card.type ?? ''}
                 onValueChange={(value) => onChange({ type: value as DesignType })}

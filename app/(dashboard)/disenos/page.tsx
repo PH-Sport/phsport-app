@@ -22,6 +22,7 @@ import { useDesignsFilters } from '@/lib/hooks/use-designs-filters';
 import { useDesignsTable } from '@/lib/hooks/use-designs-table';
 import { DesignsFilters } from '@/components/features/designs/designs-filters';
 import { DesignsTable } from '@/components/features/designs/designs-table';
+import { Tip } from '@/components/ui/tip';
 
 // FullCalendar es pesado: solo se carga cuando se usa la vista calendario
 const DesignCalendar = dynamic(
@@ -244,19 +245,25 @@ function DesignsPageContent() {
           onEventClick={(item) => handleOpenDetail(item.id)}
         />
       ) : filteredItems.length === 0 ? (
-        <EmptyState
-          title={searchQueryActive ? 'No se encontraron resultados' : 'No hay diseños programados'}
-          description={searchQueryActive ? 'Intenta con otros términos de búsqueda' : 'Crea tu primer diseño para comenzar'}
-          actionLabel={searchQueryActive ? 'Limpiar búsqueda' : 'Crear Diseño'}
-          onAction={() => {
-            if (searchQueryActive) {
-              filters.setSearchQuery('');
-            } else {
-              setEditingDesign(null);
-              setEditDialogOpen(true);
-            }
-          }}
-        />
+        <div className="flex flex-col gap-4">
+          {/* Una lista vacía casi nunca significa que no exista: significa que
+              cae fuera de la semana elegida. Es la confusión número uno de la
+              app, así que el consejo se pinta justo aquí y no en un manual. */}
+          <Tip tipId={searchQueryActive ? 'buscador-alcance' : 'rango-de-fechas'} />
+          <EmptyState
+            title={searchQueryActive ? 'No se encontraron resultados' : 'No hay diseños programados'}
+            description={searchQueryActive ? 'Intenta con otros términos de búsqueda' : 'Crea tu primer diseño para comenzar'}
+            actionLabel={searchQueryActive ? 'Limpiar búsqueda' : 'Crear Diseño'}
+            onAction={() => {
+              if (searchQueryActive) {
+                filters.setSearchQuery('');
+              } else {
+                setEditingDesign(null);
+                setEditDialogOpen(true);
+              }
+            }}
+          />
+        </div>
       ) : (
         <DesignsTable
           paginatedItems={table.paginatedItems}

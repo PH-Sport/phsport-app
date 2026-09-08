@@ -15,6 +15,7 @@ import { MyWeekSkeleton } from '@/components/skeletons/my-week-skeleton';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { Hint } from '@/components/ui/tooltip';
 import { Surface } from '@/components/ui/surface';
+import { Tip } from '@/components/ui/tip';
 import { RowSeparator } from '@/components/ui/row';
 import { SPRINGS, STAGGER, TWEENS } from '@/components/ui/animations';
 import { toast } from 'sonner';
@@ -104,19 +105,24 @@ export default function MyWeekPage() {
       skeleton={<MyWeekSkeleton />}
     >
       {!hasAnyItems ? (
-        <Card>
-          <CardContent className="flex h-64 items-center justify-center">
-            <div className="space-y-3 text-center">
-              <p className="font-medium text-foreground">Semana despejada</p>
-              <p className="text-sm text-muted-foreground">
-                Cuando te asignen trabajo, aparecerá aquí.
-              </p>
-              <Button asChild variant="outline">
-                <Link href="/disenos">Ver el backlog del equipo</Link>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="flex flex-col gap-4">
+          {/* «Nada asignado» y «asignado más allá del horizonte de esta vista»
+              se ven exactamente igual. El consejo distingue los dos casos. */}
+          <Tip tipId="rango-de-fechas" />
+          <Card>
+            <CardContent className="flex h-64 items-center justify-center">
+              <div className="space-y-3 text-center">
+                <p className="font-medium text-foreground">Semana despejada</p>
+                <p className="text-sm text-muted-foreground">
+                  Cuando te asignen trabajo, aparecerá aquí.
+                </p>
+                <Button asChild variant="outline">
+                  <Link href="/disenos">Ver el backlog del equipo</Link>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       ) : (
         <motion.div
           initial="hidden"

@@ -12,7 +12,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { LogOut, Settings, Users } from 'lucide-react';
+import { HelpCircle, LogOut, Settings, Users } from 'lucide-react';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { SPRINGS } from '@/components/ui/animations';
 import { useAuth } from '@/lib/auth/auth-context';
@@ -150,6 +150,16 @@ export function UserMenu() {
                     <span>Miembros</span>
                   </DropdownMenuItem>
                 )}
+
+                {/* En móvil no hay barra lateral, así que esta es la única
+                    puerta a la ayuda: por eso está aquí y no solo allí. */}
+                <DropdownMenuItem
+                  onClick={() => router.push('/ayuda')}
+                  className="text-foreground hover:bg-accent cursor-pointer"
+                >
+                  <HelpCircle className="mr-2 h-4 w-4" />
+                  <span>Ayuda</span>
+                </DropdownMenuItem>
 
                 {isDev && <ViewAsMenuSection />}
 

@@ -5,6 +5,7 @@ const SECTION_LABELS: Record<string, string> = {
   'mi-semana': 'Semana',
   disenos: 'Diseños',
   ajustes: 'Ajustes',
+  ayuda: 'Ayuda',
 };
 
 /**

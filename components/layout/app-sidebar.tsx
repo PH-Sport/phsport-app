@@ -31,7 +31,15 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { SPRINGS, TWEENS } from '@/components/ui/animations';
-import { CalendarRange, Home, Palette, PanelLeftClose, PanelLeftOpen, Settings } from 'lucide-react';
+import {
+  CalendarRange,
+  HelpCircle,
+  Home,
+  Palette,
+  PanelLeftClose,
+  PanelLeftOpen,
+  Settings,
+} from 'lucide-react';
 import { Hint } from '@/components/ui/tooltip';
 import { useAuth } from '@/lib/auth/auth-context';
 import { PhSportMark } from '@/components/layout/ph-sport-mark';
@@ -207,6 +215,14 @@ function SidebarBody({
       </nav>
 
       <div className="flex flex-col gap-1.5 border-t border-sidebar-border/60 pt-3">
+        {/* Ayuda vive en el pie, no entre las secciones de arriba: se consulta
+            de uvas a peras y no compite con el trabajo del día. */}
+        <NavRow
+          item={{ href: '/ayuda', label: 'Ayuda', icon: HelpCircle }}
+          active={isItemActive(pathname, '/ayuda')}
+          expanded={expanded}
+          onClick={onItemClick}
+        />
         <NavRow
           item={{ href: '/ajustes', label: 'Ajustes', icon: Settings }}
           active={isItemActive(pathname, '/ajustes')}

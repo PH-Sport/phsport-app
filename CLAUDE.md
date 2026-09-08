@@ -53,6 +53,7 @@ siguiente sesión arranca convencida.
 | La matriz de navegadores o su cobertura | `docs/testing-navegadores.md` |
 | Qué hace el producto, o cómo se pone en marcha | `README.md` |
 | Un plan en curso (rediseño, refactor, móvil) | El plan correspondiente en `docs/` |
+| Un consejo nuevo, o dónde aparece | `lib/help/tips.ts` es la fuente; no dupliques el texto en la pantalla |
 
 `docs/estado-y-traspaso.md` se revisa **siempre**; los demás, solo si los tocaste.
 Actualizar únicamente el de estado deja al específico mintiendo.
@@ -104,11 +105,12 @@ ve no es lo real.
 ## Cómo está montado
 
 ```
-app/(dashboard)/     inicio · mi-semana · disenos · equipo · ajustes
+app/(dashboard)/     inicio · mi-semana · disenos · equipo · ajustes · ayuda
 app/api/designs/     rutas de servidor, con validación zod en lib/api/schemas.ts
 components/ui/       sistema de diseño propio (Surface, Row, PulseDot…) + shadcn
 components/layout/   shell: header, sidebar, tab bar móvil
 lib/hooks/           datos vía SWR
+lib/help/            catálogo de consejos + su lógica pura
 lib/utils/           lógica pura — aquí es donde viven los tests
 supabase/migrations/ SQL numerado
 e2e/                 Playwright
@@ -117,6 +119,22 @@ e2e/                 Playwright
 **La lógica que merece test vive en `lib/utils/`, en funciones puras**, y el hook
 solo hace el fetch. Ese es el patrón del proyecto: si algo necesita pruebas,
 sácalo ahí en vez de testear el componente.
+
+**Los consejos de la app se escriben en un solo sitio: `lib/help/tips.ts`.** De
+ahí salen las tres caras —el aviso en contexto (`<Tip>`), el «?» (`<HelpHint>`) y
+la página `/ayuda`—, así que añadir uno es añadir una entrada y nada más. Dos
+cosas que no se ven en el archivo:
+
+- **Los `id` son anclas públicas** (`/ayuda#<id>`) y a la vez la clave con la que
+  se recuerda un descarte. Renombrar uno rompe enlaces guardados y hace
+  reaparecer un aviso que alguien ya había ocultado.
+- **`<HelpHint>` no sustituye a `<Hint>`.** `Hint` es un tooltip de una línea que
+  nombra un control y necesita puntero; `HelpHint` es un popover con explicación
+  que funciona al tacto. Antes de añadir uno, mira cuál de los dos toca.
+
+Criterio para admitir un consejo, que es lo que evita que esto se llene: entra si
+explica algo que la pantalla no puede decir sola y que, sin saberlo, lleva a una
+conclusión equivocada. «Pulsa el botón para abrir el diálogo» no entra.
 
 ## Cómo se trabaja aquí
 

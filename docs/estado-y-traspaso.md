@@ -1,6 +1,8 @@
 # Estado del proyecto y traspaso
 
-> **Actualizado:** 2026-09-07, al preparar el salto a otro equipo. Lo de fondo
+> **Actualizado:** 2026-09-08, al publicar el sistema de consejos y la sección
+> de Ayuda (ver más abajo). Antes, el 2026-09-07, al preparar el salto a otro
+> equipo. Lo de fondo
 > sigue siendo del 2026-08-22, cuando se subieron a producción los 95 commits que
 > llevaban meses en `preview`: `main` y `preview` van a la par.
 > **Para qué sirve:** que quien retome —persona o Claude Code, en cualquier
@@ -296,6 +298,56 @@ herramienta `update_designs` existe desde el principio y cubre el diseñador, el
 tipo, la fecha y el resto de campos. Lo que faltaba no era la capacidad, era que
 los números coincidieran.
 
+## Qué se hizo en septiembre de 2026, y por qué
+
+### 1. Sistema de consejos y sección de Ayuda
+
+Cierra el pendiente §7 de la lista de abajo, anotado el 2026-07-02 y aparcado
+desde entonces. **El diseño completo está en
+`docs/superpowers/specs/2026-09-08-sistema-consejos-ayuda-design.md`**; aquí solo
+lo que hay que saber para no romperlo.
+
+**De dónde salió el contenido.** No de imaginar dudas: de este mismo documento.
+El consejo principal —«si falta un diseño, mira las fechas antes que nada»— es
+literalmente el §1 de agosto, el caso de Lluís. El del buscador es esa misma
+trampa por otra puerta. Los del peso salen de `DESIGN_TYPE_WEIGHT`, y el de la
+numeración de tarjetas, del §11.
+
+**Todo el texto vive en `lib/help/tips.ts`, y solo ahí.** De ese catálogo beben
+las tres caras: el aviso en contexto (`<Tip>`), el «?» (`<HelpHint>`) y la página
+`/ayuda`. Añadir un consejo es añadir una entrada; no hay que tocar ninguna
+pantalla. **Los `id` son anclas públicas** (`/ayuda#<id>`) y a la vez la clave con
+la que se recuerda un descarte: renombrar uno rompe enlaces guardados y hace
+reaparecer un aviso ya visto.
+
+**Los descartes se guardan en `localStorage`**, no en `profiles`. Es una decisión,
+no un atajo: no hay base de pruebas —la de desarrollo es la de producción— y el
+historial de migraciones ya está divergido. El precio es que un aviso ya visto
+reaparece una vez al entrar desde otro aparato. Hay un botón en `/ayuda` para
+volver a mostrarlos todos.
+
+**Convive con los tooltips `Hint`, no los sustituye.** `Hint` es una etiqueta de
+una línea que nombra un control («Marcar como entregada») y necesita puntero. El
+«?» es un popover con explicación, y funciona al tacto. Antes de añadir uno,
+mirar cuál de los dos toca.
+
+**Los avisos salen donde duele, no al entrar en la sección.** Cuatro sitios: la
+lista vacía de Diseños, la semana despejada de Mi semana, el rótulo «Tipo» del
+taller y la píldora «Sobrecarga» de Semana. Un aviso que sale siempre deja de
+leerse a la segunda vez; si se añaden más, que sea con ese mismo criterio.
+
+**Lo que no se hizo, y por qué:** ni tour guiado —para un equipo que ya usa la app
+a diario es un estorbo que se salta— ni cuarta pestaña en la tab bar móvil, que
+son tres secciones de trabajo diario y esto se consulta de uvas a peras. La
+entrada está en el pie de la barra lateral y en el menú de perfil, igual que
+Ajustes.
+
+**Sin comprobar:** el aspecto en pantalla. Desde este equipo no hay credenciales
+de Playwright, así que los tests que necesitan sesión se saltan y no se ha podido
+entrar a mirar. Va a `preview` precisamente para eso.
+
+---
+
 ## Qué queda pendiente
 
 ### 1. Confirmar `ANTHROPIC_API_KEY` en Vercel (Production)
@@ -401,23 +453,25 @@ y las crean disparadores de base de datos más una ruta de alta en lote.
 (recomendado: resuelve el problema real, riesgo bajo, y crece después), o una
 cabina de desarrollador completa de una vez? Retomar por ahí.
 
-### 7. Un sistema de ayuda para toda la app
+### 7. Un sistema de ayuda para toda la app — HECHO el 2026-09-08
 
-**Anotado el 2026-07-02 y aparcado a propósito.** Mario quiere, más adelante, un
-apartado de ayuda y consejos que cubra **la aplicación entera**, no una
-funcionalidad suelta: «cada día se hace más grande y van surgiendo nuevas
-necesidades», y cada cosa nueva trae dudas de uso.
+Estuvo anotado y aparcado desde el 2026-07-02. **Ya no está pendiente:** se
+publicó el 2026-09-08 y está contado arriba, en «Qué se hizo en septiembre». El
+hueco se conserva con su número porque la cabecera de este documento apunta a
+«§6 y §7».
 
-**Por qué se aparcó:** se decidió expresamente no meterlo dentro del rediseño de
-la creación de diseños. Es más grande que una funcionalidad —¿panel fijo?,
-¿buscador?, ¿visitas guiadas?— y tiene sus propias preguntas de diseño sin
-resolver. En su lugar, aquel trabajo se quedó con una ayuda contextual acotada.
+**Cómo se respondieron sus tres preguntas abiertas**, que es lo que aquella nota
+pedía resolver antes de tocar código:
 
-**Cuando se retome, arrancar por el planteamiento, no por el código.** Preguntas
-abiertas: ¿panel permanente, avisos en contexto, o ambos? ¿Convive con la ayuda
-contextual que ya existe o la sustituye? ¿Hay ya bastantes puntos de fricción
-identificados para justificarlo, o conviene esperar a ver qué dudas genera en
-producción lo que se acaba de publicar?
+- *¿Panel permanente, avisos en contexto, o ambos?* Ambos, con reparto: los avisos
+  aparecen solo en la situación que confunde, y la página `/ayuda` es la lectura
+  con calma. Ninguno de los dos sale «al entrar en la sección».
+- *¿Convive con la ayuda contextual que ya existe o la sustituye?* Convive. Lo
+  que existía eran tooltips `Hint` de una línea, que nombran un control; el
+  sistema nuevo explica conceptos y funciona al tacto.
+- *¿Hay bastantes puntos de fricción identificados?* Sí, y no hizo falta esperar
+  a producción: estaban en este mismo documento. El caso de Lluís (§1 de agosto)
+  es el consejo principal.
 
 ### 8. Ideas anotadas, sin decidir
 

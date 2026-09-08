@@ -25,6 +25,11 @@ trabajo o se acerca una entrega.
 **Equipo y ajustes.** Alta por invitación, roles, perfil, preferencias de aviso y
 tema claro/oscuro que sigue al dispositivo.
 
+**Ayuda.** Consejos sobre lo que la app hace por debajo y la pantalla no puede
+decir sola —el alcance de cada vista, cómo pondera el reparto, qué se guarda por
+dispositivo—. Salen donde surge la duda, con un «?» o un aviso descartable, y se
+leen seguidos en `/ayuda`.
+
 ## Stack
 
 - **Frontend:** Next.js 15 (App Router), React 18, TypeScript
@@ -71,7 +76,7 @@ Medir rendimiento o pintado **siempre** sobre `build` + `start`, nunca sobre
 ```
 app/
   (auth)/           login, invitación, restablecer contraseña
-  (dashboard)/      inicio · mi-semana · disenos · equipo · ajustes
+  (dashboard)/      inicio · mi-semana · disenos · equipo · ajustes · ayuda
   api/designs/      rutas de servidor (validación zod en lib/api/schemas.ts)
 components/
   ui/               sistema de diseño propio (Surface, Row, PulseDot…) + shadcn
@@ -79,6 +84,7 @@ components/
   features/         componentes de negocio por dominio
 lib/
   hooks/            datos vía SWR
+  help/             catálogo de consejos (fuente única) + su lógica pura
   utils/            lógica pura — aquí viven los tests
   services/designs/ reparto, agente de alta
   supabase/         clientes de navegador y servidor

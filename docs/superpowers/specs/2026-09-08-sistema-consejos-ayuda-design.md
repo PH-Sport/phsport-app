@@ -57,7 +57,7 @@ tirón; esconder cada uno tras un clic la convertiría en un índice.
 |---|---|
 | `id` | Ancla de `/ayuda#<id>` **y** clave de descarte. Es una URL pública: no se renombra. |
 | `title` | Afirmación corta que se entiende suelta. |
-| `body` | Una a tres frases. Explica el porqué, no el qué. |
+| `body` | Una frase, dos como mucho. Si necesita más, hay dos consejos en uno. |
 | `section` | Agrupación en `/ayuda`. |
 | `audience` | `'todos' \| 'ADMIN' \| 'DESIGNER'`. |
 | `keywords` | Términos de búsqueda que no están en el texto. |

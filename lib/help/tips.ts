@@ -64,7 +64,10 @@ export interface HelpTip {
   id: string;
   /** Afirmación corta. Debe entenderse suelta, sin leer el cuerpo. */
   title: string;
-  /** Una a tres frases. Explica el porqué, no solo el qué. */
+  /**
+   * UNA frase, dos como mucho. Si necesita más, o el consejo sobra o hay dos
+   * consejos metidos en uno. El cuadro se lee de un vistazo o no se lee.
+   */
   body: string;
   section: HelpSection;
   audience: HelpAudience;
@@ -89,8 +92,7 @@ export const HELP_TIPS: readonly HelpTip[] = [
   {
     id: 'rango-de-fechas',
     title: 'Si falta un diseño, mira las fechas antes que nada',
-    body:
-      'Inicio y Diseños solo enseñan la semana en curso, y Mi semana va de la semana pasada a tres por delante. Un diseño que entrega el lunes siguiente está bien asignado y aun así no se ve en ninguna de las dos. Antes de darlo por perdido, amplía «Desde» y «Hasta» en Diseños.',
+    body: 'Inicio y Diseños solo enseñan la semana en curso. Si entrega más adelante, está asignado pero no se ve: amplía «Desde» y «Hasta».',
     section: 'buscar',
     audience: 'todos',
     keywords: ['desaparecido', 'no aparece', 'perdido', 'filtro', 'semana'],
@@ -98,8 +100,7 @@ export const HELP_TIPS: readonly HelpTip[] = [
   {
     id: 'buscador-alcance',
     title: 'El buscador solo mira lo que ya está en pantalla',
-    body:
-      'Filtra sobre los diseños que la semana elegida ha traído, no sobre toda la base. Si escribes un nombre y no sale nada, casi nunca es que no exista: es que cae fuera del rango de fechas. Amplía el rango y vuelve a buscar.',
+    body: 'Busca dentro de la semana elegida, no en toda la base. Si no sale nada, amplía el rango antes de darlo por perdido.',
     section: 'buscar',
     audience: 'todos',
     keywords: ['buscar', 'búsqueda', 'no encuentro', 'resultados'],
@@ -107,8 +108,7 @@ export const HELP_TIPS: readonly HelpTip[] = [
   {
     id: 'punto-semanas-futuras',
     title: 'El punto que late junto a la semana',
-    body:
-      'En Inicio, al lado de «Semana del…», avisa de que hay trabajo asignado en semanas posteriores que esta pantalla no llega a enseñar. En escritorio lo dice con todas las letras. Es solo un aviso: no lleva a ninguna parte, para eso está el rango de fechas de Diseños.',
+    body: 'Hay trabajo asignado en semanas posteriores a la que estás viendo. Solo avisa: no lleva a ninguna parte.',
     section: 'buscar',
     audience: 'todos',
     keywords: ['punto', 'dorado', 'parpadea', 'futuro', 'próxima semana'],
@@ -116,8 +116,7 @@ export const HELP_TIPS: readonly HelpTip[] = [
   {
     id: 'abrir-desde-aviso',
     title: 'El aviso de asignación abre la ficha aunque esté fuera de la semana',
-    body:
-      'Pulsar «Te han asignado…» va directo al diseño, saltándose el filtro de fechas. Si recibiste el aviso y luego no encuentras la pieza por pantalla, vuelve a la campana en lugar de pelearte con los filtros.',
+    body: 'Pulsar «Te han asignado…» abre la ficha directamente, saltándose el filtro de fechas.',
     section: 'buscar',
     audience: 'todos',
     keywords: ['notificación', 'campana', 'aviso', 'enlace'],
@@ -127,8 +126,7 @@ export const HELP_TIPS: readonly HelpTip[] = [
   {
     id: 'peso-por-tipo',
     title: 'El reparto cuenta peso, no número de diseños',
-    body:
-      'Cada tipo de pieza vale lo que cuesta: rápida 1, media 2, pesada 4. Un MD animado pesa como cuatro matchdays. Repartir «tres y tres» dejaría a alguien con tres animados y a otro con tres cumpleaños, que no es el mismo día de trabajo.',
+    body: 'Rápida 1, media 2, pesada 4. Un MD animado pesa como cuatro matchdays.',
     section: 'reparto',
     audience: 'todos',
     keywords: ['peso', 'rápida', 'media', 'pesada', 'esfuerzo', 'equilibrio'],
@@ -136,8 +134,7 @@ export const HELP_TIPS: readonly HelpTip[] = [
   {
     id: 'tipo-decide-quien',
     title: 'Elegir el tipo de pieza no es solo etiquetar',
-    body:
-      'Del tipo sale el peso, y del peso sale a quién le toca. Un tipo mal puesto no se nota en la ficha, pero descuadra el reparto de toda esa semana. Si dudas entre dos, mira cuál se parece más en tiempo real de trabajo.',
+    body: 'Del tipo sale el peso, y del peso a quién le toca. Ponerlo mal descuadra el reparto de la semana.',
     section: 'reparto',
     audience: 'todos',
     keywords: ['tipo', 'matchday', 'categoría'],
@@ -145,8 +142,7 @@ export const HELP_TIPS: readonly HelpTip[] = [
   {
     id: 'semana-de-entrega',
     title: 'Se reparte dentro de la semana de entrega, no de la actual',
-    body:
-      'La carga se mide en la semana a la que pertenece la fecha de entrega de esa pieza. Por eso cambiar la fecha puede mudar el diseño de semana, y entonces el reparto automático se rehace contando la carga de la semana nueva.',
+    body: 'La carga se mide en la semana de entrega, no en la actual. Cambiar la fecha puede rehacer el reparto.',
     section: 'reparto',
     audience: 'ADMIN',
     keywords: ['fecha', 'mover', 'cambiar fecha', 'reasignar'],
@@ -154,8 +150,7 @@ export const HELP_TIPS: readonly HelpTip[] = [
   {
     id: 'carga-capacidad',
     title: 'El «4 / 8» bajo cada nombre es peso pendiente frente a capacidad',
-    body:
-      'Solo suma lo pendiente: al marcar una pieza como entregada, baja. Pasado el 100 % aparece «Sobrecarga», que es un aviso y no un tope — la app te deja asignar más si hace falta, solo se encarga de que lo veas.',
+    body: 'Solo suma lo pendiente. Pasado el 100 % sale «Sobrecarga», que avisa pero no impide asignar más.',
     section: 'reparto',
     audience: 'ADMIN',
     keywords: ['capacidad', 'sobrecarga', 'carga', 'ocupación'],
@@ -163,8 +158,7 @@ export const HELP_TIPS: readonly HelpTip[] = [
   {
     id: 'reparto-empate',
     title: 'En empate no le toca siempre al mismo',
-    body:
-      'Cuando dos diseñadores van igual de cargados, el reparto va rotando entre ellos en vez de pegarse al primero de la lista. En un lote grande eso reparte los empates en vez de acumularlos en una sola persona.',
+    body: 'Con dos diseñadores igual de cargados, el turno rota en vez de pegarse al primero de la lista.',
     section: 'reparto',
     audience: 'ADMIN',
     keywords: ['automático', 'repartir', 'turno', 'rotación'],
@@ -174,8 +168,7 @@ export const HELP_TIPS: readonly HelpTip[] = [
   {
     id: 'entregar-reversible',
     title: 'Entregar se puede deshacer',
-    body:
-      'Si marcas una pieza por error, «Volver a pendiente» está en su fila dentro del grupo de entregadas. Vuelve a tu cola y vuelve a contar como carga de la semana, así que el reparto también se entera.',
+    body: '«Volver a pendiente» está en la misma fila: vuelve a tu cola y a contar como carga.',
     section: 'entregas',
     audience: 'todos',
     keywords: ['deshacer', 'error', 'revertir', 'pendiente'],
@@ -183,8 +176,7 @@ export const HELP_TIPS: readonly HelpTip[] = [
   {
     id: 'puntos-urgencia',
     title: 'Los puntos de color son el tiempo que queda',
-    body:
-      'Ámbar cuando faltan menos de 48 horas, rojo por debajo de 24, y rojo fijo —sin latido— si la hora ya pasó. Lo entregado nunca lleva punto de urgencia, por muy vencida que estuviera la fecha.',
+    body: 'Ámbar por debajo de 48 h, rojo por debajo de 24, rojo fijo si ya pasó. Lo entregado no lleva punto.',
     section: 'entregas',
     audience: 'todos',
     keywords: ['rojo', 'ámbar', 'atrasado', 'vencido', 'plazo', 'deadline'],
@@ -194,8 +186,7 @@ export const HELP_TIPS: readonly HelpTip[] = [
   {
     id: 'numero-de-tarjeta',
     title: 'El número de tarjeta cuenta también las que están en blanco',
-    body:
-      'Existe para que tú y el asistente habléis de la misma tarjeta. Por eso al asistente pueden llegarle «1, 2, 4»: el 3 es una tarjeta vacía que no se le manda. El número que ves en pantalla es siempre el bueno.',
+    body: 'Por eso al asistente pueden llegarle «1, 2, 4»: la 3 está en blanco y no se le manda.',
     section: 'taller',
     audience: 'todos',
     keywords: ['tarjeta', 'numeración', 'agente', 'chat', 'asistente'],
@@ -203,8 +194,7 @@ export const HELP_TIPS: readonly HelpTip[] = [
   {
     id: 'asistente-modifica',
     title: 'El asistente también corrige lo que ya está puesto',
-    body:
-      'No solo dicta tarjetas nuevas. «En la 3 cambia el diseñador a Izan» o «pasa todas al viernes» funcionan igual de bien que describirle una pieza desde cero.',
+    body: '«En la 3 cambia el diseñador a Izan» funciona igual que dictarle una pieza nueva.',
     section: 'taller',
     audience: 'todos',
     keywords: ['agente', 'chat', 'ia', 'editar', 'corregir'],
@@ -212,8 +202,7 @@ export const HELP_TIPS: readonly HelpTip[] = [
   {
     id: 'crear-desde-cualquier-sitio',
     title: 'El «+» crea desde cualquier pantalla',
-    body:
-      'En móvil, el círculo dorado de la barra inferior abre el taller estés donde estés y refresca al terminar la lista que tuvieras delante. En escritorio el botón vive en la cabecera de Inicio y de Diseños.',
+    body: 'En móvil, el círculo dorado de la barra inferior; en escritorio, el botón de la cabecera.',
     section: 'taller',
     audience: 'todos',
     keywords: ['crear', 'nuevo', 'botón', 'móvil'],
@@ -223,8 +212,7 @@ export const HELP_TIPS: readonly HelpTip[] = [
   {
     id: 'push-por-dispositivo',
     title: 'Las notificaciones push se activan por dispositivo',
-    body:
-      'Cada navegador tiene su propio permiso, así que activarlas en el móvil no las activa en el portátil. Si dejaron de llegarte en uno de los dos, entra a Ajustes desde ese mismo aparato y vuelve a activarlas allí.',
+    body: 'Cada navegador tiene su propio permiso: activarlas en el móvil no las activa en el portátil.',
     section: 'cuenta',
     audience: 'todos',
     keywords: ['push', 'notificaciones', 'avisos', 'permiso', 'móvil'],
@@ -232,8 +220,7 @@ export const HELP_TIPS: readonly HelpTip[] = [
   {
     id: 'vista-por-defecto-local',
     title: 'La vista por defecto se guarda aquí, no en tu cuenta',
-    body:
-      'Elegir lista o calendario en Ajustes afecta a este dispositivo. Desde otro te recibirá la que tenga configurada él, aunque entres con el mismo usuario.',
+    body: 'Lista o calendario se guarda en este aparato, no en tu cuenta.',
     section: 'cuenta',
     audience: 'todos',
     keywords: ['lista', 'calendario', 'preferencia', 'ajustes'],
@@ -241,8 +228,7 @@ export const HELP_TIPS: readonly HelpTip[] = [
   {
     id: 'instalar-app',
     title: 'Se puede instalar como aplicación',
-    body:
-      '«Añadir a pantalla de inicio» en el móvil, o el icono de instalar en la barra del navegador en escritorio. Se abre a pantalla completa, sin barra de direcciones, y es la vía para que los avisos lleguen como los de cualquier otra app.',
+    body: '«Añadir a pantalla de inicio» en móvil, o el icono de instalar del navegador en escritorio.',
     section: 'cuenta',
     audience: 'todos',
     keywords: ['pwa', 'instalar', 'inicio', 'escritorio', 'standalone'],
@@ -250,8 +236,7 @@ export const HELP_TIPS: readonly HelpTip[] = [
   {
     id: 'atajo-sidebar',
     title: '⌘B pliega la barra lateral',
-    body:
-      'Control + B en Windows. Se queda como la dejes, también la próxima vez que entres desde este navegador.',
+    body: 'Control + B en Windows. Se queda como la dejes.',
     section: 'cuenta',
     audience: 'todos',
     keywords: ['atajo', 'teclado', 'sidebar', 'contraer', 'menú'],

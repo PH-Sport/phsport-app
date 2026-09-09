@@ -132,9 +132,10 @@ cosas que no se ven en el archivo:
   nombra un control y necesita puntero; `HelpHint` es un popover con explicación
   que funciona al tacto. Antes de añadir uno, mira cuál de los dos toca.
 
-Criterio para admitir un consejo, que es lo que evita que esto se llene: entra si
-explica algo que la pantalla no puede decir sola y que, sin saberlo, lleva a una
-conclusión equivocada. «Pulsa el botón para abrir el diálogo» no entra.
+Dos criterios, y los dos son de descarte. **Entra** si explica algo que la
+pantalla no puede decir sola y que, sin saberlo, lleva a una conclusión
+equivocada: «pulsa el botón para abrir el diálogo» no entra. Y **cabe en una
+frase, dos como mucho**: si necesita más, hay dos consejos metidos en uno.
 
 ## Cómo se trabaja aquí
 

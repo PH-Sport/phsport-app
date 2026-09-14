@@ -1,6 +1,7 @@
 'use client';
 
 import { Suspense, useState } from 'react';
+import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Save, Loader2 } from 'lucide-react';
@@ -11,6 +12,7 @@ import { SPRINGS, STAGGER } from '@/components/ui/animations';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/lib/auth/auth-context';
 import { useUserPreferences } from '@/lib/hooks/use-user-preferences';
+import { useViewAs } from '@/lib/auth/view-as-context';
 import { AccountTab } from '@/components/features/account/account-tab';
 import { NotificationsTab } from '@/components/features/account/notifications-tab';
 import { AppearanceTab } from '@/components/features/account/appearance-tab';
@@ -48,6 +50,7 @@ function Section({
 
 function SettingsContent() {
   const { user, profile } = useAuth();
+  const { isDev } = useViewAs();
   const isAdmin = profile?.role === 'ADMIN';
   const searchParams = useSearchParams();
   const initialTab: Tab = isAdmin && searchParams.get('tab') === 'miembros' ? 'miembros' : 'general';
@@ -140,6 +143,17 @@ function SettingsContent() {
           <Section label="Notificaciones" hint="Qué te avisa la app y por dónde">
             <NotificationsTab preferences={preferences} onToggle={togglePreference} />
           </Section>
+
+          {/* Maquetas en curso. Mismo trato que el resto de lo de desarrollador:
+              solo se dibuja para esas cuentas, para que el equipo no se tope con
+              una pantalla a medias. */}
+          {isDev && (
+            <Section label="Vista previa" hint="Maquetas sin funcionalidad, solo para mirar">
+              <Button asChild variant="outline" className="w-full">
+                <Link href="/area-personal">Área personal del futbolista</Link>
+              </Button>
+            </Section>
+          )}
 
           <div className="flex justify-end">
             <Button onClick={save} disabled={saving} className="min-w-[150px]">

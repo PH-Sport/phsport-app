@@ -71,7 +71,7 @@ export function ViewAsMenuSection() {
         {designers.map((d) => (
           <DropdownMenuItem
             key={d.id}
-            onClick={() => enterDesignerView(d.id, d.displayName)}
+            onClick={() => enterDesignerView(d)}
             className="cursor-pointer text-foreground hover:bg-accent"
           >
             <UserCog className="mr-2 h-4 w-4 text-role-designer" />

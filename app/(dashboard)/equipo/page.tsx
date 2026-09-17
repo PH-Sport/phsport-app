@@ -13,6 +13,7 @@ import { WeekNav } from '@/components/ui/week-nav';
 import { SPRINGS, STAGGER } from '@/components/ui/animations';
 import { ChevronRight } from 'lucide-react';
 import { useAuth } from '@/lib/auth/auth-context';
+import { homeFor, viewModeFor } from '@/lib/utils/access';
 import { TeamSkeleton } from '@/components/skeletons/team-skeleton';
 import { useTeamData, type DesignerWithDesigns } from '@/lib/hooks/use-team-data';
 import { UserAvatar } from '@/components/ui/user-avatar';
@@ -164,8 +165,8 @@ export default function TeamPage() {
 
   // Solo admins; los diseñadores van a su propia semana.
   useEffect(() => {
-    if (!authLoading && profile && profile.role !== 'ADMIN') {
-      router.replace('/mi-semana');
+    if (!authLoading && profile && viewModeFor(profile) !== 'manager') {
+      router.replace(homeFor(viewModeFor(profile)));
     }
   }, [authLoading, profile, router]);
 
@@ -179,7 +180,7 @@ export default function TeamPage() {
     setDetailOpen(true);
   };
 
-  if (!authLoading && profile && profile.role !== 'ADMIN') {
+  if (!authLoading && profile && viewModeFor(profile) !== 'manager') {
     return null;
   }
 

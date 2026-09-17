@@ -1,13 +1,15 @@
 'use client';
 
 /**
- * Panel de Miembros (dentro de Ajustes, solo Mánager) — lenguaje del concepto D.
- * Tarjetas del equipo (clic → popup) e invitar.
+ * Panel de Miembros (dentro de Ajustes) — lenguaje del concepto D.
+ * Tarjetas del equipo (clic → popup) e invitar. Lo ve quien invita compañeros o
+ * gestiona roles.
  *
  * Acciones sobre un miembro:
  * - Renombrar: a la vista (acción normal).
- * - Cambiar rol / Eliminar: en "Zona avanzada" (plegada) — acciones extraordinarias,
- *   siempre con confirmación, solo Mánager. Eliminar conserva los diseños del usuario.
+ * - Eliminar: en "Zona avanzada" (plegada) — acción extraordinaria, siempre con
+ *   confirmación, solo con `gestionar_roles`. Conserva los diseños del usuario.
+ *   (El rol se elige aquí también; llega con la tarea 7 del plan de permisos.)
  */
 
 import { useState } from 'react';
@@ -19,17 +21,12 @@ import { SPRINGS, TWEENS, STAGGER } from '@/components/ui/animations';
 import { Collapse } from '@/components/ui/collapse';
 import { cn } from '@/lib/utils';
 import { UserAvatar } from '@/components/ui/user-avatar';
-import { ROLE_ACCENT } from '@/lib/utils/role';
+import { roleBadgeLabel, VIEW_MODE_ACCENT, viewModeFor } from '@/lib/utils/access';
 import { useAuth } from '@/lib/auth/auth-context';
 import { createClient } from '@/lib/supabase/client';
-import { useUsersData, type Profile } from '@/lib/hooks/use-users-data';
+import { useUsersData, type Member } from '@/lib/hooks/use-users-data';
 import { CreateInvitationDialog } from '@/components/invitations/create-invitation-dialog';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
-
-const ROLE_LABELS: Record<Profile['role'], string> = {
-  ADMIN: 'Mánager',
-  DESIGNER: 'Diseñador',
-};
 
 const rise = {
   hidden: { opacity: 0, y: 12 },
@@ -37,24 +34,21 @@ const rise = {
 };
 
 export function MembersPanel() {
-  const { profile } = useAuth();
+  const { profile, access } = useAuth();
   const { users, mutate } = useUsersData();
 
   const [inviteOpen, setInviteOpen] = useState(false);
-  const [member, setMember] = useState<Profile | null>(null);
+  const [member, setMember] = useState<Member | null>(null);
   const [givenDraft, setGivenDraft] = useState('');
   const [familyDraft, setFamilyDraft] = useState('');
   const [aliasDraft, setAliasDraft] = useState('');
   const [advancedOpen, setAdvancedOpen] = useState(false);
-  const [busy, setBusy] = useState<null | 'save' | 'role' | 'delete'>(null);
-  const [confirmRole, setConfirmRole] = useState(false);
+  const [busy, setBusy] = useState<null | 'save' | 'delete'>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   const isSelf = member?.id === profile?.id;
-  const targetRole = member?.role;
-  const nextRole: Profile['role'] = targetRole === 'ADMIN' ? 'DESIGNER' : 'ADMIN';
 
-  const openMember = (m: Profile) => {
+  const openMember = (m: Member) => {
     setMember(m);
     setGivenDraft(m.given_name || '');
     setFamilyDraft(m.family_name || '');
@@ -71,7 +65,6 @@ export function MembersPanel() {
     given_name?: string;
     family_name?: string | null;
     alias?: string | null;
-    role?: Profile['role'];
   }) => {
     if (!member) return false;
     const res = await fetch(`/api/users/${member.id}`, {
@@ -111,23 +104,6 @@ export function MembersPanel() {
       closeMember();
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'No se pudo actualizar');
-    } finally {
-      setBusy(null);
-    }
-  };
-
-  const handleChangeRole = async () => {
-    if (!member) return;
-    setBusy('role');
-    try {
-      await patchUser({ role: nextRole });
-      toast.success(`Ahora es ${ROLE_LABELS[nextRole]}`);
-      mutate();
-      setConfirmRole(false);
-      closeMember();
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'No se pudo cambiar el rol');
-      setConfirmRole(false);
     } finally {
       setBusy(null);
     }
@@ -186,7 +162,7 @@ export function MembersPanel() {
                 name={m.full_name}
                 src={m.avatar_url}
                 className="h-12 w-12"
-                fallbackClassName={cn('font-mono text-base font-semibold', ROLE_ACCENT[m.role])}
+                fallbackClassName={cn('font-mono text-base font-semibold', VIEW_MODE_ACCENT[viewModeFor(m)])}
               />
               <p className="mt-3 truncate font-heading text-base font-semibold">
                 {m.full_name || 'Sin nombre'}
@@ -194,23 +170,25 @@ export function MembersPanel() {
               <span
                 className={cn(
                   'mt-3 inline-block rounded-full px-2.5 py-1 text-[11px] md:text-[10px] font-semibold uppercase tracking-wider',
-                  ROLE_ACCENT[m.role]
+                  VIEW_MODE_ACCENT[viewModeFor(m)]
                 )}
               >
-                {ROLE_LABELS[m.role]}
+                {roleBadgeLabel(m)}
               </span>
             </button>
           );
         })}
 
-        <button
-          type="button"
-          onClick={() => setInviteOpen(true)}
-          className="flex min-h-[160px] flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-border text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary"
-        >
-          <Plus className="h-6 w-6" />
-          <span className="text-sm font-medium">Invitar miembro</span>
-        </button>
+        {access.can('invitar_personal') && (
+          <button
+            type="button"
+            onClick={() => setInviteOpen(true)}
+            className="flex min-h-[160px] flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-border text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary"
+          >
+            <Plus className="h-6 w-6" />
+            <span className="text-sm font-medium">Invitar miembro</span>
+          </button>
+        )}
       </motion.div>
 
       <CreateInvitationDialog
@@ -244,7 +222,7 @@ export function MembersPanel() {
                     name={member.full_name}
                     src={member.avatar_url}
                     className="h-12 w-12"
-                    fallbackClassName={cn('font-mono text-base font-semibold', ROLE_ACCENT[member.role])}
+                    fallbackClassName={cn('font-mono text-base font-semibold', VIEW_MODE_ACCENT[viewModeFor(member)])}
                   />
                   <button
                     type="button"
@@ -296,16 +274,16 @@ export function MembersPanel() {
                     <span
                       className={cn(
                         'rounded-full px-2 py-0.5 text-[11px] md:text-[10px] font-semibold uppercase tracking-wider',
-                        ROLE_ACCENT[member.role]
+                        VIEW_MODE_ACCENT[viewModeFor(member)]
                       )}
                     >
-                      {ROLE_LABELS[member.role]}
+                      {roleBadgeLabel(member)}
                     </span>
                     Se unió el {format(new Date(member.created_at), 'dd/MM/yyyy')}
                   </p>
 
-                  {/* Zona avanzada: rol + eliminar (extraordinario). Oculta para uno mismo. */}
-                  {!isSelf && (
+                  {/* Zona avanzada: eliminar (extraordinario). Oculta para uno mismo y para quien no gestiona roles. */}
+                  {!isSelf && access.can('gestionar_roles') && (
                     <div className="rounded-xl border border-border/60">
                       <button
                         type="button"
@@ -324,13 +302,6 @@ export function MembersPanel() {
                       </button>
                       <Collapse open={advancedOpen}>
                         <div className="space-y-2 px-3 pb-3 pt-1">
-                          <button
-                            type="button"
-                            onClick={() => setConfirmRole(true)}
-                            className="flex h-11 w-full items-center justify-between rounded-lg border border-border px-3 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted/40 hover:text-foreground md:h-9"
-                          >
-                            <span>Cambiar rol a {ROLE_LABELS[nextRole]}</span>
-                          </button>
                           <button
                             type="button"
                             onClick={() => setConfirmDelete(true)}
@@ -368,21 +339,6 @@ export function MembersPanel() {
           </>
         )}
       </AnimatePresence>
-
-      <ConfirmDialog
-        open={confirmRole}
-        onOpenChange={(o) => !o && setConfirmRole(false)}
-        onConfirm={handleChangeRole}
-        title={`¿Cambiar rol a ${member ? ROLE_LABELS[nextRole] : ''}?`}
-        description={
-          nextRole === 'ADMIN'
-            ? `${member?.full_name || 'Este usuario'} tendrá acceso total: gestión de equipo, diseños y ajustes.`
-            : `${member?.full_name || 'Este usuario'} dejará de ser Mánager y pasará a ser Diseñador.`
-        }
-        confirmLabel="Cambiar rol"
-        variant="warning"
-        loading={busy === 'role'}
-      />
 
       <ConfirmDialog
         open={confirmDelete}

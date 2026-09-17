@@ -9,6 +9,7 @@ import { AuthHeading } from '@/components/features/auth/auth-heading';
 import { AuthError } from '@/components/features/auth/auth-error';
 import { AuthSubmitButton } from '@/components/features/auth/auth-submit-button';
 import { PasswordInput } from '@/components/features/auth/password-input';
+import { homeFor, toProfile, PROFILE_WITH_ROLES_SELECT, viewModeFor } from '@/lib/utils/access';
 
 type Mode = 'login' | 'reset';
 
@@ -42,7 +43,7 @@ export default function LoginPage() {
 
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
-        .select('id, full_name, role')
+        .select(PROFILE_WITH_ROLES_SELECT)
         .eq('id', data.user.id)
         .single();
 
@@ -53,7 +54,7 @@ export default function LoginPage() {
         return;
       }
 
-      window.location.href = profile.role === 'ADMIN' ? '/inicio' : '/mi-semana';
+      window.location.href = homeFor(viewModeFor(toProfile(profile)));
     } catch {
       setError('Error al iniciar sesión. Intenta de nuevo.');
       setLoading(false);

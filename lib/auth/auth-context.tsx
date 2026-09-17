@@ -7,26 +7,23 @@ import { User } from '@supabase/supabase-js';
 import { LogoutOverlay } from '@/components/ui/logout-overlay';
 import { logger } from '@/lib/utils/logger';
 import { setSwrCacheOwner, clearSwrCache } from '@/lib/swr/persistent-cache';
+import {
+  deriveAccess,
+  toProfile,
+  PROFILE_WITH_ROLES_SELECT,
+  type Access,
+  type ProfileWithRoles,
+} from '@/lib/utils/access';
 
 // ============================================================================
 // Types & Interfaces
 // ============================================================================
 
-export interface Profile {
-  id: string;
-  given_name: string;
-  family_name?: string | null;
-  alias?: string | null;
-  /** Generada por la BD = Nombre + Primer apellido. Gestión / contextos formales. */
-  full_name: string;
-  /** Generada por la BD = alias || given_name. Nombre corto para el día a día. */
-  display_name: string;
-  role: 'ADMIN' | 'DESIGNER';
-  avatar_url?: string;
-  is_dev?: boolean;
-  /** Clave del acento elegido (gold|red|orange|…); null/undefined = dorado. */
-  accent_color?: string | null;
-}
+/**
+ * Perfil con sus roles ya aplanados (ver lib/utils/access.ts). `full_name` y
+ * `display_name` los genera la BD: Nombre + Primer apellido, y alias || nombre.
+ */
+export type Profile = ProfileWithRoles;
 
 type AuthStatus = 'INITIALIZING' | 'AUTHENTICATED' | 'UNAUTHENTICATED';
 
@@ -34,8 +31,19 @@ interface AuthState {
   status: AuthStatus;
   user: User | null;
   profile: Profile | null;
+  /** Permisos derivados del perfil; vacío sin sesión. Preguntar con `access.can('…')`. */
+  access: Access;
   loggingOut: boolean;
 }
+
+/** Sin sesión no queda nada: ni perfil ni permisos. Un solo sitio para no olvidar `access`. */
+const signedOut = (prev: AuthState): AuthState => ({
+  ...prev,
+  status: 'UNAUTHENTICATED',
+  user: null,
+  profile: null,
+  access: deriveAccess(null),
+});
 
 interface AuthContextType extends AuthState {
   logout: () => Promise<void>;
@@ -50,6 +58,7 @@ export const AuthContext = createContext<AuthContextType>({
   status: 'INITIALIZING',
   user: null,
   profile: null,
+  access: deriveAccess(null),
   loggingOut: false,
   logout: async () => {},
   refreshSession: async () => {},
@@ -83,6 +92,7 @@ export function AuthProvider({
     status: hasServerSession ? 'AUTHENTICATED' : 'INITIALIZING',
     user: initialUser,
     profile: initialProfile,
+    access: deriveAccess(initialProfile),
     loggingOut: false,
   });
 
@@ -101,14 +111,14 @@ export function AuthProvider({
 
       if (authError || !user) {
         logger.log('[Auth] No active session found.');
-        setState(prev => ({ ...prev, status: 'UNAUTHENTICATED', user: null, profile: null }));
+        setState(signedOut);
         return;
       }
 
       // 2. Get Profile (Required for AUTHENTICATED state)
-      const { data: profile, error: profileError } = await supabase
+      const { data: rawProfile, error: profileError } = await supabase
         .from('profiles')
-        .select('*')
+        .select(PROFILE_WITH_ROLES_SELECT)
         .eq('id', user.id)
         .maybeSingle();
 
@@ -120,13 +130,15 @@ export function AuthProvider({
         throw new Error('Profile fetch failed');
       }
 
-      if (!profile) {
+      if (!rawProfile) {
         logger.warn('[Auth] User exists but has NO profile. Critical data error.');
         // User without profile -> Invalid state -> Force Logout
         await supabase.auth.signOut();
-        setState(prev => ({ ...prev, status: 'UNAUTHENTICATED', user: null, profile: null }));
+        setState(signedOut);
         return;
       }
+
+      const profile = toProfile(rawProfile);
 
       // 3. Success -> Fully Authenticated
       // Marca al dueño de la caché SWR persistida (aislamiento por usuario).
@@ -139,7 +151,8 @@ export function AuthProvider({
           prev.profile?.id === profile.id &&
           prev.profile?.full_name === profile.full_name &&
           prev.profile?.display_name === profile.display_name &&
-          prev.profile?.role === profile.role &&
+          prev.profile?.kind === profile.kind &&
+          JSON.stringify(prev.profile?.roles) === JSON.stringify(profile.roles) &&
           prev.profile?.avatar_url === profile.avatar_url &&
           prev.profile?.is_dev === profile.is_dev &&
           prev.profile?.accent_color === profile.accent_color;
@@ -155,14 +168,15 @@ export function AuthProvider({
           ...prev,
           status: 'AUTHENTICATED',
           user,
-          profile: profile as Profile,
+          profile,
+          access: deriveAccess(profile),
         };
       });
 
     } catch (error) {
       logger.error('[Auth] Initialization error:', error);
       // Fail-safe: Default to unauthenticated to prevent zombie UI
-      setState(prev => ({ ...prev, status: 'UNAUTHENTICATED', user: null, profile: null }));
+      setState(signedOut);
     }
   }, [supabase]);
 
@@ -185,7 +199,7 @@ export function AuthProvider({
       logger.log(`[Auth] Event: ${event}`);
 
       if (event === 'SIGNED_OUT') {
-        setState(prev => ({ ...prev, status: 'UNAUTHENTICATED', user: null, profile: null }));
+        setState(signedOut);
       } else if (event === 'SIGNED_IN' || event === 'USER_UPDATED') {
         // Re-run full check to ensure profile is consistent
         initializeAuth();
@@ -238,7 +252,7 @@ export function AuthProvider({
       // State update happens via onAuthStateChange --> SIGNED_OUT
     } catch (error) {
       logger.error('Logout error:', error);
-      setState(prev => ({ ...prev, status: 'UNAUTHENTICATED', user: null, profile: null }));
+      setState(signedOut);
       router.push('/login');
     }
   }, [router, supabase.auth]);

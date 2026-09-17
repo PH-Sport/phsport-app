@@ -12,19 +12,20 @@ import {
   type HelpSectionMeta,
   type HelpTip,
 } from './tips';
+import type { ViewMode } from '@/lib/utils/access';
 
-/** Rol efectivo del usuario. `undefined` mientras la sesión resuelve. */
-export type HelpRole = 'ADMIN' | 'DESIGNER' | undefined;
+/** Cara de la app del usuario. `undefined` mientras la sesión resuelve. */
+export type HelpView = ViewMode | undefined;
 
 /**
- * Consejos que le sirven a un rol.
+ * Consejos que le sirven a una cara de la app.
  *
- * Sin rol resuelto solo pasan los de audiencia 'todos': es preferible enseñar
+ * Sin cara resuelta solo pasan los de audiencia 'todos': es preferible enseñar
  * de menos un instante que enseñarle a un diseñador, de refilón, un consejo de
- * mánager mientras la sesión termina de cargar.
+ * gestión mientras la sesión termina de cargar.
  */
-export function tipsForRole(role: HelpRole, tips: readonly HelpTip[] = HELP_TIPS): HelpTip[] {
-  return tips.filter((tip) => tip.audience === 'todos' || tip.audience === role);
+export function tipsForView(view: HelpView, tips: readonly HelpTip[] = HELP_TIPS): HelpTip[] {
+  return tips.filter((tip) => tip.audience === 'todos' || tip.audience === view);
 }
 
 /** Consejo por su id, o undefined si ese id no existe en el catálogo. */

@@ -12,8 +12,8 @@
 /** Agrupación temática. El orden de este objeto es el orden en /ayuda. */
 export type HelpSection = 'buscar' | 'reparto' | 'entregas' | 'taller' | 'cuenta';
 
-/** A quién le sirve el consejo. 'todos' incluye a los dos roles. */
-export type HelpAudience = 'todos' | 'ADMIN' | 'DESIGNER';
+/** A quién le sirve el consejo: a todos, a la cara de gestión o a la de diseñador. */
+export type HelpAudience = 'todos' | 'manager' | 'designer';
 
 export interface HelpSectionMeta {
   id: HelpSection;
@@ -144,7 +144,7 @@ export const HELP_TIPS: readonly HelpTip[] = [
     title: 'Se reparte dentro de la semana de entrega, no de la actual',
     body: 'La carga se mide en la semana de entrega, no en la actual. Cambiar la fecha puede rehacer el reparto.',
     section: 'reparto',
-    audience: 'ADMIN',
+    audience: 'manager',
     keywords: ['fecha', 'mover', 'cambiar fecha', 'reasignar'],
   },
   {
@@ -152,7 +152,7 @@ export const HELP_TIPS: readonly HelpTip[] = [
     title: 'El «4 / 8» bajo cada nombre es peso pendiente frente a capacidad',
     body: 'Solo suma lo pendiente. Pasado el 100 % sale «Sobrecarga», que avisa pero no impide asignar más.',
     section: 'reparto',
-    audience: 'ADMIN',
+    audience: 'manager',
     keywords: ['capacidad', 'sobrecarga', 'carga', 'ocupación'],
   },
   {
@@ -160,7 +160,7 @@ export const HELP_TIPS: readonly HelpTip[] = [
     title: 'En empate no le toca siempre al mismo',
     body: 'Con dos diseñadores igual de cargados, el turno rota en vez de pegarse al primero de la lista.',
     section: 'reparto',
-    audience: 'ADMIN',
+    audience: 'manager',
     keywords: ['automático', 'repartir', 'turno', 'rotación'],
   },
 

@@ -11,6 +11,7 @@ import { AlertCircle, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import { CreateDesignButton } from '@/components/features/designs/dialogs/create-design-button';
 import { useAuth } from '@/lib/auth/auth-context';
+import { viewModeFor } from '@/lib/utils/access';
 import { DesignerDashboard } from '@/components/features/dashboard/designer-dashboard';
 import { AdminDashboard } from '@/components/features/dashboard/admin-dashboard';
 import { DesignDetailSheet } from '@/components/features/designs/design-detail-sheet';
@@ -155,7 +156,7 @@ export default function Dashboard() {
         />
       }
       loading={showSkeleton}
-      skeleton={<DashboardSkeleton variant={profile?.role === 'ADMIN' ? 'admin' : 'designer'} />}
+      skeleton={<DashboardSkeleton variant={viewModeFor(profile) === 'manager' ? 'admin' : 'designer'} />}
     >
       {showError ? (
         <Card>
@@ -177,7 +178,7 @@ export default function Dashboard() {
             </div>
           </CardContent>
         </Card>
-      ) : profile?.role === 'ADMIN' ? (
+      ) : viewModeFor(profile) === 'manager' ? (
         <AdminDashboard
           items={items}
           onAssign={handleAssign}

@@ -2,6 +2,7 @@ import { cache } from 'react';
 import { createClient } from '@/lib/supabase/server';
 import type { User } from '@supabase/supabase-js';
 import type { Profile } from '@/lib/auth/auth-context';
+import { toProfile, PROFILE_WITH_ROLES_SELECT } from '@/lib/utils/access';
 
 export interface ServerAuth {
   user: User | null;
@@ -32,15 +33,15 @@ export const getServerAuth = cache(async function getServerAuth(): Promise<Serve
 
     if (error || !user) return { user: null, profile: null };
 
-    const { data: profile, error: profileError } = await supabase
+    const { data: raw, error: profileError } = await supabase
       .from('profiles')
-      .select('*')
+      .select(PROFILE_WITH_ROLES_SELECT)
       .eq('id', user.id)
       .maybeSingle();
 
-    if (profileError || !profile) return { user, profile: null };
+    if (profileError || !raw) return { user, profile: null };
 
-    return { user, profile: profile as Profile };
+    return { user, profile: toProfile(raw) };
   } catch {
     return { user: null, profile: null };
   }

@@ -1,5 +1,6 @@
 import { DashboardSkeleton } from '@/components/skeletons/dashboard-skeleton';
 import { getServerAuth } from '@/lib/auth/get-server-auth';
+import { viewModeFor } from '@/lib/utils/access';
 
 /**
  * Fallback de navegación (App Router): se muestra al instante al clicar el
@@ -10,5 +11,5 @@ import { getServerAuth } from '@/lib/auth/get-server-auth';
  */
 export default async function Loading() {
   const { profile } = await getServerAuth();
-  return <DashboardSkeleton variant={profile?.role === 'ADMIN' ? 'admin' : 'designer'} />;
+  return <DashboardSkeleton variant={viewModeFor(profile) === 'manager' ? 'admin' : 'designer'} />;
 }

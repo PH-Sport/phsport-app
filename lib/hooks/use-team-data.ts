@@ -2,6 +2,7 @@ import useSWR from 'swr';
 import { format } from 'date-fns';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/lib/auth/auth-context';
+import { viewModeFor } from '@/lib/utils/access';
 import type { Design } from '@/lib/types/design';
 
 export interface DesignerWithDesigns {
@@ -65,11 +66,11 @@ const fetchTeamData = async ([, weekStart, weekEnd]: [string, Date, Date]): Prom
 
 export function useTeamData(weekStart: Date, weekEnd: Date): UseTeamDataReturn {
   const { profile, status } = useAuth();
-  const isAdmin = status === 'AUTHENTICATED' && profile?.role === 'ADMIN';
+  const isManager = status === 'AUTHENTICATED' && viewModeFor(profile) === 'manager';
 
   const { data, error, isLoading, mutate } = useSWR<DesignerWithDesigns[]>(
-    // Only fetch when authenticated as admin
-    isAdmin ? ['team-data', weekStart, weekEnd] : null,
+    // Solo la cara de gestión pide la semana del equipo.
+    isManager ? ['team-data', weekStart, weekEnd] : null,
     fetchTeamData
   );
 

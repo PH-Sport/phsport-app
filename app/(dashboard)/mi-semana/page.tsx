@@ -21,6 +21,7 @@ import { SPRINGS, STAGGER, TWEENS } from '@/components/ui/animations';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/lib/auth/auth-context';
+import { viewModeFor } from '@/lib/utils/access';
 import { useConfirm } from '@/lib/hooks/use-confirm';
 import { useMyWeek } from '@/lib/hooks/use-my-week';
 import { useMyWeekData } from '@/lib/hooks/use-my-week-data';
@@ -55,7 +56,7 @@ export default function MyWeekPage() {
 
   // Redireccionar admins a /equipo
   useEffect(() => {
-    if (status === 'AUTHENTICATED' && profile && profile.role === 'ADMIN') {
+    if (status === 'AUTHENTICATED' && profile && viewModeFor(profile) === 'manager') {
       router.replace('/equipo');
     }
   }, [status, profile, router]);

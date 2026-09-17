@@ -4,6 +4,7 @@ import { useMemo } from 'react';
 import useSWR from 'swr';
 import { format, endOfWeek, addDays, addWeeks } from 'date-fns';
 import { useAuth } from '@/lib/auth/auth-context';
+import { viewModeFor } from '@/lib/utils/access';
 import { designsFetcher } from '@/lib/utils/api-fetcher';
 import { summarizeUpcoming, HORIZON_WEEKS, type UpcomingWork } from '@/lib/utils/upcoming-work';
 import type { Design } from '@/lib/types/design';
@@ -28,7 +29,7 @@ export function useUpcomingWork(): UpcomingWork {
   const from = addDays(weekEnd, 1);
   const to = addWeeks(weekEnd, HORIZON_WEEKS);
 
-  const isDesigner = profile?.role === 'DESIGNER';
+  const isDesigner = viewModeFor(profile) === 'designer';
   // Un diseñador sin id todavía resuelto pediría el backlog entero del equipo y
   // contaría de más: mejor esperar a tenerlo.
   const ready = status === 'AUTHENTICATED' && profile !== null && (!isDesigner || Boolean(user?.id));

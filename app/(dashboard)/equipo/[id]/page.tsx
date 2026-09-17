@@ -18,6 +18,7 @@ import {
   ExternalLink,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth/auth-context';
+import { homeFor, viewModeFor } from '@/lib/utils/access';
 import { useTeamData } from '@/lib/hooks/use-team-data';
 import { sumWeight } from '@/lib/services/designs/weekly-load';
 import { cn } from '@/lib/utils';
@@ -53,8 +54,8 @@ function DesignerDetailPage() {
 
   // Solo admins
   useEffect(() => {
-    if (!authLoading && profile && profile.role !== 'ADMIN') {
-      router.replace('/mi-semana');
+    if (!authLoading && profile && viewModeFor(profile) !== 'manager') {
+      router.replace(homeFor(viewModeFor(profile)));
     }
   }, [authLoading, profile, router]);
 
@@ -69,7 +70,7 @@ function DesignerDetailPage() {
     setDetailSheetOpen(true);
   };
 
-  if (!authLoading && profile && profile.role !== 'ADMIN') {
+  if (!authLoading && profile && viewModeFor(profile) !== 'manager') {
     return null;
   }
 

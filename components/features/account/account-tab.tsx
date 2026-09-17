@@ -16,7 +16,8 @@ interface AccountTabProps {
   alias: string;
   onAliasChange: (v: string) => void;
   email: string | undefined;
-  role: string | undefined;
+  /** Nombres de los roles, ya escritos para enseñar («Gestor creativo»). */
+  roleLabel: string;
   avatarUrl: string | null | undefined;
   uploading: boolean;
   /** Sube el JPEG recortado/comprimido. Devuelve true si tuvo éxito. */
@@ -31,7 +32,7 @@ export function AccountTab({
   alias,
   onAliasChange,
   email,
-  role,
+  roleLabel,
   avatarUrl,
   uploading,
   onAvatarConfirm,
@@ -147,9 +148,9 @@ export function AccountTab({
           <Label htmlFor="role">Rol</Label>
           <Input
             id="role"
-            value={role || 'User'}
+            value={roleLabel}
             disabled
-            className="bg-muted text-muted-foreground border-input capitalize"
+            className="bg-muted text-muted-foreground border-input"
           />
         </div>
       </div>

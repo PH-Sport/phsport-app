@@ -10,7 +10,8 @@ import { RowSeparator } from '@/components/ui/row';
 import { SPRINGS, STAGGER } from '@/components/ui/animations';
 import { useAuth } from '@/lib/auth/auth-context';
 import { useDismissedTips } from '@/lib/help/use-dismissed-tips';
-import { groupTipsBySection, searchTips, tipsForRole } from '@/lib/help/select';
+import { groupTipsBySection, searchTips, tipsForView } from '@/lib/help/select';
+import { viewModeFor } from '@/lib/utils/access';
 import { cn } from '@/lib/utils';
 
 const rise = {
@@ -35,7 +36,7 @@ export function HelpContent() {
   const [highlighted, setHighlighted] = useState<string | null>(null);
   const highlightTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const visible = useMemo(() => tipsForRole(profile?.role), [profile?.role]);
+  const visible = useMemo(() => tipsForView(profile ? viewModeFor(profile) : undefined), [profile]);
   const matches = useMemo(() => searchTips(visible, query), [visible, query]);
   const groups = useMemo(() => groupTipsBySection(matches), [matches]);
 

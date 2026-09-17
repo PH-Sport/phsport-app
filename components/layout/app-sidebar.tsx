@@ -42,6 +42,7 @@ import {
 } from 'lucide-react';
 import { Hint } from '@/components/ui/tooltip';
 import { useAuth } from '@/lib/auth/auth-context';
+import { viewModeFor, type ViewMode } from '@/lib/utils/access';
 import { PhSportMark } from '@/components/layout/ph-sport-mark';
 import { cn } from '@/lib/utils';
 
@@ -142,11 +143,11 @@ type NavItem = {
   icon: ComponentType<{ className?: string }>;
 };
 
-export function buildNavItems(role: 'ADMIN' | 'DESIGNER' | undefined): NavItem[] {
+export function buildNavItems(mode: ViewMode): NavItem[] {
   return [
     { href: '/inicio', label: 'Inicio', icon: Home },
-    // Vista semanal de trabajo: el equipo (mánager) o la cola propia (diseñador).
-    role === 'ADMIN'
+    // Vista semanal de trabajo: el equipo (gestión) o la cola propia (quien recibe diseños).
+    mode === 'manager'
       ? { href: '/equipo', label: 'Semana', icon: CalendarRange }
       : { href: '/mi-semana', label: 'Semana', icon: CalendarRange },
     { href: '/disenos', label: 'Diseños', icon: Palette },
@@ -163,7 +164,7 @@ export function AppSidebar() {
   const { expanded } = useSidebar();
   const { profile } = useAuth();
   const pathname = usePathname() ?? '';
-  const items = buildNavItems(profile?.role);
+  const items = buildNavItems(viewModeFor(profile));
 
   // Solo escritorio (hidden md:flex): en móvil la navegación es la MobileTabBar.
   return (

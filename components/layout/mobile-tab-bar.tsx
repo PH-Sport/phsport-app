@@ -27,6 +27,7 @@ import { Plus } from 'lucide-react';
 import { SPRINGS } from '@/components/ui/animations';
 import { useAuth } from '@/lib/auth/auth-context';
 import { CreateDesignDialog } from '@/components/features/designs/dialogs/create-design-dialog';
+import { viewModeFor } from '@/lib/utils/access';
 import { buildNavItems, isItemActive } from './app-sidebar';
 import { cn } from '@/lib/utils';
 
@@ -45,7 +46,7 @@ export function MobileTabBar() {
   const [createMounted, setCreateMounted] = useState(false);
 
   // Solo las 3 secciones principales: Ajustes ya vive en el dropdown del perfil.
-  const items = buildNavItems(profile?.role);
+  const items = buildNavItems(viewModeFor(profile));
 
   // La ruta manda en cuanto llega; hasta entonces manda el dedo.
   const activeHref =

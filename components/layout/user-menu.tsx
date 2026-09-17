@@ -17,15 +17,15 @@ import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { SPRINGS } from '@/components/ui/animations';
 import { useAuth } from '@/lib/auth/auth-context';
 import { useViewAs } from '@/lib/auth/view-as-context';
-import { ROLE_LABEL, ROLE_ACCENT } from '@/lib/utils/role';
+import { VIEW_MODE_ACCENT, roleBadgeLabel } from '@/lib/utils/access';
 import { ViewAsMenuSection } from './view-as-menu-section';
 import { cn } from '@/lib/utils';
 
 export function UserMenu() {
   const router = useRouter();
-  // status/logout/profile.role(efectivo) de useAuth; identidad REAL de useViewAs.
-  const { status, logout, profile } = useAuth();
-  const { isDev, realName, realDisplayName, realEmail, realRole, realAvatarUrl } = useViewAs();
+  // status/logout/access (efectivo) de useAuth; identidad REAL de useViewAs.
+  const { status, logout, access } = useAuth();
+  const { isDev, realName, realDisplayName, realEmail, realProfile, realViewMode, realAvatarUrl } = useViewAs();
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   // Altura medida en píxeles (subpíxel exacto) para el despliegue del menú.
@@ -120,14 +120,14 @@ export function UserMenu() {
                   <div className="flex flex-col space-y-1">
                     <p className="text-sm font-medium">{label}</p>
                     <p className="text-xs text-muted-foreground truncate">{realEmail}</p>
-                    {realRole && (
+                    {realProfile && (
                       <span
                         className={cn(
                           'mt-1 inline-block w-fit rounded-full px-2 py-0.5 text-[11px] md:text-[10px] font-semibold uppercase tracking-wider',
-                          ROLE_ACCENT[realRole]
+                          VIEW_MODE_ACCENT[realViewMode]
                         )}
                       >
-                        {ROLE_LABEL[realRole]}
+                        {roleBadgeLabel(realProfile)}
                       </span>
                     )}
                   </div>
@@ -141,7 +141,7 @@ export function UserMenu() {
                   <Settings className="mr-2 h-4 w-4" />
                   <span>Ajustes</span>
                 </DropdownMenuItem>
-                {profile?.role === 'ADMIN' && (
+                {(access.can('invitar_personal') || access.can('gestionar_roles')) && (
                   <DropdownMenuItem
                     onClick={() => router.push('/ajustes?tab=miembros')}
                     className="text-foreground hover:bg-accent cursor-pointer"

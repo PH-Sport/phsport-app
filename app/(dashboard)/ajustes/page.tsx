@@ -13,6 +13,7 @@ import { cn } from '@/lib/utils';
 import { useAuth } from '@/lib/auth/auth-context';
 import { useUserPreferences } from '@/lib/hooks/use-user-preferences';
 import { useViewAs } from '@/lib/auth/view-as-context';
+import { roleBadgeLabel } from '@/lib/utils/access';
 import { AccountTab } from '@/components/features/account/account-tab';
 import { NotificationsTab } from '@/components/features/account/notifications-tab';
 import { AppearanceTab } from '@/components/features/account/appearance-tab';
@@ -49,11 +50,12 @@ function Section({
 }
 
 function SettingsContent() {
-  const { user, profile } = useAuth();
+  const { user, profile, access } = useAuth();
   const { isDev } = useViewAs();
-  const isAdmin = profile?.role === 'ADMIN';
+  // La pestaña Miembros la ve quien invita compañeros o quien gestiona roles.
+  const canMembers = access.can('invitar_personal') || access.can('gestionar_roles');
   const searchParams = useSearchParams();
-  const initialTab: Tab = isAdmin && searchParams.get('tab') === 'miembros' ? 'miembros' : 'general';
+  const initialTab: Tab = canMembers && searchParams.get('tab') === 'miembros' ? 'miembros' : 'general';
   const [tab, setTab] = useState<Tab>(initialTab);
 
   const {
@@ -74,19 +76,19 @@ function SettingsContent() {
     uploadAvatar,
   } = useUserPreferences();
 
-  const tabs: { id: Tab; label: string }[] = isAdmin
+  const tabs: { id: Tab; label: string }[] = canMembers
     ? [
         { id: 'general', label: 'General' },
         { id: 'miembros', label: 'Miembros' },
       ]
     : [{ id: 'general', label: 'General' }];
 
-  const activeTab: Tab = isAdmin ? tab : 'general';
+  const activeTab: Tab = canMembers ? tab : 'general';
 
   return (
     <PageTransition
       loading={loading}
-      skeleton={<SettingsSkeleton isAdmin={isAdmin} />}
+      skeleton={<SettingsSkeleton isAdmin={canMembers} />}
       variant="fadeSlide"
     >
       <motion.div
@@ -95,7 +97,7 @@ function SettingsContent() {
         variants={{ show: { transition: { staggerChildren: STAGGER } } }}
         className="space-y-4"
       >
-      {isAdmin && (
+      {canMembers && (
         <motion.div
           variants={rise}
           className="inline-flex items-center gap-0.5 rounded-xl border border-border bg-card p-1 shadow-raised"
@@ -129,7 +131,7 @@ function SettingsContent() {
               alias={alias}
               onAliasChange={setAlias}
               email={user?.email}
-              role={profile?.role}
+              roleLabel={roleBadgeLabel(profile)}
               avatarUrl={profile?.avatar_url}
               uploading={uploading}
               onAvatarConfirm={uploadAvatar}

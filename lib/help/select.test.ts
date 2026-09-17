@@ -6,7 +6,7 @@ import {
   parseDismissedIds,
   searchTips,
   serializeDismissedIds,
-  tipsForRole,
+  tipsForView,
 } from './select';
 import { HELP_SECTIONS, HELP_TIPS, type HelpSectionMeta, type HelpTip } from './tips';
 
@@ -21,20 +21,20 @@ function tip(overrides: Partial<HelpTip> = {}): HelpTip {
   };
 }
 
-describe('tipsForRole', () => {
+describe('tipsForView', () => {
   const tips = [
     tip({ id: 'comun', audience: 'todos' }),
-    tip({ id: 'jefe', audience: 'ADMIN' }),
-    tip({ id: 'peon', audience: 'DESIGNER' }),
+    tip({ id: 'jefe', audience: 'manager' }),
+    tip({ id: 'peon', audience: 'designer' }),
   ];
 
-  it('da a cada rol los suyos más los comunes', () => {
-    expect(tipsForRole('ADMIN', tips).map((t) => t.id)).toEqual(['comun', 'jefe']);
-    expect(tipsForRole('DESIGNER', tips).map((t) => t.id)).toEqual(['comun', 'peon']);
+  it('da a cada cara los suyos más los comunes', () => {
+    expect(tipsForView('manager', tips).map((t) => t.id)).toEqual(['comun', 'jefe']);
+    expect(tipsForView('designer', tips).map((t) => t.id)).toEqual(['comun', 'peon']);
   });
 
-  it('sin rol resuelto deja pasar solo los comunes', () => {
-    expect(tipsForRole(undefined, tips).map((t) => t.id)).toEqual(['comun']);
+  it('sin cara resuelta deja pasar solo los comunes', () => {
+    expect(tipsForView(undefined, tips).map((t) => t.id)).toEqual(['comun']);
   });
 });
 

@@ -31,8 +31,9 @@ setup('iniciar sesión', async ({ page }) => {
   await page.locator('#password').fill(pass);
   await page.getByRole('button', { name: /iniciar sesión/i }).click();
 
-  // El destino depende del rol (mánager → /equipo, diseñador → /inicio), así que
-  // esperamos a salir de /login en vez de a una ruta concreta.
+  // El destino depende de la cara que ve la cuenta (mánager → /inicio,
+  // diseñador → /mi-semana, jugador → /area-personal), así que esperamos a
+  // salir de /login en vez de a una ruta concreta.
   await expect(page).not.toHaveURL(/\/login/, { timeout: 30_000 });
 
   fs.mkdirSync(path.dirname(RUTA_SESION), { recursive: true });

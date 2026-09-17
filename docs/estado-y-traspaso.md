@@ -1,8 +1,14 @@
 # Estado del proyecto y traspaso
 
-> **Actualizado:** 2026-09-08, al publicar el sistema de consejos y la sección
-> de Ayuda (ver más abajo). Antes, el 2026-09-07, al preparar el salto a otro
-> equipo. Lo de fondo
+> **Actualizado:** 2026-09-17, al cerrar el código de los permisos por roles
+> (§3 de septiembre): la migración 044 está aplicada, la 045 escrita y sin
+> aplicar (pendiente 11), y toda la app decide ya por permiso. `preview` va por
+> delante de `main` y no se sube hasta que Mario lo pruebe en staging.
+> Antes, el 2026-09-14, al arrancar el salto de «panel del equipo de
+> diseño» a «app de la agencia» — ver el §2 de septiembre y el pendiente 8, que
+> es un agujero de permisos que hay que cerrar antes de meter gente de fuera.
+> Antes, el 2026-09-08, al publicar el sistema de consejos y la sección de
+> Ayuda. Y el 2026-09-07, al preparar el salto a otro equipo. Lo de fondo
 > sigue siendo del 2026-08-22, cuando se subieron a producción los 95 commits que
 > llevaban meses en `preview`: `main` y `preview` van a la par.
 > **Para qué sirve:** que quien retome —persona o Claude Code, en cualquier
@@ -33,8 +39,10 @@
 | `main` | Lo que corre en producción. |
 | `preview` | Donde se implementa. |
 
-**Las dos van a la par desde el 2026-08-22.** Ese día se subieron
-a producción los 95 commits que llevaban meses acumulados: el rediseño iOS 26
+**`preview` va por delante desde el 2026-09-16** con la tanda de permisos por
+roles (§3 de septiembre) y todo lo que venga detrás; `main` la recibe cuando
+Mario lo haya probado en staging. Antes iban a la par desde el 2026-08-22, cuando
+se subieron a producción los 95 commits que llevaban meses acumulados: el rediseño iOS 26
 entero, la fase 1.5 de contenido y voz, el chat de creación de diseños y los
 arreglos del alta por invitación. Fue un fast-forward limpio, sin merge commit.
 
@@ -44,8 +52,15 @@ acuerdo tácito y no constaba en ningún sitio.
 
 ### Cuidado: la base de datos va por delante del código
 
-**Ya no lo va: con el despliegue del 2026-08-22 se han igualado.** Se deja escrito
-porque explica por qué tres migraciones del repo no hay que ejecutarlas nunca.
+**Vuelve a ir por delante desde el 2026-09-16, y esta vez a propósito.** La
+migración 044 (y la 045 cuando se aplique) están en producción antes que su
+código, porque `preview` y producción comparten base. Las dos están pensadas
+para convivir con `main`: añaden reglas y columnas, no quitan ninguna que
+`main` lea. La que quita —la 046— espera al merge. Ver §3 de septiembre.
+
+Entre el 2026-08-22 y el 2026-09-16 estuvieron igualadas. Lo que sigue se deja
+escrito porque explica por qué tres migraciones del repo no hay que ejecutarlas
+nunca.
 
 Las migraciones `041`, `042` y `043` se aplicaron **directamente sobre la base de
 producción** antes de que su código estuviera desplegado: la `041` para arreglar
@@ -346,6 +361,117 @@ Ajustes.
 de Playwright, así que los tests que necesitan sesión se saltan y no se ha podido
 entrar a mirar. Va a `preview` precisamente para eso.
 
+### 2. Arranca el salto a «app de la agencia»
+
+**El diseño completo está en
+`docs/superpowers/specs/2026-09-14-roles-departamentos-y-jugadores-design.md`.**
+Aquí solo lo que cambia el estado del proyecto.
+
+**Lo que viene:** la gestión de diseños pasa a ser una sección más —la de los
+perfiles creativos— y se añaden departamentos: agentes y scouts por un lado,
+futbolistas representados por otro. Lo de fondo es que **entra gente de fuera**,
+y eso rompe supuestos que llevan aquí desde el principio.
+
+**Lo único implementado a día de hoy** es una vista previa del área personal del
+futbolista, sin funcionalidad y con datos inventados en
+`lib/jugador/datos-de-muestra.ts`. Estrena el grupo de rutas `app/(jugador)/`,
+que es el marco sin panel acordado. Se llega desde el final de Ajustes y **solo
+se dibuja para cuentas de desarrollador**.
+
+**Los cuatro puntos del orden de trabajo están confirmados por Mario**
+(2026-09-16): permisos, ficha y alta, carpetas y archivos, almacenamiento. El
+spec es la guía para completarlos. **El primero, permisos, está hecho en código:
+§3.**
+
+**El hallazgo que cambia prioridades está en el pendiente 8.**
+
+**Lo que se descartó por el camino, para no repetirlo:**
+
+- **Conectar `designs.player` con una ficha de jugador** para que cada chaval
+  viera «sus» diseños. No va por ahí: los diseños son de la agencia y el acceso
+  se concede a mano, no se deriva de quién sale en la pieza. De paso se ahorra
+  reconciliar los nombres escritos a mano, que era lo más pesado del plan.
+- **Guardar los archivos en Drive.** Se recomendó con estimaciones infladas; con
+  los números reales (20 fotos al mes por chaval) caben de sobra en la app. Pero
+  **no en el plan gratuito**, que da para diez chavales durante un mes: se prueba
+  en gratis y se salta a Pro cuando entren jugadores de verdad.
+- **Jefes por departamento.** En creativo no hay jerarquía: nadie manda sobre
+  nadie. Sí hay grano —Izan y Lluís invitan, Loren y Pau no— y eso se modela con
+  roles y permisos, no con jefes.
+
+### 3. Permisos por roles: la app decide por permiso, no por «admin o diseñador»
+
+**El plan, con cada tarea y su verificación, está en
+`docs/superpowers/plans/2026-09-16-permisos-rbac.md`**; el diseño, en el §4 del
+spec. Aquí, lo que cambia el estado y lo que no se deduce del código.
+
+**Qué hay ahora (commits `8bdd39c` → `938cd88`, 2026-09-16 y 17):**
+
+- Tres tablas nuevas —`roles`, `role_permissions`, `profile_roles`— y una
+  columna `profiles.kind` (`AGENCIA` o `JUGADOR`). **Los tres roles son fijos**
+  y los siembra la migración: Gestor creativo, Diseñador senior, Diseñador. No
+  hay pantalla de roles, por decisión de Mario; si hay que cambiar uno, es otra
+  migración. Los permisos que existen los dice el código (`lib/utils/access.ts`):
+  `invitar_personal`, `invitar_jugadores`, `gestionar_roles`,
+  `recibir_asignaciones`.
+- Tres funciones para preguntar desde las políticas de la base
+  (`has_permission`, `in_department`, `is_staff`) y una guardia: la base
+  **impide dejar al equipo sin nadie que gestione roles**, tanto quitando el rol
+  como borrando la cuenta.
+- Las ocho personas migradas: los cuatro admin son Gestor creativo, los cuatro
+  diseñadores son Diseñador. **Subir a Izan y Lluís a Diseñador senior lo hace
+  Mario** desde Ajustes → Miembros, que ahora tiene un selector de rol. Está por
+  hacer.
+- La app entera decide por «cara» (mánager, diseñador, jugador) y por permiso;
+  ya no compara con `ADMIN` ni `DESIGNER`. Las invitaciones llevan el rol del
+  catálogo. Repartir lo puede cualquiera de creativo. La función de borrar
+  cuentas pregunta por `gestionar_roles` (código en el repo; **se despliega con
+  el merge**, la versión desplegada sigue valiendo hasta la 046).
+
+**Tres migraciones, y por qué en tres.** Producción y preview comparten base, y
+`main` todavía lee `profiles.role`. Así que: la **044 añade** (aplicada el
+2026-09-16, registrada en Supabase como `roles_y_permisos`); la **045 cambia
+las políticas** para que pregunten por permiso y cierra dos agujeros (escrita el
+2026-09-17, **sin aplicar todavía**: pendiente 11); la **046 borra lo antiguo**
+—`profiles.role`, `invitations.role`, `is_admin`, `role_enum`— y **solo puede ir
+después del merge a `main`**, porque hasta entonces producción lee esas columnas.
+
+**Los dos agujeros que cierra la 045.** El pendiente 8 (cualquiera con sesión
+borraba cualquier diseño) y uno peor, encontrado el 2026-09-16 al inventariar la
+base: **cualquier usuario podía cambiar su propio `role` e `is_dev`** con una
+petición directa, porque tenía permiso de escritura sobre la fila entera. La 045
+deja escribibles desde el cliente solo las columnas de perfil (nombre, avatar,
+color, preferencias). Hasta que se aplique, los dos siguen abiertos; hoy son
+inofensivos porque sois ocho.
+
+**Qué le pasa a producción cuando se aplique la 045:** nada, para las ocho
+personas — se recorrió escritura a escritura. Lo único que deja de funcionar en
+la versión antigua es «Cambiar rol» de Miembros, hasta el merge. Y ojo: **una
+cuenta sin rol asignado no vería nada** (ni diseños ni perfiles). Antes de
+aplicar, comprobar que no haya ninguna; el 2026-09-17 había 8 perfiles y los 8
+con rol.
+
+**Lo que se descubrió por el camino, para no volver a tropezar:**
+
+- Sin tipos generados de Supabase, `from()` devuelve `any` y
+  `.overrideTypes<>()` no compila (TS2347); la fila se anota a mano en el
+  resultado. Con `rpc()` sí funciona.
+- `profiles` tiene dos claves foráneas hacia `profile_roles`, así que el embed
+  de PostgREST necesita el nombre de la FK:
+  `profile_roles!profile_roles_profile_id_fkey(...)`. Está en
+  `PROFILE_ROLES_EMBED`; no reescribirlo a mano.
+- Revocar EXECUTE a `anon` sobre las funciones de permisos hace que una consulta
+  anónima a `profiles` devuelva 401. La app nunca consulta sin sesión; se deja
+  así a propósito.
+- **Cómo se prueba la RLS de verdad:** simulando una sesión dentro de una
+  transacción (`set local role authenticated` + `set_config('request.jwt.claims',
+  …)`) y deshaciéndola. Las consultas están en el plan, tarea 9, paso 4. Buscar
+  los uuid **antes** de cambiar de rol, o `auth.uid()` sale nulo.
+
+**Lo que no se ha comprobado todavía:** la app en staging con ojos —crear una
+invitación y ver el rol, cambiar un rol desde Miembros, repartir—. Lo automático
+sí: tipos, lint, 178 tests y build en verde el 2026-09-17.
+
 ---
 
 ## Qué queda pendiente
@@ -405,7 +531,16 @@ y pierde un `public.`, se cae en silencio igual que se cayó el alta. El arreglo
 es mecánico —`SET search_path = ''` y cualificar— pero toca funciones vivas y
 merece su propia tanda con verificación una por una, no ir de paso.
 
-### 5. `invitations.role` y `profiles.role` no comparten tipo
+**Avance (2026-09-17):** `handle_new_user` queda arreglada en la 045 (reescrita
+con `search_path = ''`), e `is_admin` desaparece en la 046, cuando ya no la use
+ninguna política. Quedan las otras doce.
+
+### 5. `invitations.role` y `profiles.role` no comparten tipo — HECHO el 2026-09-16
+
+**Resuelto por otro camino:** desde la 044 la invitación lleva `role_id`, una
+clave hacia la tabla `roles`, y `use_invitation` concede ese rol. Las dos
+columnas de texto siguen existiendo solo para que `main` no se caiga; la 046 las
+borra. Lo de abajo queda como estaba, para entender el porqué.
 
 La primera es `text`, la segunda es `public.role_enum`. Eso es lo que tumbó
 `use_invitation` (§10), y el cast de la `043` lo tapa sin resolverlo: las dos
@@ -473,7 +608,61 @@ pedía resolver antes de tocar código:
   a producción: estaban en este mismo documento. El caso de Lluís (§1 de agosto)
   es el consejo principal.
 
-### 8. Ideas anotadas, sin decidir
+### 8. Cualquiera con sesión puede borrar cualquier diseño — CERRADO EN LA 045, pendiente de aplicar
+
+**Estado el 2026-09-17:** la migración 045 lo cierra (solo el departamento
+creativo toca `designs`), y de paso cierra el agujero de `profiles.role` del §3
+de septiembre. Está escrita y comprobada contra el catálogo vivo, **pero no
+aplicada**: ver el pendiente 11. Hasta entonces, sigue abierto tal como se
+describe abajo.
+
+**Comprobado contra la base el 2026-09-14**, no deducido: la política de borrado
+de `designs` es `auth.uid() IS NOT NULL`. Lo mismo crear y editar. El rol no
+interviene.
+
+- **Entrada:** un usuario con sesión llama a la API de Supabase con un DELETE
+  sobre `designs`.
+- **Esperado:** rechazado si no le corresponde.
+- **Real:** borrado.
+
+**Hoy es inofensivo y por eso lleva ahí desde el principio:** sois ocho, todos
+del equipo. **Deja de serlo en cuanto entre el primer futbolista**, que es gente
+de fuera con sesión en la misma app. La interfaz no le enseñaría el botón, pero
+esconder un menú no es proteger un dato.
+
+**Va antes que dar de alta a nadie de fuera.** Y arrastra el pendiente 4: las dos
+funciones que hay que tocar —`is_admin` y `handle_new_user`— siguen con el
+`search_path` entrecomillado, así que o se arregla a la vez o se caen en
+silencio como se cayó el alta por invitación.
+
+### 9. Línea base de migraciones antes de estrenar las ramas de base de datos
+
+**PRIORITARIO en cuanto se pase a Pro: es lo primero que se hace, antes de
+activar ninguna rama.** Anotado el 2026-09-17 a petición de Mario, que lo
+marcó así expresamente. El salto a Supabase Pro trae las
+ramas de base de datos —el entorno de pruebas que este proyecto nunca ha
+tenido— y Supabase construye cada rama **reproduciendo `supabase/migrations`
+de cero, en orden**. Tal como está la carpeta, esa reproducción fallaría:
+
+- Números duplicados (`036` ×2, `037` ×2).
+- Migraciones aplicadas a mano que no constan en el registro, y registros con
+  nombre distinto al archivo (la base guarda `fix_use_invitation_role_cast`,
+  el archivo se llama `043_…`).
+- Nadie ha replayado nunca la carpeta contra una base vacía.
+
+**Qué hacer, y cuándo:** justo antes de activar las ramas, volcar el esquema
+real de producción a una sola migración de línea base (`supabase db dump
+--schema-only`, o el equivalente por MCP), archivar las 4x anteriores en el
+historial de git y comprobar que la carpeta nueva reproduce una base vacía
+hasta el estado de producción. **No antes:** hoy no cambiaría nada en
+producción y borraría de la carpeta los comentarios que documentan por qué se
+rompió el alta (042, 043); esos porqués deben pasar a este documento antes de
+archivar.
+
+Hasta entonces, seguir añadiendo en orden (044 → 045 → 046) y registrar cada
+una por MCP con el nombre sin prefijo, que es como están las últimas.
+
+### 10. Ideas anotadas, sin decidir
 
 - **Llevar el aviso de semanas futuras a Diseños.** Hoy solo está en Inicio.
   Requiere pensar dónde: esa página no tiene subtítulo y la semana vive en dos
@@ -486,6 +675,28 @@ pedía resolver antes de tocar código:
   esto es el borde *superior*, y sigue sin hacerse.
 - **Instalar Xcode** para probar iOS real (18 y 26) sin depender del móvil de
   Mario. No está instalado; se maneja con `xcrun simctl`, no con Playwright.
+
+### 11. Aplicar la 045 y, tras el merge a `main`, la 046
+
+**La 045 está escrita** (`supabase/migrations/045_politicas_por_permiso.sql`) y
+comprobada contra la base viva el 2026-09-17: las nueve políticas que sustituye
+existen con esos nombres, no queda ninguna otra que mire el rol antiguo, y el
+código de `preview` ya no lo lee. **No se pudo aplicar** ese día: el modo
+automático de permisos de Claude Code bloquea los cambios de estructura sobre la
+base, y no se rodeó a propósito (aplicarla por otra vía la dejaría sin registrar
+en Supabase, que es justo lo que el pendiente 9 quiere evitar).
+
+**Cómo se aplica, con Mario delante:** por MCP, `apply_migration` con el nombre
+`politicas_por_permiso` y el contenido del archivo tal cual. Antes, comprobar
+que ningún perfil está sin rol. Después, las cuatro consultas de sesiones
+simuladas del plan (tarea 9, paso 4) y avisar de que «Cambiar rol» de la versión
+antigua da error hasta el merge.
+
+**La 046 va después del merge**, cuando Vercel tenga desplegado en producción el
+código de `preview`: borra `profiles.role`, `invitations.role`, `is_admin` y
+`role_enum`. Está descrita en el plan, tarea 11, con el relleno previo de
+`invitations.role_id` para las invitaciones antiguas. Aplicarla antes tumba
+producción.
 
 ---
 

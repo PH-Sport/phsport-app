@@ -137,6 +137,14 @@ pantalla no puede decir sola y que, sin saberlo, lleva a una conclusión
 equivocada: «pulsa el botón para abrir el diálogo» no entra. Y **cabe en una
 frase, dos como mucho**: si necesita más, hay dos consejos metidos en uno.
 
+**Los permisos se definen en un solo sitio: `lib/utils/access.ts`.** La base
+guarda qué roles hay y qué permisos tiene cada uno, y eso solo lo cambia una
+migración (decisión de Mario: sin pantalla de roles); el código dice qué
+permisos existen, y Ajustes → Miembros solo elige el rol de cada persona. Para
+preguntar «¿puede?»: en cliente `useAuth().access.can('…')`, en rutas de API
+`loadAccess(supabase, userId)`, y en la base `has_permission(uid, '…')` dentro
+de las políticas. Nunca comparar nombres de rol: un rol se puede renombrar.
+
 ## Cómo se trabaja aquí
 
 **Despacito y con buena letra.** Los cambios grandes van por fases pequeñas con
@@ -186,6 +194,12 @@ Supabase. Antes de escribir DDL: mira el número real con un `ls` de la carpeta 
 **La base de datos de desarrollo es la de producción.** No hay entorno de
 staging: `.env.local` apunta al proyecto real. Todo lo que se escriba lo ven los
 diseñadores. Lee cuanto quieras; para escribir, pregunta.
+
+**Producción y preview comparten base, y `main` va por detrás.** Una migración
+que quite una columna que `main` todavía lee tumba producción. Por eso las
+migraciones se parten en «añadir» (se aplican cuando se escriben) y «quitar»
+(esperan al merge): la 046 es el ejemplo. Antes de escribir DDL que borre algo,
+mirar qué lee `main` con `git grep <columna> main -- app lib components`.
 
 **Ante un fallo visual, mira la pantalla antes de teorizar.** Hay matriz de
 Playwright: se puede cargar una página, medir cajas, leer estilos calculados y

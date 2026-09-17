@@ -17,10 +17,19 @@ import { PasswordInput } from '@/components/features/auth/password-input';
 
 interface Invitation {
   id: string;
-  /** Nombre del rol que da la invitación («Diseñador senior»). */
+  /** Nombre del rol que da la invitación («Diseñador senior»); nulo si es de jugador. */
   roleName: string | null;
+  /** La ficha a la que queda enganchada la cuenta; nulo si es de personal. */
+  playerId: string | null;
+  playerName: string | null;
 }
 
+/**
+ * El alta por enlace. Una misma pantalla para dos casos (spec §8): la
+ * invitación de personal da un rol; la de jugador engancha la cuenta a su
+ * ficha, con el nombre ya puesto y un solo campo de apellidos. Cuál es cada
+ * una lo dice la base, no la URL.
+ */
 export default function InvitePage() {
   const params = useParams();
   const router = useRouter();
@@ -35,8 +44,11 @@ export default function InvitePage() {
   const [alias, setAlias] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [passwordAgain, setPasswordAgain] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
+
+  const isPlayer = !!invitation?.playerId;
 
   useEffect(() => {
     const validateToken = async () => {
@@ -62,7 +74,19 @@ export default function InvitePage() {
         return;
       }
 
-      setInvitation({ id: row.id, roleName: row.role_name ?? null });
+      setInvitation({
+        id: row.id,
+        roleName: row.role_name ?? null,
+        playerId: row.player_id ?? null,
+        playerName: row.player_name ?? null,
+      });
+
+      // La ficha ya tiene el nombre: se rellena y él lo corrige si hace falta.
+      if (row.player_id && typeof row.player_name === 'string') {
+        const [first, ...rest] = row.player_name.trim().split(/\s+/);
+        setGivenName(first ?? '');
+        setFamilyName(rest.join(' '));
+      }
       setLoading(false);
     };
 
@@ -72,6 +96,11 @@ export default function InvitePage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!invitation) return;
+
+    if (isPlayer && password !== passwordAgain) {
+      toast.error('Las contraseñas no coinciden.');
+      return;
+    }
 
     setSubmitting(true);
 
@@ -88,7 +117,7 @@ export default function InvitePage() {
         return;
       }
 
-      // El rol se aplica server-side dentro de use_invitation(), nunca se pasa desde el cliente.
+      // El rol (o la ficha) se aplica server-side dentro de use_invitation(), nunca se pasa desde el cliente.
       const { data: authData, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
@@ -96,7 +125,7 @@ export default function InvitePage() {
           data: {
             given_name: givenName.trim(),
             family_name: familyName.trim() || null,
-            alias: alias.trim() || null,
+            alias: isPlayer ? null : alias.trim() || null,
           },
         },
       });
@@ -175,64 +204,98 @@ export default function InvitePage() {
       <AuthHeading title="Has sido invitado" subtitle="Crea tu cuenta en PHSPORT" />
       <div className="mb-8 -mt-4">
         <Badge variant="outline" className="text-sm">
-          Rol: {invitation?.roleName ?? 'Miembro'}
+          {isPlayer ? `Área personal · ${invitation?.playerName ?? ''}` : `Rol: ${invitation?.roleName ?? 'Miembro'}`}
         </Badge>
       </div>
 
       <form className="space-y-5" onSubmit={handleSubmit}>
-        <div className="grid grid-cols-2 gap-3">
-          <div className="space-y-2">
-            <Label htmlFor="givenName">Nombre</Label>
-            <Input
-              id="givenName"
-              name="givenName"
-              type="text"
-              required
-              placeholder="Tu nombre"
-              value={givenName}
-              onChange={(e) => setGivenName(e.target.value)}
-              disabled={submitting}
-              className="h-11"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="familyName">Primer apellido</Label>
-            <Input
-              id="familyName"
-              name="familyName"
-              type="text"
-              required
-              placeholder="Tu apellido"
-              value={familyName}
-              onChange={(e) => setFamilyName(e.target.value)}
-              disabled={submitting}
-              className="h-11"
-            />
-          </div>
-        </div>
+        {isPlayer ? (
+          <>
+            <div className="space-y-2">
+              <Label htmlFor="givenName">Nombre</Label>
+              <Input
+                id="givenName"
+                name="givenName"
+                type="text"
+                required
+                placeholder="Tu nombre"
+                value={givenName}
+                onChange={(e) => setGivenName(e.target.value)}
+                disabled={submitting}
+                className="h-11"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="familyName">Apellidos</Label>
+              <Input
+                id="familyName"
+                name="familyName"
+                type="text"
+                placeholder="Tus apellidos"
+                value={familyName}
+                onChange={(e) => setFamilyName(e.target.value)}
+                disabled={submitting}
+                className="h-11"
+              />
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label htmlFor="givenName">Nombre</Label>
+                <Input
+                  id="givenName"
+                  name="givenName"
+                  type="text"
+                  required
+                  placeholder="Tu nombre"
+                  value={givenName}
+                  onChange={(e) => setGivenName(e.target.value)}
+                  disabled={submitting}
+                  className="h-11"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="familyName">Primer apellido</Label>
+                <Input
+                  id="familyName"
+                  name="familyName"
+                  type="text"
+                  required
+                  placeholder="Tu apellido"
+                  value={familyName}
+                  onChange={(e) => setFamilyName(e.target.value)}
+                  disabled={submitting}
+                  className="h-11"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="alias">Alias (opcional)</Label>
+              <Input
+                id="alias"
+                name="alias"
+                type="text"
+                placeholder={givenName || 'Cómo quieres que te muestren'}
+                value={alias}
+                onChange={(e) => setAlias(e.target.value)}
+                disabled={submitting}
+                className="h-11"
+              />
+            </div>
+          </>
+        )}
 
         <div className="space-y-2">
-          <Label htmlFor="alias">Alias (opcional)</Label>
-          <Input
-            id="alias"
-            name="alias"
-            type="text"
-            placeholder={givenName || 'Cómo quieres que te muestren'}
-            value={alias}
-            onChange={(e) => setAlias(e.target.value)}
-            disabled={submitting}
-            className="h-11"
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="email">Email</Label>
+          <Label htmlFor="email">{isPlayer ? 'Correo' : 'Email'}</Label>
           <Input
             id="email"
             name="email"
             type="email"
             required
-            placeholder="tu@email.com"
+            placeholder={isPlayer ? 'tu@correo.com' : 'tu@email.com'}
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             disabled={submitting}
@@ -247,16 +310,34 @@ export default function InvitePage() {
             name="password"
             required
             minLength={6}
+            placeholder={isPlayer ? 'Mínimo 6 caracteres' : undefined}
             value={password}
             onChange={setPassword}
             disabled={submitting}
             className="h-11"
           />
-          <p className="text-xs text-muted-foreground">Mínimo 6 caracteres.</p>
+          {!isPlayer && <p className="text-xs text-muted-foreground">Mínimo 6 caracteres.</p>}
         </div>
 
+        {isPlayer && (
+          <div className="space-y-2">
+            <Label htmlFor="passwordAgain">Confirmar contraseña</Label>
+            <PasswordInput
+              id="passwordAgain"
+              name="passwordAgain"
+              required
+              minLength={6}
+              placeholder="Repite la contraseña"
+              value={passwordAgain}
+              onChange={setPasswordAgain}
+              disabled={submitting}
+              className="h-11"
+            />
+          </div>
+        )}
+
         <AuthSubmitButton loading={submitting} loadingLabel="Creando cuenta...">
-          Crear Cuenta
+          {isPlayer ? 'Crear cuenta' : 'Crear Cuenta'}
         </AuthSubmitButton>
       </form>
     </div>

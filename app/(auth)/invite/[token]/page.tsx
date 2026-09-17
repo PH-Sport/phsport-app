@@ -17,13 +17,9 @@ import { PasswordInput } from '@/components/features/auth/password-input';
 
 interface Invitation {
   id: string;
-  role: 'ADMIN' | 'DESIGNER';
+  /** Nombre del rol que da la invitación («Diseñador senior»). */
+  roleName: string | null;
 }
-
-const ROLE_LABELS: Record<string, string> = {
-  ADMIN: 'Administrador',
-  DESIGNER: 'Diseñador',
-};
 
 export default function InvitePage() {
   const params = useParams();
@@ -66,7 +62,7 @@ export default function InvitePage() {
         return;
       }
 
-      setInvitation({ id: row.id, role: row.role });
+      setInvitation({ id: row.id, roleName: row.role_name ?? null });
       setLoading(false);
     };
 
@@ -179,7 +175,7 @@ export default function InvitePage() {
       <AuthHeading title="Has sido invitado" subtitle="Crea tu cuenta en PHSPORT" />
       <div className="mb-8 -mt-4">
         <Badge variant="outline" className="text-sm">
-          Rol: {ROLE_LABELS[invitation?.role || 'DESIGNER']}
+          Rol: {invitation?.roleName ?? 'Miembro'}
         </Badge>
       </div>
 

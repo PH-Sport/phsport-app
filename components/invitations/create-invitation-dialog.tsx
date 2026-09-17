@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { logger } from '@/lib/utils/logger';
+import { useRoles } from '@/lib/hooks/use-roles';
 import {
   Dialog,
   DialogContent,
@@ -35,8 +36,17 @@ export function CreateInvitationDialog({
   onOpenChange,
   onCreated 
 }: CreateInvitationDialogProps) {
-  const [role, setRole] = useState<'ADMIN' | 'DESIGNER'>('DESIGNER');
+  const { roles } = useRoles();
+  const [roleId, setRoleId] = useState<string>('');
   const [creating, setCreating] = useState(false);
+
+  // Por defecto, «Diseñador» (el rol de quien entra a hacer diseños); si no
+  // existiera, el primero del catálogo.
+  useEffect(() => {
+    if (!roleId && roles.length) {
+      setRoleId(roles.find((r) => r.name === 'Diseñador')?.id ?? roles[0].id);
+    }
+  }, [roles, roleId]);
   const [createdToken, setCreatedToken] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
@@ -52,6 +62,10 @@ export function CreateInvitationDialog({
   };
 
   const handleCreate = async () => {
+    if (!roleId) {
+      toast.error('Elige un rol');
+      return;
+    }
     setCreating(true);
 
     try {
@@ -62,11 +76,14 @@ export function CreateInvitationDialog({
       const expiresAt = new Date();
       expiresAt.setHours(expiresAt.getHours() + 24);
 
+      // `role_id` es el rol de verdad; la columna antigua `role` se queda en su
+      // valor por defecto hasta que la migración 046 la retire. `created_by` lo
+      // pone la base.
       const { error } = await supabase
         .from('invitations')
         .insert({
           token,
-          role,
+          role_id: roleId,
           max_uses: 1,
           expires_at: expiresAt.toISOString(),
         });
@@ -116,7 +133,7 @@ export function CreateInvitationDialog({
     if (!open) {
       setCreatedToken(null);
       setCopied(false);
-      setRole('DESIGNER');
+      setRoleId('');
     }
     onOpenChange(open);
   };
@@ -166,13 +183,16 @@ export function CreateInvitationDialog({
           <div className="space-y-4 py-4">
             <div className="space-y-2">
               <Label>Rol</Label>
-              <Select value={role} onValueChange={(v) => setRole(v as typeof role)}>
+              <Select value={roleId} onValueChange={setRoleId}>
                 <SelectTrigger>
-                  <SelectValue />
+                  <SelectValue placeholder="Elige un rol" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="DESIGNER">Diseñador</SelectItem>
-                  <SelectItem value="ADMIN">Mánager</SelectItem>
+                  {roles.map((r) => (
+                    <SelectItem key={r.id} value={r.id}>
+                      {r.name}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>

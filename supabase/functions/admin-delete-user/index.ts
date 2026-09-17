@@ -4,9 +4,10 @@ import { createClient } from "jsr:@supabase/supabase-js@2";
 /**
  * admin-delete-user — elimina un miembro del equipo.
  *
- * Seguridad: solo un Mánager (profiles.role = 'ADMIN') puede invocarla; se
- * verifica con el JWT del llamante (no se confía en el cliente). El service-role
- * vive aquí, en Supabase, nunca en el runtime de Next.
+ * Seguridad: solo quien tiene el permiso `gestionar_roles` puede invocarla; se
+ * verifica con el JWT del llamante y preguntándole a la base (has_permission,
+ * la misma función que usan las políticas), no confiando en el cliente. El
+ * service-role vive aquí, en Supabase, nunca en el runtime de Next.
  *
  * "Mantén sus diseños": antes de borrar se reasigna designs.created_by (FK
  * RESTRICT) al Mánager que ejecuta la acción. Al eliminar la cuenta auth, la
@@ -51,13 +52,12 @@ Deno.serve(async (req) => {
     auth: { persistSession: false },
   });
 
-  const { data: callerProfile, error: profileError } = await admin
-    .from("profiles")
-    .select("role")
-    .eq("id", caller.id)
-    .single();
-  if (profileError) return json({ error: "Error al verificar permisos" }, 500);
-  if (callerProfile?.role !== "ADMIN") return json({ error: "Prohibido" }, 403);
+  const { data: allowed, error: permError } = await admin.rpc("has_permission", {
+    uid: caller.id,
+    perm: "gestionar_roles",
+  });
+  if (permError) return json({ error: "Error al verificar permisos" }, 500);
+  if (allowed !== true) return json({ error: "Prohibido" }, 403);
 
   let body: { userId?: string };
   try {
@@ -92,8 +92,16 @@ Deno.serve(async (req) => {
   }
 
   // Eliminar la cuenta auth → cascada borra el perfil; designer_id/reviewed_by → NULL.
+  // La guardia de la base aborta el borrado si es la última persona con
+  // gestionar_roles (la cascada llegaría a profile_roles): se explica, no se esconde.
   const { error: deleteError } = await admin.auth.admin.deleteUser(userId);
   if (deleteError) {
+    if (String(deleteError.message).includes("gestionar_roles")) {
+      return json(
+        { error: "Es la última persona que gestiona roles. Dale el permiso a otra antes de borrarla." },
+        409
+      );
+    }
     return json({ error: "No se pudo eliminar la cuenta" }, 500);
   }
 

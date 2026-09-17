@@ -10,10 +10,11 @@
 > jugador, ver sus carpetas, subir archivos, y desde la agencia moverlos,
 > entregarle material y borrarlo.
 >
-> **Escrito el 2026-09-17** en una sesión con Mario fuera y todo delegado salvo
-> producción. La migración de este plan (046) y la 045 **no se pudieron aplicar**
-> ese día: el modo automático de permisos bloquea el DDL. Quedan escritas y se
-> aplican con Mario delante (pendiente 11 del estado).
+> **Escrito y ejecutado el 2026-09-17** en una sesión con Mario fuera y todo
+> delegado salvo producción. La migración de este plan (046) y la 045 se
+> aplicaron esa misma tarde, en cuanto Mario dio permiso expreso (por la mañana
+> el modo automático de permisos las había bloqueado y no se rodeó). Lo que
+> queda es rodarlo desde el iPhone y pulir la fluidez: pendiente 12 del estado.
 
 ## Restricciones
 
@@ -193,9 +194,14 @@ verificarse: que `storage.remove()` ignore en silencio lo que la RLS no deja
 borrar (base del arreglo 4), el ajuste «Confirm email» del proyecto, y el
 comportamiento real en iOS.
 
-## Verificación que no se pudo hacer el 2026-09-17
+## Verificación
 
-Todo lo que necesita la base con la 046 aplicada: crear una ficha, mandar el
-enlace, darse de alta como jugador, subir y mover archivos. Lo automático
-(tipos, lint, tests, build) sí se hizo en cada fase. Al aplicar la 045 y la
-046, hacer el recorrido entero desde el iPhone y anotar aquí lo que falle.
+Hecha el 2026-09-17: lo automático (tipos, lint, 190 tests, build) en cada
+fase; la 046 en seco y luego aplicada; y sesiones simuladas contra la base ya
+migrada (Mario crea ficha y enlace, Loren las ve, una cuenta ajena no ve ni
+crea nada, el enlace se valida como anon con el nombre del jugador).
+
+**Sin hacer:** el recorrido con datos reales desde un navegador o el iPhone
+(crear ficha → enlace → alta con otro correo → subir → mover → borrar) y los
+retoques de fluidez que Mario vio. Es el pendiente 12 del estado; anotar aquí
+lo que falle.

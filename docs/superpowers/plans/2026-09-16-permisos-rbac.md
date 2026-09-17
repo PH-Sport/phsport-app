@@ -914,7 +914,7 @@ select count(*) from public.audit_log where entity = 'profile_roles' and action 
 ```
 Esperado: 8.
 
-- [ ] **Paso 5: comprobar que el código de hoy sigue vivo** (aplicada el 2026-09-16 como `roles_y_permisos`; pasos 1-4 verificados; este lo hace Mario)
+- [x] **Paso 5: comprobar que el código de hoy sigue vivo** (aplicada el 2026-09-16 como `roles_y_permisos`; pasos 1-4 verificados; este lo hace Mario)
 
 Abrir preview con la cuenta de Mario: `/inicio` carga, `/ajustes?tab=miembros` lista a los ocho, y el diálogo de invitación crea un enlace (no hace falta usarlo). Nada ha cambiado para el usuario; eso es lo esperado.
 
@@ -2016,9 +2016,9 @@ $function$;
 Run: `grep -rn "\.role\b\|'ADMIN'\|'DESIGNER'\|eq('role'" app lib components | grep -v "role: 'user'\|role: 'assistant'\|\.role === 'user'\|\.role === 'assistant'"`
 Esperado: vacío. Y las comprobaciones manuales de la fase 2 hechas y en verde.
 
-- [ ] **Paso 3: pedir el visto bueno a Mario y aplicar** (`apply_migration`, `name: "politicas_por_permiso"`). Decirle en el mismo mensaje lo único de producción que deja de funcionar hasta el merge: el botón «Cambiar rol» de Miembros (escribe `profiles.role`, que ya no es escribible desde el cliente) devolverá «Error interno del servidor». Todo lo demás de `main` sigue: se recorrió escritura a escritura contra los permisos nuevos.
+- [x] **Paso 3: pedir el visto bueno a Mario y aplicar** (`apply_migration`, `name: "politicas_por_permiso"`). Decirle en el mismo mensaje lo único de producción que deja de funcionar hasta el merge: el botón «Cambiar rol» de Miembros (escribe `profiles.role`, que ya no es escribible desde el cliente) devolverá «Error interno del servidor». Todo lo demás de `main` sigue: se recorrió escritura a escritura contra los permisos nuevos.
 
-- [ ] **Paso 4: verificar la RLS con sesiones simuladas**
+- [x] **Paso 4: verificar la RLS con sesiones simuladas**
 
 Postgres deja ejecutar una consulta «como si» fuera otro usuario dentro de una transacción que luego se deshace. Es la prueba real de las políticas, no una lectura del catálogo. Con `execute_sql`:
 
@@ -2110,7 +2110,7 @@ En «Trampas conocidas»: «**Producción y preview comparten base, y `main` va 
 
 En §4, tras «Coste, sin adornos»: «**Implementado el <fecha>** (migraciones 044 y 045; plan en `docs/superpowers/plans/2026-09-16-permisos-rbac.md`).» Y una nota nueva: «**Consecuencia de no tener escalafón:** quien puede invitar puede invitar a cualquier rol, y quien gestiona roles puede dar cualquier permiso. No hay "por encima de". Con ocho personas de confianza es lo correcto; si algún día hace falta, la regla sería "no puedes dar lo que no tienes" y cabe en una función.»
 
-- [ ] **Paso 4: punto de control**
+- [x] **Paso 4: punto de control**
 
 Releer los tres documentos buscando «pendiente» sobre algo ya hecho. `npm run lint` (por si el comentario de e2e).
 

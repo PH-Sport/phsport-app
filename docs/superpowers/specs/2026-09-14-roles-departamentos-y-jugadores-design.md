@@ -159,10 +159,9 @@ las nueve políticas que hoy miran el rol, y un selector en Ajustes → Miembros
 para elegir el rol de cada compañero. Es la tanda grande de esta fase, y el
 cimiento de agentes, scouts y jugadores a la vez.
 
-**Implementado el 2026-09-17** en código (migración 044 aplicada; 045 escrita,
-pendiente de aplicar; plan en
+**Implementado el 2026-09-17** (migraciones 044 y 045 aplicadas; plan en
 `docs/superpowers/plans/2026-09-16-permisos-rbac.md`; estado en el §3 de
-septiembre de `docs/estado-y-traspaso.md`). La 046, que borra lo antiguo,
+septiembre de `docs/estado-y-traspaso.md`). La 047, que borra lo antiguo,
 espera al merge a `main`.
 
 **Consecuencia de no tener escalafón:** quien puede invitar puede invitar a
@@ -290,8 +289,8 @@ como `JUGADOR` (§4) y sin roles.
 Confirmado por Mario el 2026-09-16 como punto de partida para los primeros
 chicos.
 
-**Implementado el 2026-09-17** (§5, §6 y §8 a la vez; migración 046, escrita y
-pendiente de aplicar; plan en
+**Implementado el 2026-09-17** (§5, §6 y §8 a la vez; migración 046, aplicada
+esa tarde; plan en
 `docs/superpowers/plans/2026-09-17-jugadores-carpetas-y-almacen.md`; estado en
 el §4 de septiembre de `docs/estado-y-traspaso.md`). Dos decisiones que el
 texto de arriba dejaba implícitas: las carpetas no tienen tabla (son una
@@ -338,10 +337,10 @@ miniatura. Los vídeos van con icono.
 
 ## Lo que hay que arreglar antes de dar de alta al primer futbolista
 
-> **Estado 2026-09-17:** las dos cosas de este apartado las resuelve la
+> **Estado 2026-09-17:** las dos cosas de este apartado las resolvió la
 > migración 045 (políticas por permiso y `handle_new_user` con el `search_path`
-> bien escrito). Está escrita y pendiente de aplicar: pendiente 11 de
-> `docs/estado-y-traspaso.md`. Lo de abajo es la foto de antes.
+> bien escrito), aplicada ese día y comprobada con sesiones simuladas (§3 de
+> septiembre de `docs/estado-y-traspaso.md`). Lo de abajo es la foto de antes.
 
 **Cualquier usuario autenticado puede borrar cualquier diseño.** Comprobado
 contra la base: la política de borrado de `designs` dice literalmente

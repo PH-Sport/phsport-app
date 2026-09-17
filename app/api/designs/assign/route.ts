@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { loadAccess } from '@/lib/api/access';
 import { logger } from '@/lib/utils/logger';
+import { assignableProfiles } from '@/lib/services/profiles/assignable';
 import {
   internalErrorResponse,
   unauthorizedResponse,
@@ -23,17 +25,9 @@ export async function POST(_request: Request) {
   const { data, error: userError } = await supabase.auth.getUser();
   if (userError || !data.user) return unauthorizedResponse();
 
-  const { data: profile, error: profileError } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', data.user.id)
-    .single();
-
-  if (profileError) {
-    logger.serverError('[API Assign] Role check error', { reqId, error: profileError });
-    return internalErrorResponse(profileError, 'role check', reqId);
-  }
-  if (profile?.role !== 'ADMIN') return forbiddenResponse();
+  // Reparte cualquiera del departamento creativo: no hay jerarquía dentro (spec §3).
+  const access = await loadAccess(supabase, data.user.id);
+  if (!access.inDepartment('creativo')) return forbiddenResponse();
 
   // 1. Diseños sin asignar.
   const { data: unassigned, error: unassignedError } = await supabase
@@ -47,11 +41,8 @@ export async function POST(_request: Request) {
     return NextResponse.json({ message: 'No hay diseños sin asignar', assigned: 0 });
   }
 
-  // 2. Diseñadores activos.
-  const { data: designers, error: designersError } = await supabase
-    .from('profiles')
-    .select('id')
-    .eq('role', 'DESIGNER');
+  // 2. Quien recibe diseños en el reparto.
+  const { data: designers, error: designersError } = await assignableProfiles(supabase);
 
   if (designersError) return internalErrorResponse(designersError, 'fetch designers', reqId);
   const designerIds = (designers ?? []).map((d) => d.id);

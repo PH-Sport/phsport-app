@@ -1,6 +1,7 @@
 import useSWR from 'swr';
 import { format } from 'date-fns';
 import { createClient } from '@/lib/supabase/client';
+import { assignableProfiles } from '@/lib/services/profiles/assignable';
 import { useAuth } from '@/lib/auth/auth-context';
 import { viewModeFor } from '@/lib/utils/access';
 import type { Design } from '@/lib/types/design';
@@ -24,11 +25,14 @@ interface UseTeamDataReturn {
 const fetchTeamData = async ([, weekStart, weekEnd]: [string, Date, Date]): Promise<DesignerWithDesigns[]> => {
   const supabase = createClient();
 
-  // 1. Get all designers
-  const { data: designersData, error: designersError } = await supabase
-    .from('profiles')
-    .select('id, full_name, display_name, avatar_url, weekly_capacity')
-    .eq('role', 'DESIGNER');
+  // 1. Quien recibe diseños en el reparto
+  const { data: designersData, error: designersError } = await assignableProfiles<{
+    id: string;
+    full_name: string | null;
+    display_name: string | null;
+    avatar_url: string | null;
+    weekly_capacity: number | null;
+  }>(supabase, 'id, full_name, display_name, avatar_url, weekly_capacity');
 
   if (designersError) throw designersError;
 

@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server';
+import { assignableProfiles } from '@/lib/services/profiles/assignable';
 import { logger } from '@/lib/utils/logger';
 import { selectDesignerByLoad } from './select-designer';
 import { buildWeeklyWeightMaps, loadMapForWeek, weekKeyFor } from './weekly-load';
@@ -20,10 +21,7 @@ export async function assignDesignerAutomatically(
   try {
     const supabase = await createClient();
 
-    const { data: designers, error: designersError } = await supabase
-      .from('profiles')
-      .select('id')
-      .eq('role', 'DESIGNER');
+    const { data: designers, error: designersError } = await assignableProfiles(supabase);
 
     if (designersError) {
       logger.error('Error fetching designers for assignment:', designersError);

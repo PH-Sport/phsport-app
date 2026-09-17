@@ -31,15 +31,15 @@ export async function PATCH(
     const { assignDesignerAutomatically } = await import('@/lib/services/designs/assignment');
     resolvedDesignerId = await assignDesignerAutomatically(id);
   } else if (designer_id) {
-    // Verificar que el destino sea un usuario con rol DESIGNER.
-    const { data: target, error: targetError } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', designer_id)
-      .single();
-    if (targetError || !target || target.role !== 'DESIGNER') {
+    // El destino tiene que recibir asignaciones: se lo preguntamos a la base,
+    // que es quien tiene la respuesta (misma función que usan las políticas).
+    const { data: allowed, error: targetError } = await supabase.rpc('has_permission', {
+      uid: designer_id,
+      perm: 'recibir_asignaciones',
+    });
+    if (targetError || allowed !== true) {
       return NextResponse.json(
-        { error: 'designer_id debe corresponder a un usuario con rol DESIGNER' },
+        { error: 'designer_id debe corresponder a alguien que reciba asignaciones' },
         { status: 400 }
       );
     }

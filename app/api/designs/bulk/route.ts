@@ -7,6 +7,7 @@ import {
   internalErrorResponse,
   unauthorizedResponse,
 } from '@/lib/api/errors';
+import { assignableProfiles } from '@/lib/services/profiles/assignable';
 import { selectDesignerByLoad } from '@/lib/services/designs/select-designer';
 import { buildWeeklyWeightMaps, loadMapForWeek, weekKeyFor } from '@/lib/services/designs/weekly-load';
 import { getDesignWeightValue } from '@/lib/types/design';
@@ -45,10 +46,7 @@ export async function POST(request: Request) {
     });
 
     // Obtener diseñadores y carga actual para asignación equitativa en lote.
-    const { data: designers, error: designersError } = await supabase
-      .from('profiles')
-      .select('id')
-      .eq('role', 'DESIGNER');
+    const { data: designers, error: designersError } = await assignableProfiles(supabase);
 
     if (designersError) {
       logger.serverError('[API Bulk] Error fetching designers', { reqId, error: designersError });

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { assignableProfiles } from '@/lib/services/profiles/assignable';
 import { logger } from '@/lib/utils/logger';
 import { designChatSchema } from '@/lib/api/schemas';
 import { validationErrorResponse, unauthorizedResponse } from '@/lib/api/errors';
@@ -91,10 +92,11 @@ export async function POST(request: Request) {
   }
 
   try {
-    const { data: designers, error: designersError } = await supabase
-      .from('profiles')
-      .select('id, display_name, full_name')
-      .eq('role', 'DESIGNER');
+    const { data: designers, error: designersError } = await assignableProfiles<{
+      id: string;
+      display_name: string | null;
+      full_name: string | null;
+    }>(supabase, 'id, display_name, full_name');
 
     if (designersError) throw designersError;
 

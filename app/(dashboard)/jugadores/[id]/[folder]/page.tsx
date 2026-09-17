@@ -7,6 +7,7 @@ import { useSWRConfig } from 'swr';
 import { ArrowLeft, FolderOpen, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { DashboardPage } from '@/components/ui/dashboard-page';
+import { HelpHint } from '@/components/ui/help-hint';
 import { PlayerDetailSkeleton } from '@/components/skeletons/player-detail-skeleton';
 import { FileGrid } from '@/components/features/players/file-grid';
 import { FileList } from '@/components/features/players/file-list';
@@ -74,6 +75,9 @@ export default function PlayerFolderPage() {
             </Link>
           </Button>
         )}
+        {/* El «?» solo en Enviados: es donde mover algo cambia quién puede
+            quitarlo, y eso la pantalla no lo dice sola. */}
+        {view === SENT && <HelpHint tipId="enviados-son-de-la-agencia" align="end" />}
       </div>
 
       {!view ? (

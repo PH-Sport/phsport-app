@@ -10,7 +10,7 @@
  */
 
 /** Agrupación temática. El orden de este objeto es el orden en /ayuda. */
-export type HelpSection = 'buscar' | 'reparto' | 'entregas' | 'taller' | 'cuenta';
+export type HelpSection = 'buscar' | 'reparto' | 'entregas' | 'taller' | 'jugadores' | 'cuenta';
 
 /** A quién le sirve el consejo: a todos, a la cara de gestión o a la de diseñador. */
 export type HelpAudience = 'todos' | 'manager' | 'designer';
@@ -47,6 +47,11 @@ export const HELP_SECTIONS: readonly HelpSectionMeta[] = [
     id: 'taller',
     label: 'Crear diseños',
     hint: 'El taller de tarjetas y el asistente',
+  },
+  {
+    id: 'jugadores',
+    label: 'Jugadores y sus carpetas',
+    hint: 'Qué puede hacer él con lo que manda y qué hacéis vosotros',
   },
   {
     id: 'cuenta',
@@ -206,6 +211,24 @@ export const HELP_TIPS: readonly HelpTip[] = [
     section: 'taller',
     audience: 'todos',
     keywords: ['crear', 'nuevo', 'botón', 'móvil'],
+  },
+
+  // ─── Jugadores y sus carpetas ───────────────────────────────
+  {
+    id: 'enviados-son-de-la-agencia',
+    title: 'Lo que él manda es vuestro desde que llega',
+    body: 'Un archivo en «Enviados por él» lo puede quitar el jugador mientras siga ahí. En cuanto lo movéis a una carpeta, ya no.',
+    section: 'jugadores',
+    audience: 'todos',
+    keywords: ['enviados', 'mover', 'carpeta', 'borrar', 'quitar', 'jugador', 'futbolista'],
+  },
+  {
+    id: 'enlace-jugador-caduca',
+    title: 'El enlace del jugador caduca a las 24 horas y sirve una vez',
+    body: 'Si no entra a tiempo, se crea otro desde su ficha; los anteriores dejan de valer solos.',
+    section: 'jugadores',
+    audience: 'todos',
+    keywords: ['invitación', 'enlace', 'alta', 'ficha', 'caducado', 'expirado'],
   },
 
   // ─── Tu cuenta y este dispositivo ───────────────────────────

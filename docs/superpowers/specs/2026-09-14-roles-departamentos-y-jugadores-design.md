@@ -290,6 +290,47 @@ como `JUGADOR` (§4) y sin roles.
 Confirmado por Mario el 2026-09-16 como punto de partida para los primeros
 chicos.
 
+**Implementado el 2026-09-17** (§5, §6 y §8 a la vez; migración 046, escrita y
+pendiente de aplicar; plan en
+`docs/superpowers/plans/2026-09-17-jugadores-carpetas-y-almacen.md`; estado en
+el §4 de septiembre de `docs/estado-y-traspaso.md`). Dos decisiones que el
+texto de arriba dejaba implícitas: las carpetas no tienen tabla (son una
+constante del código, como los tipos de diseño) y la entrega es un rótulo por
+archivo, no una entidad.
+
+### 9. El almacén: un cubo privado, una carpeta por jugador
+
+Diseñado el 2026-09-17, en la misma tanda que lo implementó; cierra el punto
+que el orden de trabajo dejaba abierto.
+
+**Un solo cubo, `jugadores`, privado.** Nada se sirve por URL pública: ver o
+descargar pasa siempre por una URL firmada de un minuto, que solo se puede
+pedir si la regla del cubo deja leer ese objeto. Límite de 50 MB por archivo
+(el techo del plan gratuito) e imágenes y vídeos solamente, HEIC incluido
+porque es lo que hace el iPhone.
+
+**La ruta dice de quién es.** Cada archivo vive en `{player_id}/{file_id}.{ext}`
+y su miniatura en `{player_id}/{file_id}.thumb.jpg`. Las reglas de
+`storage.objects` leen el jugador del primer tramo de la ruta: la agencia
+(departamento creativo) puede todo en el cubo; el jugador lee y sube solo bajo
+su propio tramo, y borra solo lo que subió él y siga sin colocar. Esa última
+regla mira la fila de `player_files`, así que **se borra el objeto antes que
+la fila**, nunca al revés.
+
+**La fila es la verdad; el objeto, el contenido.** `player_files` guarda
+carpeta, rótulo de entrega, nombre original, ruta, miniatura, tipo, tamaño y
+quién lo subió. Mover un archivo cambia la carpeta en la fila; el objeto no se
+toca. Borrar una ficha borra sus filas en cascada, pero el cubo no sabe de
+cascadas: la app vacía la carpeta del jugador antes de borrar la ficha.
+
+**Miniaturas en el navegador.** El plan gratuito no transforma imágenes en el
+servidor, y una rejilla de veinte originales de 6 MB no cabe en un móvil. Al
+subir una imagen se hace una miniatura JPEG de 480 px en el propio navegador y
+se sube al lado; si el navegador no sabe decodificar el archivo, va sin
+miniatura. Los vídeos van con icono.
+
+**Cuánto ocupa:** lo del §7. Con Pro no cambia nada de esto, solo el techo.
+
 ---
 
 ## Lo que hay que arreglar antes de dar de alta al primer futbolista
@@ -348,19 +389,18 @@ Medido, no estimado:
    diseño.
 4. **El almacenamiento (§7).** Un cubo privado en Supabase Storage, con prefijo
    por jugador y reglas en `storage.objects` que solo dejen alcanzar lo propio;
-   subida directa desde el móvil y descarga del original sin recomprimir. **La
-   estructura concreta del cubo está pendiente de diseñar** — ver «Abierto».
-   Se prueba en el plan gratuito.
+   subida directa desde el móvil y descarga del original sin recomprimir. La
+   estructura concreta del cubo está en el §9. Se prueba en el plan gratuito.
 
 ---
 
 ## Abierto
 
-- **La arquitectura del almacenamiento (punto 4).** Pendiente de diseñar; lo
-  hace Mario en una sesión aparte. Lo que tiene que garantizar está en el orden
-  de trabajo; lo que decide esa sesión es la estructura de rutas dentro del
-  cubo, cómo se nombran los objetos y cómo se cruzan con la tabla `archivos`
-  del §5. Cuando esté, va aquí como §9 y se quita de esta lista.
+- **«Descargar las N» de una carpeta.** La maqueta lo tenía; la primera
+  versión no: en iOS Safari varias descargas seguidas se bloquean, y un zip
+  hecho en el navegador no cabía en la tanda. Hoy se descarga archivo a
+  archivo desde su hoja. Si hace falta, la vía es una función en el servidor
+  que empaquete y devuelva un solo enlace.
 - **El salto a Pro.** Mario lo va a intentar cuanto antes, por espacio y por
   tener entorno de pruebas (ramas de base de datos). Hasta entonces, plan
   gratuito (§7). **Antes de estrenar las ramas hace falta una línea base de

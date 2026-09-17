@@ -1,8 +1,10 @@
 # Estado del proyecto y traspaso
 
-> **Actualizado:** 2026-09-17, al cerrar el código de los permisos por roles
-> (§3 de septiembre): la migración 044 está aplicada, la 045 escrita y sin
-> aplicar (pendiente 11), y toda la app decide ya por permiso. `preview` va por
+> **Actualizado:** 2026-09-17, al cerrar en código los cuatro puntos del salto
+> a «app de la agencia» (§3 y §4 de septiembre): permisos por roles, fichas de
+> jugadores con alta por enlace, carpetas y archivos, y el almacén. La 044 está
+> aplicada; la 045 y la 046 están escritas y **sin aplicar** (pendiente 11), así
+> que nada de jugadores se ha probado todavía contra la base. `preview` va por
 > delante de `main` y no se sube hasta que Mario lo pruebe en staging.
 > Antes, el 2026-09-14, al arrancar el salto de «panel del equipo de
 > diseño» a «app de la agencia» — ver el §2 de septiembre y el pendiente 8, que
@@ -372,16 +374,13 @@ perfiles creativos— y se añaden departamentos: agentes y scouts por un lado,
 futbolistas representados por otro. Lo de fondo es que **entra gente de fuera**,
 y eso rompe supuestos que llevan aquí desde el principio.
 
-**Lo único implementado a día de hoy** es una vista previa del área personal del
-futbolista, sin funcionalidad y con datos inventados en
-`lib/jugador/datos-de-muestra.ts`. Estrena el grupo de rutas `app/(jugador)/`,
-que es el marco sin panel acordado. Se llega desde el final de Ajustes y **solo
-se dibuja para cuentas de desarrollador**.
-
 **Los cuatro puntos del orden de trabajo están confirmados por Mario**
 (2026-09-16): permisos, ficha y alta, carpetas y archivos, almacenamiento. El
-spec es la guía para completarlos. **El primero, permisos, está hecho en código:
-§3.**
+spec es la guía para completarlos. **Los cuatro están hechos en código** (el
+2026-09-17; permisos en el §3, el resto en el §4) **y sin probar contra la
+base**, porque sus dos migraciones no se pudieron aplicar ese día (pendiente
+11). El área personal del futbolista, que empezó como maqueta con datos
+inventados en el grupo de rutas `app/(jugador)/`, es ya la de verdad.
 
 **El hallazgo que cambia prioridades está en el pendiente 8.**
 
@@ -471,6 +470,72 @@ con rol.
 **Lo que no se ha comprobado todavía:** la app en staging con ojos —crear una
 invitación y ver el rol, cambiar un rol desde Miembros, repartir—. Lo automático
 sí: tipos, lint, 178 tests y build en verde el 2026-09-17.
+
+### 4. Jugadores, carpetas y almacén: los puntos 2, 3 y 4, en código
+
+**El plan está en
+`docs/superpowers/plans/2026-09-17-jugadores-carpetas-y-almacen.md`**, con las
+decisiones que el spec dejaba abiertas (tablas, almacén, descarga, numeración).
+Se hizo el 2026-09-17 con Mario fuera y todo delegado salvo producción. Aquí,
+lo que cambia el estado.
+
+**Qué hay ahora (commits `7d5941e` → `79bed90`):**
+
+- **Sección «Jugadores»** para todo el departamento creativo (cuarta entrada de
+  navegación): lista de fichas con cuenta y conteos, o con el enlace que
+  caduca; ficha con cuenta, carpetas, «Nueva entrega» y zona avanzada
+  (renombrar, activo, borrar); entrega con carpeta, rótulo y archivos tal cual;
+  cada carpeta por lotes, y «Enviados por él» en lista; una hoja por archivo
+  para ver, descargar el original, mover o eliminar.
+- **El alta del jugador** reutiliza `/invite/[token]`: la invitación lleva
+  ficha en vez de rol, la pantalla pone el nombre y pide un solo campo de
+  apellidos y la contraseña dos veces, y la cuenta nace `JUGADOR` enganchada a
+  esa ficha, sin roles.
+- **El área personal de verdad** (`/area-personal`): portadas y conteos, subir
+  desde el móvil (cae en «Enviados», y de ahí lo quita él mientras nadie lo
+  coloque), cada carpeta por lotes con vista previa y descarga, y salir de
+  sesión desde el avatar. Los datos inventados de la maqueta se borraron.
+- **Cada clase de cuenta en su marco:** el middleware manda al futbolista a
+  `/area-personal` y a la agencia fuera de ahí, con una consulta de perfil por
+  navegación; los dos marcos lo repiten en cliente.
+- **Migración 046** (`046_jugadores_y_archivos.sql`): `players`, `player_files`,
+  `invitations.player_id`, `get_invitation_by_token` y `use_invitation` v3, el
+  cubo `jugadores` con sus cuatro reglas. Comprobada en seco contra la base
+  (dentro de una transacción deshecha: todo pasa) y **sin aplicar**: pendiente
+  11. Va después de la 045. **La que borra lo antiguo del rol pasa a ser la
+  047.**
+
+**El almacén (spec §9):** un cubo privado `jugadores`, 50 MB por archivo (el
+techo del plan gratuito), imágenes y vídeos. Ruta `{player_id}/{file_id}.{ext}`
+y miniatura `{player_id}/{file_id}.thumb.jpg`, hecha en el navegador al subir
+(el plan gratuito no transforma imágenes; los vídeos van con icono). Las reglas
+del cubo leen el jugador del primer tramo de la ruta. Descarga con URL firmada
+de un minuto, en pestaña nueva (en iOS es lo que deja guardar en Fotos).
+
+**Lo que hay que saber para no tropezar:**
+
+- Todo el circuito —subir, mover, borrar— va del navegador a Supabase con la
+  sesión de quien lo hace; la RLS del cubo y de `player_files` es la
+  protección. **Borrar es objetos primero, fila después:** la regla del cubo
+  comprueba que la fila siga sin colocar, así que al revés falla para el
+  jugador.
+- **Con sesión abierta, `/invite/…` redirige a casa.** Para probar el alta de
+  jugador desde el mismo móvil hay que cerrar sesión o abrir el enlace en una
+  pestaña privada, con otro correo.
+- **Hasta que se aplique la 045, un jugador con sesión puede leer perfiles y
+  diseños** llamando a la API de Supabase directamente: las políticas antiguas
+  solo piden sesión. La app no se lo enseña, pero esconder no es proteger. Con
+  la 045 se cierra.
+- «Descargar las N» de la maqueta se quedó fuera (varias descargas seguidas se
+  bloquean en iOS Safari; un zip en el navegador no cabía). Está en Abierto.
+- Los lotes son un rótulo por archivo (`player_files.batch`), no una entidad:
+  se agrupa por él y, sin él, por día.
+
+**Lo que no se ha comprobado:** nada contra la base, porque las tablas no
+existen hasta aplicar la 046. Lo automático sí, en cada fase: tipos, lint, 190
+tests, build. **Al aplicar la 045 y la 046, el recorrido entero desde el iPhone**
+(crear ficha → enlace → alta con otro correo → subir → mover → borrar) es lo
+primero que hay que hacer, y anotar aquí lo que falle.
 
 ---
 
@@ -676,25 +741,35 @@ una por MCP con el nombre sin prefijo, que es como están las últimas.
 - **Instalar Xcode** para probar iOS real (18 y 26) sin depender del móvil de
   Mario. No está instalado; se maneja con `xcrun simctl`, no con Playwright.
 
-### 11. Aplicar la 045 y, tras el merge a `main`, la 046
+### 11. Aplicar la 045 y la 046; y, tras el merge a `main`, la 047
 
-**La 045 está escrita** (`supabase/migrations/045_politicas_por_permiso.sql`) y
-comprobada contra la base viva el 2026-09-17: las nueve políticas que sustituye
-existen con esos nombres, no queda ninguna otra que mire el rol antiguo, y el
-código de `preview` ya no lo lee. **No se pudo aplicar** ese día: el modo
-automático de permisos de Claude Code bloquea los cambios de estructura sobre la
-base, y no se rodeó a propósito (aplicarla por otra vía la dejaría sin registrar
-en Supabase, que es justo lo que el pendiente 9 quiere evitar).
+**Las dos están escritas y sin aplicar.** La 045
+(`045_politicas_por_permiso.sql`) se comprobó contra la base viva el 2026-09-17:
+las nueve políticas que sustituye existen con esos nombres, no queda ninguna
+otra que mire el rol antiguo, y el código de `preview` ya no lo lee. La 046
+(`046_jugadores_y_archivos.sql`) se ejecutó entera dentro de una transacción
+deshecha: pasa. **No se pudieron aplicar** ese día: el modo automático de
+permisos de Claude Code bloquea los cambios de estructura sobre la base, y no se
+rodeó a propósito (aplicarlas por otra vía las dejaría sin registrar en Supabase,
+que es justo lo que el pendiente 9 quiere evitar). Hasta que estén, **nada de
+jugadores funciona** (no existen las tablas) y los dos agujeros del §3 siguen
+abiertos.
 
-**Cómo se aplica, con Mario delante:** por MCP, `apply_migration` con el nombre
-`politicas_por_permiso` y el contenido del archivo tal cual. Antes, comprobar
-que ningún perfil está sin rol. Después, las cuatro consultas de sesiones
-simuladas del plan (tarea 9, paso 4) y avisar de que «Cambiar rol» de la versión
-antigua da error hasta el merge.
+**Cómo se aplican, con Mario delante y en este orden:**
 
-**La 046 va después del merge**, cuando Vercel tenga desplegado en producción el
+1. Comprobar que ningún perfil está sin rol (`profiles` sin fila en
+   `profile_roles`): el 2026-09-17 eran 8 de 8.
+2. `apply_migration` con nombre `politicas_por_permiso` y el contenido de la 045
+   tal cual. Después, las cuatro consultas de sesiones simuladas del plan de
+   permisos (tarea 9, paso 4). Avisar de que «Cambiar rol» de la versión antigua
+   da error hasta el merge.
+3. `apply_migration` con nombre `jugadores_y_archivos` y el contenido de la 046.
+   Después, el recorrido entero desde el iPhone (§4 de septiembre).
+
+**La 047 va después del merge**, cuando Vercel tenga desplegado en producción el
 código de `preview`: borra `profiles.role`, `invitations.role`, `is_admin` y
-`role_enum`. Está descrita en el plan, tarea 11, con el relleno previo de
+`role_enum`. Está descrita en el plan de permisos, tarea 11 (allí se llamaba
+046; el número lo ocupó la de jugadores), con el relleno previo de
 `invitations.role_id` para las invitaciones antiguas. Aplicarla antes tumba
 producción.
 

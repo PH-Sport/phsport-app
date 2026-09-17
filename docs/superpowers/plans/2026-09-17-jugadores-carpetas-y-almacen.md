@@ -54,8 +54,9 @@
    nombre del jugador para que la pantalla de alta lo enseñe y rellene.
 7. **Quién entra dónde:** el marco `(dashboard)` echa a un `JUGADOR` a
    `/area-personal`; el marco `(jugador)` echa a quien no lo sea a su casa. Y el
-   middleware hace lo mismo en servidor con una consulta de una columna
-   (`kind`), para que no dependa del cliente.
+   middleware hace lo mismo en servidor, leyendo el perfil con sus roles una vez
+   por navegación (la misma consulta que ya hacía para `/login`), para que no
+   dependa del cliente.
 8. **Lo que él sube:** cliente directo a Storage con supabase-js (sin pasar por
    una ruta de API): la RLS del cubo y de `player_files` son la protección.
    Límite de 50 MB por archivo (el del plan gratuito) comprobado antes de subir.
@@ -65,7 +66,7 @@
 | Fase | Archivos |
 |---|---|
 | A | `supabase/migrations/046_jugadores_y_archivos.sql` · `lib/utils/players.ts` (+ test) · spec §9 |
-| B | `lib/hooks/use-players.ts` · `lib/hooks/use-player.ts` · `lib/hooks/use-player-files.ts` · `lib/services/players/files.ts` · `app/(dashboard)/jugadores/page.tsx` · `components/features/players/*` · `components/skeletons/players-skeleton.tsx` · `components/layout/app-sidebar.tsx` (nav) · `lib/supabase/middleware.ts` · `components/layout/app-layout.tsx` · `app/(jugador)/layout.tsx` · `middleware.ts` |
+| B | `lib/hooks/use-players.ts` · `lib/hooks/use-player.ts` (ficha y archivos) · `lib/hooks/use-own-player.ts` · `lib/services/players/files.ts` · `lib/services/invitations/token.ts` · `app/(dashboard)/jugadores/page.tsx` · `components/features/players/*` · `components/skeletons/players-skeleton.tsx` · `components/layout/app-sidebar.tsx` (nav) · `lib/supabase/middleware.ts` · `components/layout/app-layout.tsx` · `app/(jugador)/layout.tsx` · `middleware.ts` |
 | C | `app/(dashboard)/jugadores/[id]/page.tsx` · `app/(auth)/invite/[token]/page.tsx` |
 | D | `app/(dashboard)/jugadores/[id]/entrega/page.tsx` · `app/(dashboard)/jugadores/[id]/[folder]/page.tsx` |
 | E | `components/features/jugador/area-personal.tsx` (real) · borrar `lib/jugador/datos-de-muestra.ts` · `app/(dashboard)/ajustes/page.tsx` (quitar la vista previa) |
@@ -77,7 +78,7 @@
 
 ### Tarea 1: migración 046
 
-- [ ] **Paso 1: escribir `supabase/migrations/046_jugadores_y_archivos.sql`**
+- [x] **Paso 1: escribir `supabase/migrations/046_jugadores_y_archivos.sql`**
 
 Contenido completo en el archivo. Resumen de lo que hace:
 
@@ -100,7 +101,7 @@ Contenido completo en el archivo. Resumen de lo que hace:
   políticas en `storage.objects` (creativo todo; jugador lee y sube lo suyo y
   borra lo suyo sin colocar).
 
-- [ ] **Paso 2: comprobar la sintaxis sin tocar nada**: `begin; … rollback;`
+- [x] **Paso 2: comprobar la sintaxis sin tocar nada**: `begin; … rollback;`
   por MCP. Si el modo de permisos lo bloquea, se deja para cuando Mario
   apruebe la aplicación de verdad.
 
@@ -116,24 +117,24 @@ Commit: `feat(jugadores): nace la ficha, los archivos y el cubo (migración 046,
 
 ## Fase B — Lista de jugadores y quién entra dónde
 
-- [ ] Hooks SWR sobre supabase-js (patrón de `use-roles.ts`): lista de fichas
+- [x] Hooks SWR sobre supabase-js (patrón de `use-roles.ts`): lista de fichas
   con conteos por carpeta y la invitación viva de cada una; una ficha; los
   archivos de una ficha.
-- [ ] `/jugadores`: lista + «Nuevo jugador» (diálogo con nombre y apellidos).
+- [x] `/jugadores`: lista + «Nuevo jugador» (diálogo con nombre y apellidos).
   Cuarta entrada de navegación «Jugadores» para todo creativo (la tab bar ya se
   adapta al número de secciones).
-- [ ] Redirecciones por clase de cuenta (decisión 7). Quitar de Ajustes la
+- [x] Redirecciones por clase de cuenta (decisión 7). Quitar de Ajustes la
   «vista previa».
 
 Commit: `feat(jugadores): la agencia tiene una lista de fichas y sabe quién tiene cuenta`
 
 ## Fase C — La ficha y el alta por enlace
 
-- [ ] `/jugadores/[id]`: Cuenta (sin cuenta → crear/copiar enlace, caducidad;
+- [x] `/jugadores/[id]`: Cuenta (sin cuenta → crear/copiar enlace, caducidad;
   con cuenta → correo y desde cuándo), Carpetas (Fotos, Matchdays, Enviados
   por él, con conteos), «Nueva entrega», zona avanzada (renombrar, activo,
   eliminar ficha con confirmación).
-- [ ] `/invite/[token]`: si la invitación es de jugador, cabecera «Área
+- [x] `/invite/[token]`: si la invitación es de jugador, cabecera «Área
   personal · Nombre», campos Nombre, Apellidos (uno solo), Correo, Contraseña,
   Confirmar contraseña. La de personal sigue como está.
 
@@ -141,30 +142,30 @@ Commit: `feat(jugadores): la ficha manda el enlace y la cuenta nace enganchada a
 
 ## Fase D — Entregas y carpetas desde la agencia
 
-- [ ] `/jugadores/[id]/entrega`: carpeta, nombre del lote, archivos (con
+- [x] `/jugadores/[id]/entrega`: carpeta, nombre del lote, archivos (con
   miniatura al vuelo), «Entregar a Nombre». Subida secuencial con progreso.
-- [ ] `/jugadores/[id]/[folder]` (`fotos`, `matchdays`, `enviados`): rejilla
+- [x] `/jugadores/[id]/[folder]` (`fotos`, `matchdays`, `enviados`): rejilla
   por lote; por archivo: ver/descargar, mover a otra carpeta, eliminar.
 
 Commit: `feat(jugadores): la agencia entrega, mueve y borra archivos`
 
 ## Fase E — El área personal de verdad
 
-- [ ] `area-personal.tsx` con datos reales: portadas y conteos, subir
+- [x] `area-personal.tsx` con datos reales: portadas y conteos, subir
   archivos (imagen/vídeo, hasta 50 MB), «N enviados» con quitar, carpeta por
   lote con vista previa y descarga.
-- [ ] Borrar `lib/jugador/datos-de-muestra.ts`.
+- [x] Borrar `lib/jugador/datos-de-muestra.ts`.
 
 Commit: `feat(jugador): el área personal deja de ser una maqueta`
 
 ## Fase F — Documentación y remates
 
-- [ ] Spec: §9 almacén; Abierto actualizado; §5/§8 «implementado».
-- [ ] Estado: §4 de septiembre; pendiente 11 incluye la 046; 047 en vez de 046
+- [x] Spec: §9 almacén; Abierto actualizado; §5/§8 «implementado».
+- [x] Estado: §4 de septiembre; pendiente 11 incluye la 046; 047 en vez de 046
   para lo antiguo del rol.
-- [ ] Plan de permisos: tarea 11 → 047.
-- [ ] Un consejo en `lib/help/tips.ts` para «Enviados por él».
-- [ ] README: una línea sobre jugadores.
+- [x] Plan de permisos: tarea 11 → 047.
+- [x] Un consejo en `lib/help/tips.ts` para «Enviados por él».
+- [x] README: una línea sobre jugadores.
 
 Commit: `docs(jugadores): queda escrito cómo se guardan los archivos y qué falta`
 

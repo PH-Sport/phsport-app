@@ -25,6 +25,11 @@ trabajo o se acerca una entrega.
 **Equipo y ajustes.** Alta por invitación, roles, perfil, preferencias de aviso y
 tema claro/oscuro que sigue al dispositivo.
 
+**Jugadores.** Una ficha por futbolista representado, con su alta por enlace y un
+área personal propia: la agencia le entrega fotos y matchdays en carpetas, él
+descarga los originales y manda lo que quiera, y la agencia lo coloca o lo
+descarta. Los archivos viven en la propia app, en el almacén de Supabase.
+
 **Ayuda.** Consejos sobre lo que la app hace por debajo y la pantalla no puede
 decir sola —el alcance de cada vista, cómo pondera el reparto, qué se guarda por
 dispositivo—. Salen donde surge la duda, con un «?» o un aviso descartable, y se

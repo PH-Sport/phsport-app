@@ -2120,12 +2120,16 @@ Commit propuesto: `docs(permisos): queda escrito cómo funcionan los roles y qu�
 
 ## Después del merge a `main`
 
-### Tarea 11: migración 046 — borrar lo antiguo
+### Tarea 11: migración 047 — borrar lo antiguo
+
+> **Renumerada el 2026-09-17:** el 046 lo ocupó la migración de jugadores y
+> archivos (plan `2026-09-17-jugadores-carpetas-y-almacen.md`). Donde el SQL
+> de abajo diga «046», léase 047; el nombre por MCP sigue siendo `adios_role_enum`.
 
 **Solo cuando `main` lleve el código de este plan desplegado.** Comprobar con `git log --oneline main..preview` (vacío para lo de aquí) y con el panel de Vercel que producción está en ese commit.
 
 **Archivos:**
-- Crear: `supabase/migrations/046_adios_role_enum.sql`
+- Crear: `supabase/migrations/047_adios_role_enum.sql`
 
 - [ ] **Paso 1: escribir el archivo**
 

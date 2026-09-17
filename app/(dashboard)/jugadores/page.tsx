@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { ChevronRight, Plus, Users } from 'lucide-react';
+import { ChevronRight, Plus } from 'lucide-react';
 import { DashboardPage } from '@/components/ui/dashboard-page';
 import { Surface } from '@/components/ui/surface';
 import { RowSeparator } from '@/components/ui/row';
@@ -46,7 +46,12 @@ export default function PlayersPage() {
   const showSkeleton = authLoading || (isLoading && players.length === 0);
 
   return (
-    <DashboardPage title="Jugadores" icon={Users} skeleton={<PlayersSkeleton />} loading={showSkeleton} maxWidth="2xl">
+    <DashboardPage
+      title="Jugadores"
+      skeleton={<PlayersSkeleton />}
+      loading={showSkeleton}
+      maxWidth="2xl"
+    >
       <motion.div
         variants={{ show: { transition: { staggerChildren: STAGGER } } }}
         initial="hidden"
@@ -55,7 +60,8 @@ export default function PlayersPage() {
       >
         {players.length === 0 ? (
           <motion.p variants={rise} className="px-2 py-6 text-center text-sm text-muted-foreground">
-            Todavía no hay ninguna ficha. Crea la primera y, cuando toque, mándale el enlace desde ella.
+            Todavía no hay ninguna ficha. Crea la primera y, cuando toque, mándale el enlace desde
+            ella.
           </motion.p>
         ) : (
           <motion.div variants={rise}>
@@ -101,7 +107,11 @@ export default function PlayersPage() {
 
 function PlayerRow({ player, now }: { player: PlayerSummary; now: Date }) {
   const subtitle = playerSubtitle(
-    { hasAccount: player.profile_id !== null, counts: player.counts, inviteExpiresAt: player.invite?.expires_at ?? null },
+    {
+      hasAccount: player.profile_id !== null,
+      counts: player.counts,
+      inviteExpiresAt: player.invite?.expires_at ?? null,
+    },
     now
   );
   return (
@@ -120,7 +130,9 @@ function PlayerRow({ player, now }: { player: PlayerSummary; now: Date }) {
       <span className="flex min-w-0 flex-1 flex-col gap-0.5">
         <span className="truncate text-[15px] font-medium leading-5">
           {player.full_name}
-          {!player.active && <span className="ml-2 text-xs font-normal text-muted-foreground">Inactivo</span>}
+          {!player.active && (
+            <span className="ml-2 text-xs font-normal text-muted-foreground">Inactivo</span>
+          )}
         </span>
         <span className="truncate font-mono tabular text-xs text-muted-foreground">{subtitle}</span>
       </span>

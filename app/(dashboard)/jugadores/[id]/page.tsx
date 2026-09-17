@@ -17,7 +17,6 @@ import {
   ShieldAlert,
   Trash2,
   Upload,
-  Users,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -28,7 +27,7 @@ import { Collapse } from '@/components/ui/collapse';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { DashboardPage } from '@/components/ui/dashboard-page';
 import { RowSeparator } from '@/components/ui/row';
-import { SPRINGS } from '@/components/ui/animations';
+import { SPRINGS, STAGGER } from '@/components/ui/animations';
 import { PlayerDetailSkeleton } from '@/components/skeletons/player-detail-skeleton';
 import { Section } from '@/components/features/players/section';
 import { useAuth } from '@/lib/auth/auth-context';
@@ -40,6 +39,13 @@ import { createPlayerInvitation, deletePlayer, updatePlayer } from '@/lib/servic
 import { expiresInLabel, FOLDERS, folderCounts, folderLabel, SENT } from '@/lib/utils/players';
 import { logger } from '@/lib/utils/logger';
 import { cn } from '@/lib/utils';
+
+// Mismo movimiento que Ajustes: cada bloque «se asienta» en su sitio, uno
+// detrás de otro, en vez de aparecer todo de golpe.
+const rise = {
+  hidden: { opacity: 0, y: 12 },
+  show: { opacity: 1, y: 0, transition: SPRINGS.gentle },
+};
 
 /**
  * La ficha (spec §8): su acceso, sus carpetas y la puerta a una entrega.
@@ -68,72 +74,98 @@ export default function PlayerDetailPage() {
   return (
     <DashboardPage
       title={player?.full_name ?? 'Jugador'}
-      icon={Users}
-      subtitle={player && !player.active ? 'Inactivo: no aparece como disponible, pero conserva sus archivos.' : undefined}
+      subtitle={
+        player && !player.active
+          ? 'Inactivo: no aparece como disponible, pero conserva sus archivos.'
+          : undefined
+      }
       skeleton={<PlayerDetailSkeleton />}
       loading={showSkeleton}
       maxWidth="2xl"
     >
-      <div className="-mt-2">
-        <Button variant="ghost" size="sm" asChild className="-ml-3">
-          <Link href="/jugadores">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Jugadores
-          </Link>
-        </Button>
-      </div>
-
-      {!player ? (
-        <p className="py-6 text-center text-sm text-muted-foreground">Esta ficha no existe o se ha borrado.</p>
-      ) : (
-        <div className="space-y-6">
-          <AccountSection
-            playerId={player.id}
-            account={player.account}
-            invite={player.invite}
-            now={now}
-            onChanged={() => {
-              setNow(new Date());
-              mutate();
-            }}
-          />
-
-          <Section label="Carpetas" hint="Lo que se le ha entregado y lo que él manda" padded={false}>
-            <ul>
-              {[...FOLDERS, SENT].map((view, i) => (
-                <li key={view}>
-                  {i > 0 && <RowSeparator />}
-                  <Link
-                    href={`/jugadores/${player.id}/${view}`}
-                    className="flex min-h-14 items-center justify-between gap-3 px-4 py-2 outline-none transition-colors hover:bg-muted/40 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
-                  >
-                    <span className="text-[15px]">{view === SENT ? 'Enviados por él' : folderLabel(view)}</span>
-                    <span className="flex items-center gap-2">
-                      <span className="font-mono tabular text-xs text-muted-foreground">
-                        {counts[view]} {counts[view] === 1 ? 'archivo' : 'archivos'}
-                      </span>
-                      <ChevronRight className="h-4 w-4 text-muted-foreground" aria-hidden />
-                    </span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </Section>
-
-          <Button asChild size="lg" className="h-11 w-full">
-            <Link href={`/jugadores/${player.id}/entrega`}>
-              <Upload className="mr-2 h-4 w-4" />
-              Nueva entrega
+      <motion.div
+        variants={{ show: { transition: { staggerChildren: STAGGER } } }}
+        initial="hidden"
+        animate="show"
+        className="space-y-6"
+      >
+        <motion.div variants={rise} className="-mt-2">
+          <Button variant="ghost" size="sm" asChild className="-ml-3">
+            <Link href="/jugadores">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Jugadores
             </Link>
           </Button>
+        </motion.div>
 
-          <AdvancedZone
-            player={player}
-            onSaved={() => mutate()}
-            onDeleted={() => router.replace('/jugadores')}
-          />
-        </div>
-      )}
+        {!player ? (
+          <motion.p variants={rise} className="py-6 text-center text-sm text-muted-foreground">
+            Esta ficha no existe o se ha borrado.
+          </motion.p>
+        ) : (
+          <>
+            <motion.div variants={rise}>
+              <AccountSection
+                playerId={player.id}
+                account={player.account}
+                invite={player.invite}
+                now={now}
+                onChanged={() => {
+                  setNow(new Date());
+                  mutate();
+                }}
+              />
+            </motion.div>
+
+            <motion.div variants={rise}>
+              <Section
+                label="Carpetas"
+                hint="Lo que se le ha entregado y lo que él manda"
+                padded={false}
+              >
+                <ul>
+                  {[...FOLDERS, SENT].map((view, i) => (
+                    <li key={view}>
+                      {i > 0 && <RowSeparator />}
+                      <Link
+                        href={`/jugadores/${player.id}/${view}`}
+                        className="flex min-h-14 items-center justify-between gap-3 px-4 py-2 outline-none transition-colors hover:bg-muted/40 active:bg-muted/60 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
+                      >
+                        <span className="text-[15px]">
+                          {view === SENT ? 'Enviados por él' : folderLabel(view)}
+                        </span>
+                        <span className="flex items-center gap-2">
+                          <span className="font-mono tabular text-xs text-muted-foreground">
+                            {counts[view]} {counts[view] === 1 ? 'archivo' : 'archivos'}
+                          </span>
+                          <ChevronRight className="h-4 w-4 text-muted-foreground" aria-hidden />
+                        </span>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </Section>
+            </motion.div>
+
+            <motion.div variants={rise}>
+              <Button asChild size="lg" className="h-11 w-full">
+                <Link href={`/jugadores/${player.id}/entrega`}>
+                  <Upload className="mr-2 h-4 w-4" />
+                  Nueva entrega
+                </Link>
+              </Button>
+            </motion.div>
+
+            <motion.div variants={rise}>
+              <AdvancedZone
+                player={player}
+                onSaved={() => mutate()}
+                onDeleted={() => router.replace('/jugadores')}
+              />
+            </motion.div>
+          </>
+        )}
+      </motion.div>
     </DashboardPage>
   );
 }
@@ -185,7 +217,10 @@ function AccountSection({
   const share = async () => {
     if (!liveInvite) return;
     try {
-      await navigator.share({ title: 'Tu área personal en PHSPORT', url: inviteUrl(liveInvite.token) });
+      await navigator.share({
+        title: 'Tu área personal en PHSPORT',
+        url: inviteUrl(liveInvite.token),
+      });
     } catch {
       // Cancelar la hoja de compartir no es un error.
     }
@@ -210,14 +245,26 @@ function AccountSection({
               </span>
             </span>
             {!liveInvite && (
-              <Button variant="outline" size="sm" onClick={create} disabled={creating} className="shrink-0">
-                {creating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Link2 className="mr-2 h-4 w-4" />}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={create}
+                disabled={creating}
+                className="shrink-0"
+              >
+                {creating ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Link2 className="mr-2 h-4 w-4" />
+                )}
                 Crear enlace
               </Button>
             )}
           </div>
-          {liveInvite && (
-            <div className="flex flex-wrap gap-2">
+          {/* Los botones del enlace se despliegan con la extensión suave de la
+              app en vez de aparecer de golpe cuando se crea. */}
+          <Collapse open={!!liveInvite}>
+            <div className="flex flex-wrap gap-2 pt-1">
               <Button variant="outline" size="sm" onClick={copy}>
                 <Copy className="mr-2 h-4 w-4" />
                 Copiar enlace
@@ -228,11 +275,17 @@ function AccountSection({
                   Compartir
                 </Button>
               )}
-              <Button variant="ghost" size="sm" onClick={create} disabled={creating} className="text-muted-foreground">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={create}
+                disabled={creating}
+                className="text-muted-foreground"
+              >
                 Nuevo enlace
               </Button>
             </div>
-          )}
+          </Collapse>
         </div>
       )}
     </Section>
@@ -246,7 +299,13 @@ function AdvancedZone({
   onSaved,
   onDeleted,
 }: {
-  player: { id: string; given_name: string; family_name: string | null; active: boolean; full_name: string };
+  player: {
+    id: string;
+    given_name: string;
+    family_name: string | null;
+    active: boolean;
+    full_name: string;
+  };
   onSaved: () => void;
   onDeleted: () => void;
 }) {
@@ -257,7 +316,9 @@ function AdvancedZone({
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
-  const dirty = givenName.trim() !== player.given_name || (familyName.trim() || null) !== (player.family_name ?? null);
+  const dirty =
+    givenName.trim() !== player.given_name ||
+    (familyName.trim() || null) !== (player.family_name ?? null);
 
   const save = async () => {
     if (!givenName.trim()) {
@@ -312,7 +373,11 @@ function AdvancedZone({
       >
         <ShieldAlert className="h-3.5 w-3.5" />
         <span className="flex-1">Zona avanzada</span>
-        <motion.span initial={false} animate={{ rotate: open ? 0 : -90 }} transition={SPRINGS.snappy}>
+        <motion.span
+          initial={false}
+          animate={{ rotate: open ? 0 : -90 }}
+          transition={SPRINGS.snappy}
+        >
           <ChevronDown className="h-4 w-4" />
         </motion.span>
       </button>
@@ -321,11 +386,21 @@ function AdvancedZone({
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="space-y-1.5">
               <Label htmlFor="player-given">Nombre</Label>
-              <Input id="player-given" value={givenName} onChange={(e) => setGivenName(e.target.value)} disabled={saving} />
+              <Input
+                id="player-given"
+                value={givenName}
+                onChange={(e) => setGivenName(e.target.value)}
+                disabled={saving}
+              />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="player-family">Apellidos</Label>
-              <Input id="player-family" value={familyName} onChange={(e) => setFamilyName(e.target.value)} disabled={saving} />
+              <Input
+                id="player-family"
+                value={familyName}
+                onChange={(e) => setFamilyName(e.target.value)}
+                disabled={saving}
+              />
             </div>
           </div>
           <div className="flex justify-end">
@@ -338,9 +413,15 @@ function AdvancedZone({
           <div className="flex items-center justify-between gap-3 border-t border-border/60 pt-3">
             <span className="flex flex-col gap-0.5">
               <span className="text-sm font-medium">Activo</span>
-              <span className="text-xs text-muted-foreground">Inactivo no borra nada; solo lo marca.</span>
+              <span className="text-xs text-muted-foreground">
+                Inactivo no borra nada; solo lo marca.
+              </span>
             </span>
-            <Switch checked={player.active} onCheckedChange={toggleActive} aria-label="Ficha activa" />
+            <Switch
+              checked={player.active}
+              onCheckedChange={toggleActive}
+              aria-label="Ficha activa"
+            />
           </div>
 
           <div className="border-t border-border/60 pt-3">

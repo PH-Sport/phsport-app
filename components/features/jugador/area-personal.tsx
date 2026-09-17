@@ -16,7 +16,7 @@ import { useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { ChevronLeft, ChevronRight, Loader2, LogOut, Upload } from 'lucide-react';
 import { toast } from 'sonner';
-import { SPRINGS } from '@/components/ui/animations';
+import { SPRINGS, STAGGER } from '@/components/ui/animations';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -55,6 +55,11 @@ const COVER_FALLBACK: Record<Folder, string> = {
   matchdays: 'linear-gradient(155deg, hsl(212 38% 36%), hsl(220 36% 18%))',
 };
 
+const rise = {
+  hidden: { opacity: 0, y: 12 },
+  show: { opacity: 1, y: 0, transition: SPRINGS.gentle },
+};
+
 export function AreaPersonal() {
   const { user, profile, logout } = useAuth();
   const { player, isLoading: playerLoading } = useOwnPlayer();
@@ -87,7 +92,13 @@ export function AreaPersonal() {
     let done = 0;
     for (const file of accepted) {
       try {
-        await uploadPlayerFile(supabase, { playerId: player.id, file, folder: null, batch: null, uploadedBy: user.id });
+        await uploadPlayerFile(supabase, {
+          playerId: player.id,
+          file,
+          folder: null,
+          batch: null,
+          uploadedBy: user.id,
+        });
       } catch (e) {
         logger.error('Error uploading file:', e);
         failed += 1;
@@ -97,7 +108,8 @@ export function AreaPersonal() {
     }
     setProgress(null);
     mutate();
-    if (failed === 0) toast.success(accepted.length === 1 ? 'Enviado' : `${accepted.length} archivos enviados`);
+    if (failed === 0)
+      toast.success(accepted.length === 1 ? 'Enviado' : `${accepted.length} archivos enviados`);
     else toast.error(`${failed} de ${accepted.length} no se pudieron enviar. Prueba otra vez.`);
   };
 
@@ -151,7 +163,12 @@ export function AreaPersonal() {
             onSelect={open}
           />
         ) : (
-          <Carpeta folder={vista} files={filesIn(files, vista)} onVolver={() => setVista('inicio')} onSelect={open} />
+          <Carpeta
+            folder={vista}
+            files={filesIn(files, vista)}
+            onVolver={() => setVista('inicio')}
+            onSelect={open}
+          />
         )}
       </motion.div>
 
@@ -169,7 +186,13 @@ export function AreaPersonal() {
 
 // ─── Avatar con salida ───────────────────────────────────────
 
-function Avatar({ displayName, onLogout }: { displayName?: string | null; onLogout: () => Promise<void> }) {
+function Avatar({
+  displayName,
+  onLogout,
+}: {
+  displayName?: string | null;
+  onLogout: () => Promise<void>;
+}) {
   const iniciales = (displayName ?? '?')
     .split(' ')
     .map((p) => p[0])
@@ -204,7 +227,13 @@ function Avatar({ displayName, onLogout }: { displayName?: string | null; onLogo
 
 // ─── Sin ficha ───────────────────────────────────────────────
 
-function SinFicha({ displayName, onLogout }: { displayName?: string | null; onLogout: () => Promise<void> }) {
+function SinFicha({
+  displayName,
+  onLogout,
+}: {
+  displayName?: string | null;
+  onLogout: () => Promise<void>;
+}) {
   return (
     <>
       <div className="flex justify-end px-[18px] pt-2.5">
@@ -213,7 +242,8 @@ function SinFicha({ displayName, onLogout }: { displayName?: string | null; onLo
       <div className="flex flex-1 flex-col items-center justify-center gap-2 px-8 text-center">
         <h1 className="text-2xl font-bold tracking-tight">Área personal</h1>
         <p className="text-sm text-muted-foreground">
-          Tu cuenta todavía no está enganchada a ninguna ficha. Dile a la agencia que te mande un enlace nuevo.
+          Tu cuenta todavía no está enganchada a ninguna ficha. Dile a la agencia que te mande un
+          enlace nuevo.
         </p>
       </div>
     </>
@@ -250,37 +280,32 @@ function Inicio({
 
       <h1 className="mb-5 mt-1 px-[18px] text-3xl font-bold tracking-tight">Área personal</h1>
 
-      <div className="flex min-h-0 flex-1 flex-col gap-3.5 overflow-y-auto px-[18px] pb-[18px]">
+      {/* Las portadas y la diana entran escalonadas, como las placas del panel. */}
+      <motion.div
+        variants={{ show: { transition: { staggerChildren: STAGGER } } }}
+        initial="hidden"
+        animate="show"
+        className="flex min-h-0 flex-1 flex-col gap-3.5 overflow-y-auto px-[18px] pb-[18px]"
+      >
         {FOLDERS.map((folder) => {
           const coverPath = folderCover(files, folder);
-          const cover = coverPath ? thumbs[coverPath] : undefined;
           return (
-            <button
+            <CoverCard
               key={folder}
-              type="button"
-              onClick={() => onAbrir(folder)}
-              style={cover ? undefined : { background: COVER_FALLBACK[folder] }}
-              className="relative block h-[150px] shrink-0 overflow-hidden rounded-surface bg-muted shadow-raised outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-            >
-              {cover && (
-                // Firmada y caducable: <img> a propósito (ver file-grid.tsx).
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={cover} alt="" className="absolute inset-0 h-full w-full object-cover" />
-              )}
-              <span aria-hidden className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/5 to-transparent" />
-              <span className="absolute inset-x-4 bottom-3.5 z-10 text-left text-white">
-                <span className="block text-lg font-semibold tracking-tight">{folderLabel(folder)}</span>
-                <span className="font-mono tabular text-xs opacity-85">
-                  {counts[folder]} {counts[folder] === 1 ? 'archivo' : 'archivos'}
-                </span>
-              </span>
-            </button>
+              folder={folder}
+              count={counts[folder]}
+              cover={coverPath ? thumbs[coverPath] : undefined}
+              onOpen={() => onAbrir(folder)}
+            />
           );
         })}
 
         {/* Crece hasta el fondo: lo que sobraba pasa a ser la diana. Con muchas
             carpetas se queda en su mínimo y el conjunto hace scroll. */}
-        <div className="flex min-h-[190px] flex-1 flex-col overflow-hidden rounded-surface border border-dashed border-primary/35 bg-card">
+        <motion.div
+          variants={rise}
+          className="flex min-h-[190px] flex-1 flex-col overflow-hidden rounded-surface border border-dashed border-primary/35 bg-card"
+        >
           <button
             type="button"
             onClick={onSubir}
@@ -288,7 +313,11 @@ function Inicio({
             className="flex flex-1 flex-col items-center justify-center gap-3 p-[18px] outline-none transition-colors active:bg-primary/10 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset disabled:opacity-70"
           >
             <span className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/15 text-primary">
-              {progress ? <Loader2 className="h-6 w-6 animate-spin" aria-hidden /> : <Upload className="h-6 w-6" aria-hidden />}
+              {progress ? (
+                <Loader2 className="h-6 w-6 animate-spin" aria-hidden />
+              ) : (
+                <Upload className="h-6 w-6" aria-hidden />
+              )}
             </span>
             <span className="text-[17px] font-semibold">
               {progress ? `Subiendo ${progress.done} de ${progress.total}…` : 'Subir archivos'}
@@ -302,9 +331,57 @@ function Inicio({
             {counts.enviados} {counts.enviados === 1 ? 'enviado' : 'enviados'}
             <ChevronRight className="h-[15px] w-[15px]" aria-hidden />
           </button>
-        </div>
-      </div>
+        </motion.div>
+      </motion.div>
     </>
+  );
+}
+
+function CoverCard({
+  folder,
+  count,
+  cover,
+  onOpen,
+}: {
+  folder: Folder;
+  count: number;
+  cover?: string;
+  onOpen: () => void;
+}) {
+  // La foto real se funde sobre el degradado cuando llega, en vez de saltar.
+  const [loaded, setLoaded] = useState(false);
+  return (
+    <motion.button
+      variants={rise}
+      type="button"
+      onClick={onOpen}
+      style={{ background: COVER_FALLBACK[folder] }}
+      className="relative block h-[150px] shrink-0 overflow-hidden rounded-surface shadow-raised outline-none transition-transform duration-150 active:scale-[0.985] focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+    >
+      {cover && (
+        // Firmada y caducable: <img> a propósito (ver file-grid.tsx).
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={cover}
+          alt=""
+          onLoad={() => setLoaded(true)}
+          className={cn(
+            'absolute inset-0 h-full w-full object-cover transition-opacity duration-500 ease-out',
+            loaded ? 'opacity-100' : 'opacity-0'
+          )}
+        />
+      )}
+      <span
+        aria-hidden
+        className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/5 to-transparent"
+      />
+      <span className="absolute inset-x-4 bottom-3.5 z-10 text-left text-white">
+        <span className="block text-lg font-semibold tracking-tight">{folderLabel(folder)}</span>
+        <span className="font-mono tabular text-xs opacity-85">
+          {count} {count === 1 ? 'archivo' : 'archivos'}
+        </span>
+      </span>
+    </motion.button>
   );
 }
 
@@ -362,7 +439,11 @@ function Enviados({
             'outline-none transition-colors active:bg-primary/10 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-70'
           )}
         >
-          {progress ? <Loader2 className="h-[19px] w-[19px] animate-spin text-primary" aria-hidden /> : <Upload className="h-[19px] w-[19px] text-primary" aria-hidden />}
+          {progress ? (
+            <Loader2 className="h-[19px] w-[19px] animate-spin text-primary" aria-hidden />
+          ) : (
+            <Upload className="h-[19px] w-[19px] text-primary" aria-hidden />
+          )}
           {progress ? `Subiendo ${progress.done} de ${progress.total}…` : 'Subir archivos'}
         </button>
         {/* Puede quitar lo que él mandó; lo que le disteis vosotros, no. */}

@@ -140,6 +140,12 @@
   html {
     /* Táctil: sin flash gris de WebKit al tocar; el feedback lo dan los estados propios */
     -webkit-tap-highlight-color: transparent;
+    /* Safari 26 tiñe su barra superior muestreando los elementos pegados al
+       borde; si el que hay (la cabecera, transparente arriba del todo) no le da
+       color, cae al fondo de html, y sin fondo pinta una banda BLANCA sobre la
+       cabecera, más clara que la página. Con el mismo fondo que el body la banda
+       sigue ahí pero es invisible. Ver https://1ar.io/updates/safari-26-liquid-glass-web/ */
+    @apply bg-background;
   }
   body {
     @apply bg-background text-foreground antialiased;

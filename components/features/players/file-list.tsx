@@ -1,14 +1,22 @@
 'use client';
 
+import { motion } from 'framer-motion';
 import { ChevronRight, Image as ImageIcon, Video } from 'lucide-react';
+import { SPRINGS, STAGGER } from '@/components/ui/animations';
 import { RowSeparator } from '@/components/ui/row';
 import { fileKind, formatBytes, formatDay, type PlayerFile } from '@/lib/utils/players';
 import { cn } from '@/lib/utils';
 
+const rise = {
+  hidden: { opacity: 0, y: 8 },
+  show: { opacity: 1, y: 0, transition: SPRINGS.gentle },
+};
+
 /**
  * Los envíos, en lista: lo que él mandó y nadie ha colocado aún. Una fila por
  * archivo con nombre, cuándo y cuánto pesa. Al tocar se abre la hoja del
- * archivo, donde están las acciones (mover, borrar, quitar).
+ * archivo, donde están las acciones (mover, borrar, quitar). Las filas entran
+ * escalonadas, como las placas del resto de la app.
  */
 export function FileList({
   files,
@@ -22,20 +30,33 @@ export function FileList({
   className?: string;
 }) {
   if (files.length === 0) {
-    return <p className="px-2 py-8 text-center text-sm text-muted-foreground">{emptyText}</p>;
+    return (
+      <motion.p
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="px-2 py-8 text-center text-sm text-muted-foreground"
+      >
+        {emptyText}
+      </motion.p>
+    );
   }
   return (
-    <ul className={cn('overflow-hidden rounded-surface bg-card shadow-raised', className)}>
+    <motion.ul
+      variants={{ show: { transition: { staggerChildren: STAGGER } } }}
+      initial="hidden"
+      animate="show"
+      className={cn('overflow-hidden rounded-surface bg-card shadow-raised', className)}
+    >
       {files.map((file, i) => {
         const Icon = fileKind(file.mime_type, file.name) === 'video' ? Video : ImageIcon;
         return (
-          <li key={file.id}>
+          <motion.li key={file.id} variants={rise}>
             {/* 16 de padding + 40 de icono + 14 de hueco = 70 */}
             {i > 0 && <RowSeparator inset={70} />}
             <button
               type="button"
               onClick={() => onSelect(file)}
-              className="flex w-full items-center gap-3.5 px-4 py-3.5 text-left outline-none transition-colors hover:bg-muted/40 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
+              className="flex w-full items-center gap-3.5 px-4 py-3.5 text-left outline-none transition-colors hover:bg-muted/40 active:bg-muted/60 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
             >
               <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-muted text-muted-foreground">
                 <Icon className="h-[18px] w-[18px]" aria-hidden />
@@ -48,9 +69,9 @@ export function FileList({
               </span>
               <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
             </button>
-          </li>
+          </motion.li>
         );
       })}
-    </ul>
+    </motion.ul>
   );
 }

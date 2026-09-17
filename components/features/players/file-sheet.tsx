@@ -1,13 +1,28 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { motion } from 'framer-motion';
 import { Download, FolderInput, Loader2, Trash2, X } from 'lucide-react';
+import { TWEENS } from '@/components/ui/animations';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet';
+import { Collapse } from '@/components/ui/collapse';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { createClient } from '@/lib/supabase/client';
 import { deletePlayerFile, movePlayerFile, signedUrl } from '@/lib/services/players/files';
@@ -40,7 +55,14 @@ interface FileSheetProps {
  * borrar o quitar. Es la misma hoja para la agencia y para el jugador; lo que
  * cambia son los botones, y la RLS dice lo mismo desde la base.
  */
-export function FileSheet({ file, open, onOpenChange, canManage, canRemove, onChanged }: FileSheetProps) {
+export function FileSheet({
+  file,
+  open,
+  onOpenChange,
+  canManage,
+  canRemove,
+  onChanged,
+}: FileSheetProps) {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [busy, setBusy] = useState<'download' | 'move' | 'delete' | null>(null);
   const [moveOpen, setMoveOpen] = useState(false);
@@ -129,14 +151,19 @@ export function FileSheet({ file, open, onOpenChange, canManage, canRemove, onCh
   return (
     <>
       <Sheet open={open} onOpenChange={onOpenChange}>
-        <SheetContent side="bottom" className="max-h-[92svh] overflow-y-auto rounded-t-2xl pb-[max(1rem,env(safe-area-inset-bottom))]">
+        <SheetContent
+          side="bottom"
+          className="max-h-[92svh] overflow-y-auto rounded-t-2xl pb-[max(1rem,env(safe-area-inset-bottom))]"
+        >
           {file && (
             <div className="mx-auto w-full max-w-lg">
               <SheetHeader className="text-left">
                 <SheetTitle className="truncate pr-8">{file.name}</SheetTitle>
                 <SheetDescription className="font-mono tabular text-xs">
                   {formatDay(file.created_at)} · {formatBytes(file.size_bytes)}
-                  {file.folder ? ` · ${isFolder(file.folder) ? folderLabel(file.folder) : file.folder}` : ' · Enviado'}
+                  {file.folder
+                    ? ` · ${isFolder(file.folder) ? folderLabel(file.folder) : file.folder}`
+                    : ' · Enviado'}
                   {file.batch ? ` · ${file.batch}` : ''}
                 </SheetDescription>
               </SheetHeader>
@@ -144,35 +171,62 @@ export function FileSheet({ file, open, onOpenChange, canManage, canRemove, onCh
               <div className="mt-4 overflow-hidden rounded-xl bg-muted">
                 {previewUrl && kind === 'image' ? (
                   // Firmada y caducable: <img> a propósito, igual que en la rejilla.
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={previewUrl} alt={file.name} className="max-h-[50svh] w-full object-contain" />
+                  // Se funde al llegar en vez de sustituir la rueda de golpe.
+                  <motion.img
+                    key={previewUrl}
+                    src={previewUrl}
+                    alt={file.name}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={TWEENS.base}
+                    className="max-h-[50svh] w-full object-contain"
+                  />
                 ) : previewUrl && kind === 'video' ? (
                   <video src={previewUrl} controls playsInline className="max-h-[50svh] w-full" />
                 ) : (
                   <div className="flex h-40 items-center justify-center text-sm text-muted-foreground">
-                    {previewUrl === null ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Sin vista previa'}
+                    {previewUrl === null ? (
+                      <Loader2 className="h-5 w-5 animate-spin" />
+                    ) : (
+                      'Sin vista previa'
+                    )}
                   </div>
                 )}
               </div>
 
               <div className="mt-4 flex flex-col gap-2">
                 <Button onClick={download} disabled={busy !== null} className="h-11 w-full">
-                  {busy === 'download' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
+                  {busy === 'download' ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <Download className="mr-2 h-4 w-4" />
+                  )}
                   Descargar el original
                 </Button>
 
-                {canManage && !moveOpen && (
-                  <Button variant="outline" onClick={() => setMoveOpen(true)} disabled={busy !== null} className="h-11 w-full">
+                {canManage && (
+                  <Button
+                    variant="outline"
+                    onClick={() => setMoveOpen((v) => !v)}
+                    disabled={busy !== null}
+                    aria-expanded={moveOpen}
+                    className="h-11 w-full"
+                  >
                     <FolderInput className="mr-2 h-4 w-4" />
                     Mover a una carpeta
                   </Button>
                 )}
 
-                {canManage && moveOpen && (
+                {/* El panel de mover se despliega con la extensión suave de la
+                    app, en vez de aparecer y desaparecer de golpe. */}
+                <Collapse open={canManage && moveOpen}>
                   <div className="space-y-3 rounded-xl border border-border/60 p-3">
                     <div className="space-y-1.5">
                       <Label>Carpeta</Label>
-                      <Select value={targetFolder} onValueChange={(v) => setTargetFolder(v as Folder)}>
+                      <Select
+                        value={targetFolder}
+                        onValueChange={(v) => setTargetFolder(v as Folder)}
+                      >
                         <SelectTrigger>
                           <SelectValue />
                         </SelectTrigger>
@@ -195,7 +249,12 @@ export function FileSheet({ file, open, onOpenChange, canManage, canRemove, onCh
                       />
                     </div>
                     <div className="flex justify-end gap-2">
-                      <Button variant="ghost" size="sm" onClick={() => setMoveOpen(false)} disabled={busy !== null}>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setMoveOpen(false)}
+                        disabled={busy !== null}
+                      >
                         Cancelar
                       </Button>
                       <Button size="sm" onClick={move} disabled={busy !== null}>
@@ -204,7 +263,7 @@ export function FileSheet({ file, open, onOpenChange, canManage, canRemove, onCh
                       </Button>
                     </div>
                   </div>
-                )}
+                </Collapse>
 
                 {(canManage || canRemove) && (
                   <Button
@@ -213,7 +272,11 @@ export function FileSheet({ file, open, onOpenChange, canManage, canRemove, onCh
                     disabled={busy !== null}
                     className="h-11 w-full text-destructive hover:bg-destructive/10 hover:text-destructive"
                   >
-                    {canManage ? <Trash2 className="mr-2 h-4 w-4" /> : <X className="mr-2 h-4 w-4" />}
+                    {canManage ? (
+                      <Trash2 className="mr-2 h-4 w-4" />
+                    ) : (
+                      <X className="mr-2 h-4 w-4" />
+                    )}
                     {canManage ? 'Eliminar' : 'Quitar'}
                   </Button>
                 )}

@@ -788,16 +788,36 @@ cuyo código ya está en el repo.
 ### 12. Rodar jugadores en el iPhone y pulir la fluidez
 
 Mario recorrió `preview` el 2026-09-17 (antes de que existieran las tablas de
-jugadores) y vio «un par de cosillas de la interfaz que no van del todo
-fluidas», sin concretar cuáles. Falta:
+jugadores) y señaló tres cosas, **las tres atendidas ese mismo día** (commit
+siguiente al `5529cc5`):
 
-- Que las diga, o que Claude las encuentre con un navegador. Para lo segundo
-  hace falta **una cuenta de pruebas** (pendiente 2): Claude no tiene
-  credenciales y la extensión de Chrome no estaba conectada ese día.
-- El recorrido entero de jugadores con la base ya aplicada: crear ficha →
-  enlace → alta con otro correo (sin sesión abierta) → subir desde el móvil →
-  mover, entregar, borrar desde la agencia. Anotar aquí lo que falle.
-- Después, decidir el merge (pendiente 11).
+- **La banda clara sobre la cabecera** en el iPhone, tocando título, campana y
+  avatar. No era un degradado de la app: es Safari 26 pintando su tinte con el
+  fondo de `html`, que no estaba definido. Ahora `html` lleva el fondo de la
+  página. Ver «Cosas que conviene saber». **Solo Mario puede confirmarlo**, en
+  el iPhone: el WebKit de Playwright no lo reproduce.
+- **Iconos junto al título** en las pantallas de Jugadores: fuera, como en el
+  resto de la app (criterio de hace tiempo: título desnudo).
+- **Navegación plana y brusca:** las pantallas de Jugadores entran ahora como
+  Ajustes y Equipo (bloques que se asientan uno detrás de otro), los botones
+  del enlace y el panel de mover se despliegan con la extensión suave de la
+  app, las filas de una entrega entran y salen con fundido y se recolocan con
+  muelle, y las miniaturas y portadas se funden al cargar en vez de saltar.
+
+Para revisarlo con navegador hay credenciales en `.env.local` como
+`USER_EMAIL` / `USER_PASSWORD` (Mario, 2026-09-17); el setup de e2e espera
+`PLAYWRIGHT_USER` / `PLAYWRIGHT_PASS`, así que se lanzan mapeadas:
+`set -a; source .env.local; set +a; PLAYWRIGHT_USER="$USER_EMAIL"
+PLAYWRIGHT_PASS="$USER_PASSWORD" npx playwright test --project=sesion`, y luego
+`npx playwright screenshot --browser=webkit --device="iPhone 15"
+--load-storage=e2e/.sesion/usuario.json <url> <png>` contra `next start -p 3100`.
+Es la cuenta de Mario (gestor): mira y crea datos de prueba que luego hay que
+borrar (hoy existe la ficha «Juan Cruz», sin cuenta, creada por él).
+
+**Queda:** el recorrido entero de jugadores desde el iPhone (crear ficha →
+enlace → alta con otro correo, sin sesión abierta → subir desde el móvil →
+mover, entregar, borrar desde la agencia), anotar aquí lo que falle, y después
+decidir el merge (pendiente 11).
 
 ---
 
@@ -812,7 +832,13 @@ fluidas», sin concretar cuáles. Falta:
 - **Safari 26 ya no lee `theme-color`.** Tinta su barra muestreando el fondo de
   los elementos fijos o pegajosos cercanos al borde, incluso si tienen
   `opacity: 0`. El `themeColor` de `app/layout.tsx` no hace nada en iOS 26. Si
-  aparece un tinte raro, mirar ahí.
+  aparece un tinte raro, mirar ahí. **Y si el elemento pegado no tiene fondo**
+  (la cabecera, transparente arriba del todo), cae al fondo de `html`; sin él,
+  pinta una **banda blanca** sobre la cabecera, más clara que la página, que
+  Mario vio el 2026-09-17 tocando el título, la campana y el avatar. Desde ese
+  día `html` lleva el mismo fondo que `body` (`app/globals.css`): la banda
+  sigue ahí, pero del color de la página. No se puede reproducir con el WebKit
+  de escritorio de Playwright; solo en un iPhone con iOS 26.
 - **Los dos «2ª PORTUGAL - J2» no son un duplicado**: son dos piezas del mismo
   partido, para jugadores distintos. El modelo lo permite y es correcto.
 - **Lo que hay detrás de la app —cuentas, claves, correo, DNS— está en

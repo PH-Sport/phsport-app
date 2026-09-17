@@ -314,8 +314,11 @@ y su miniatura en `{player_id}/{file_id}.thumb.jpg`. Las reglas de
 `storage.objects` leen el jugador del primer tramo de la ruta: la agencia
 (departamento creativo) puede todo en el cubo; el jugador lee y sube solo bajo
 su propio tramo, y borra solo lo que subió él y siga sin colocar. Esa última
-regla mira la fila de `player_files`, así que **se borra el objeto antes que
-la fila**, nunca al revés.
+regla busca la fila de `player_files` **por la ruta misma** (jugador del
+primer tramo, id del archivo del nombre), y la fila lleva la ruta atada por
+restricción: una fila no puede apuntar a un objeto que no sea el suyo. Por
+eso **se borra el objeto antes que la fila**, nunca al revés, y por eso la fila
+se crea antes de subir nada.
 
 **La fila es la verdad; el objeto, el contenido.** `player_files` guarda
 carpeta, rótulo de entrega, nombre original, ruta, miniatura, tipo, tamaño y

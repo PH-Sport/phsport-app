@@ -51,14 +51,20 @@ export async function updatePlayer(supabase: SupabaseClient, id: string, patch: 
  * es otra cosa y tiene su propia función.
  */
 export async function deletePlayer(supabase: SupabaseClient, playerId: string): Promise<void> {
-  const { data: objects, error: listError } = await supabase.storage
-    .from(BUCKET)
-    .list(playerId, { limit: 1000 });
-  if (listError) throw new Error(`No se pudo vaciar su carpeta: ${listError.message}`);
-  const paths = (objects ?? []).map((o) => `${playerId}/${o.name}`);
-  if (paths.length > 0) {
+  // El listado va por páginas: cada foto son dos objetos y una ficha con
+  // años de material pasa de mil. Se borra página a página desde la primera,
+  // así que el offset no se mueve.
+  const PAGE = 500;
+  for (;;) {
+    const { data: objects, error: listError } = await supabase.storage
+      .from(BUCKET)
+      .list(playerId, { limit: PAGE, offset: 0 });
+    if (listError) throw new Error(`No se pudo vaciar su carpeta: ${listError.message}`);
+    const paths = (objects ?? []).map((o) => `${playerId}/${o.name}`);
+    if (paths.length === 0) break;
     const { error: removeError } = await supabase.storage.from(BUCKET).remove(paths);
     if (removeError) throw new Error(`No se pudo vaciar su carpeta: ${removeError.message}`);
+    if (paths.length < PAGE) break;
   }
   const { error } = await supabase.from('players').delete().eq('id', playerId);
   if (error) throw new Error(`No se pudo borrar la ficha: ${error.message}`);

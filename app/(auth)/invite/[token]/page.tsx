@@ -118,6 +118,9 @@ export default function InvitePage() {
       }
 
       // El rol (o la ficha) se aplica server-side dentro de use_invitation(), nunca se pasa desde el cliente.
+      // `kind` sí viaja: el perfil del jugador nace JUGADOR desde el primer segundo,
+      // para que producción no lo tome por diseñador si use_invitation fallara.
+      // Ponérselo sin invitación solo da una cuenta que no puede nada.
       const { data: authData, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
@@ -126,6 +129,7 @@ export default function InvitePage() {
             given_name: givenName.trim(),
             family_name: familyName.trim() || null,
             alias: isPlayer ? null : alias.trim() || null,
+            ...(isPlayer ? { kind: 'JUGADOR' } : {}),
           },
         },
       });
@@ -163,8 +167,13 @@ export default function InvitePage() {
       setSuccess(true);
       toast.success('¡Cuenta creada exitosamente!');
 
-      setTimeout(() => {
-        router.push('/login');
+      // Si el alta abrió sesión, el cliente pudo leer el perfil ANTES de que
+      // use_invitation lo marcara (jugador, roles): se queda con uno viejo y
+      // el marco del jugador se pierde en redirecciones. Se cierra la sesión y
+      // se recarga de verdad, como hace el login; el usuario entra limpio.
+      setTimeout(async () => {
+        await supabase.auth.signOut();
+        window.location.assign('/login');
       }, 2000);
     } catch {
       toast.error('Error al crear la cuenta. Intenta de nuevo.');

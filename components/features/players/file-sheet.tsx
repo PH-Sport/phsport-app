@@ -77,12 +77,16 @@ export function FileSheet({ file, open, onOpenChange, canManage, canRemove, onCh
   const download = async () => {
     if (!file) return;
     setBusy('download');
+    // Una pestaña nueva: en iOS es lo que deja guardar el original en Fotos o
+    // en Archivos; un <a download> ahí se ignora. Y se abre ANTES del await:
+    // Safari bloquea como popup cualquier ventana que no nazca del toque.
+    const tab = window.open('', '_blank');
     try {
       const url = await signedUrl(createClient(), file.storage_path, true);
-      // Una pestaña nueva: en iOS es lo que deja guardar el original en Fotos
-      // o en Archivos; un <a download> ahí se ignora.
-      window.open(url, '_blank', 'noopener');
+      if (tab) tab.location.href = url;
+      else window.location.assign(url);
     } catch (e) {
+      tab?.close();
       toast.error(e instanceof Error ? e.message : 'No se pudo descargar');
     } finally {
       setBusy(null);

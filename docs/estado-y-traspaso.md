@@ -499,11 +499,28 @@ lo que cambia el estado.
   `/area-personal` y a la agencia fuera de ahí, con una consulta de perfil por
   navegación; los dos marcos lo repiten en cliente.
 - **Migración 046** (`046_jugadores_y_archivos.sql`): `players`, `player_files`,
-  `invitations.player_id`, `get_invitation_by_token` y `use_invitation` v3, el
-  cubo `jugadores` con sus cuatro reglas. Comprobada en seco contra la base
-  (dentro de una transacción deshecha: todo pasa) y **sin aplicar**: pendiente
-  11. Va después de la 045. **La que borra lo antiguo del rol pasa a ser la
-  047.**
+  `invitations.player_id`, `get_invitation_by_token` y `use_invitation` v3,
+  `handle_new_user` v3, el cubo `jugadores` con sus cuatro reglas, y un valor
+  `JUGADOR` en el enum antiguo `role_enum`. Comprobada en seco contra la base
+  (dentro de una transacción deshecha: todo pasa, incluidas las dos
+  restricciones de ruta) y **sin aplicar**: pendiente 11. Va después de la
+  045. **La que borra lo antiguo del rol pasa a ser la 047.**
+- **Revisada con contexto limpio antes de aplicarse.** Sacó tres cosas
+  serias, corregidas el mismo día: (1) un jugador podía crear una fila suya
+  apuntando a un objeto ajeno y borrarlo con la regla del cubo — ahora la ruta
+  va atada a la fila por restricción y la regla del cubo busca la fila por la
+  ruta; (2) una cuenta de jugador nacía con `profiles.role = 'DESIGNER'`, y
+  **`main` sí lee esa columna**: lo listaba en Equipo y le repartía diseños —
+  ahora el enum tiene `JUGADOR`, el perfil nace así (el alta manda `kind` en
+  los metadatos) y `use_invitation` lo confirma; (3) `use_invitation` se fiaba
+  del `p_user_id` que le pasaban y con un enlace válido se podía degradar a
+  JUGADOR cualquier cuenta de la agencia — ahora exige que sea la cuenta que
+  llama o, sin sesión, un perfil recién nacido sin roles ni ficha. Y tres
+  menores: el deshacer de una subida fallida no podía borrar objetos del
+  jugador (ahora la fila se crea antes que los objetos), vaciar una ficha
+  paraba en mil objetos (ahora pagina), y el alta con sesión inmediata dejaba
+  un perfil viejo en el cliente (ahora cierra sesión y recarga). El informe
+  entero está en el plan.
 
 **El almacén (spec §9):** un cubo privado `jugadores`, 50 MB por archivo (el
 techo del plan gratuito), imágenes y vídeos. Ruta `{player_id}/{file_id}.{ext}`
@@ -528,6 +545,12 @@ de un minuto, en pestaña nueva (en iOS es lo que deja guardar en Fotos).
   la 045 se cierra.
 - «Descargar las N» de la maqueta se quedó fuera (varias descargas seguidas se
   bloquean en iOS Safari; un zip en el navegador no cabía). Está en Abierto.
+- **Lo que producción (`main`) ve de un jugador hasta el merge:** nada en
+  Equipo ni en el reparto (gracias al valor `JUGADOR` en `role`), pero **sí una
+  fila en Ajustes → Miembros**, porque esa lista de `main` enseña todos los
+  perfiles; le pondrá una etiqueta de rol que no le corresponde. Es cosmético y
+  solo lo ven los gestores; desaparece con el merge. Si molesta, el primer
+  jugador de verdad espera al merge.
 - Los lotes son un rótulo por archivo (`player_files.batch`), no una entidad:
   se agrupa por él y, sin él, por día.
 

@@ -171,6 +171,28 @@ Commit: `docs(jugadores): queda escrito cómo se guardan los archivos y qué fal
 
 ---
 
+## Revisión con contexto limpio (2026-09-17, antes de aplicar la 046)
+
+Un agente sin el contexto de la sesión leyó la 046, las consultas, el almacén,
+las redirecciones y la interfaz, con el catálogo vivo delante. Seis hallazgos
+con caso concreto, todos corregidos el mismo día (commit siguiente al
+`cf67230`); ninguno en consultas PostgREST ni en la interfaz.
+
+| # | Gravedad | Qué fallaba | Qué se hizo |
+|---|---|---|---|
+| 1 | alta | La política de INSERT de `player_files` no ataba la ruta a la fila, y la de DELETE del cubo buscaba *cualquier* fila con esa ruta: un jugador creaba una fila suya apuntando a un objeto entregado y lo borraba. | Dos restricciones en `player_files` (`storage_path like {player_id}/{id}.%`, `thumb_path = {player_id}/{id}.thumb.jpg`) y la regla del cubo busca la fila por el jugador del primer tramo y el id del nombre del objeto. |
+| 2 | alta | El perfil del jugador nacía con `profiles.role = 'DESIGNER'` y `main` filtra por esa columna: lo listaba en Equipo y le repartía diseños. | Valor `JUGADOR` en `role_enum`; `handle_new_user` v3 lo pone si el alta manda `kind: 'JUGADOR'`; `use_invitation` lo confirma. |
+| 3 | media | `use_invitation` no comparaba `p_user_id` con quien llama: con un enlace válido se podía degradar a JUGADOR cualquier cuenta de la agencia. | Exige `auth.uid() = p_user_id`; sin sesión (correo por confirmar), solo un perfil de menos de 15 minutos sin roles ni ficha. |
+| 4 | baja | Si fallaba el insert de la fila tras subir, el jugador no podía borrar los objetos (la regla exige fila): huérfanos. | La fila se crea antes que los objetos; si la subida falla se retiran objetos y luego la fila. |
+| 5 | baja | `deletePlayer` listaba mil objetos y paraba. | Pagina de 500 en 500 hasta vaciar. |
+| 6 | baja | Con sesión inmediata tras el alta, el cliente se quedaba con el perfil viejo y el marco del jugador entraba en bucle. | Tras `use_invitation`, cierra sesión y recarga a `/login`. |
+
+Además: la descarga abre la pestaña antes del `await` (Safari bloquea popups
+que no nacen del toque). Lo que el revisor no pudo verificar y sigue sin
+verificarse: que `storage.remove()` ignore en silencio lo que la RLS no deja
+borrar (base del arreglo 4), el ajuste «Confirm email» del proyecto, y el
+comportamiento real en iOS.
+
 ## Verificación que no se pudo hacer el 2026-09-17
 
 Todo lo que necesita la base con la 046 aplicada: crear una ficha, mandar el

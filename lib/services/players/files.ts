@@ -58,8 +58,10 @@ export interface UploadInput {
 }
 
 /**
- * Sube el archivo (y su miniatura si es imagen) y crea la fila. Si la fila
- * falla, se borran los objetos: nunca queda un archivo huérfano en el cubo.
+ * Crea la fila y después sube el archivo (y su miniatura si es imagen). En
+ * ese orden y no al revés: la regla del cubo solo deja al jugador borrar un
+ * objeto cuya fila exista, así que si la subida falla se pueden retirar los
+ * objetos y luego la fila, y nunca queda un archivo huérfano en el cubo.
  * Lanza un Error con mensaje en castellano; quien llama lo enseña tal cual.
  */
 export async function uploadPlayerFile(supabase: SupabaseClient, input: UploadInput): Promise<PlayerFile> {
@@ -71,22 +73,9 @@ export async function uploadPlayerFile(supabase: SupabaseClient, input: UploadIn
   const { path, thumbPath } = storagePaths(playerId, id, file.name);
   const contentType = file.type || mimeFromExtension(file.name);
 
-  const { error: uploadError } = await supabase.storage
-    .from(BUCKET)
-    .upload(path, file, { contentType, cacheControl: '3600', upsert: false });
-  if (uploadError) throw new Error(`No se pudo subir ${file.name}: ${uploadError.message}`);
-
-  let storedThumb: string | null = null;
-  if (fileKind(contentType, file.name) === 'image') {
-    const thumb = await makeThumbnail(file);
-    if (thumb) {
-      const { error: thumbError } = await supabase.storage
-        .from(BUCKET)
-        .upload(thumbPath, thumb, { contentType: 'image/jpeg', cacheControl: '31536000', upsert: false });
-      // Sin miniatura se puede vivir; sin archivo no. No se aborta por esto.
-      if (!thumbError) storedThumb = thumbPath;
-    }
-  }
+  // La miniatura se hace antes de tocar nada: así la fila ya nace sabiendo si
+  // la tiene (el jugador no puede editar filas, y no hace falta).
+  const thumb = fileKind(contentType, file.name) === 'image' ? await makeThumbnail(file) : null;
 
   const row = {
     id,
@@ -95,16 +84,39 @@ export async function uploadPlayerFile(supabase: SupabaseClient, input: UploadIn
     batch: input.batch?.trim() || null,
     name: file.name,
     storage_path: path,
-    thumb_path: storedThumb,
+    thumb_path: thumb ? thumbPath : null,
     mime_type: contentType || null,
     size_bytes: file.size,
     uploaded_by: input.uploadedBy,
   };
   const { data, error } = await supabase.from('player_files').insert(row).select('*').single();
-  if (error || !data) {
-    await supabase.storage.from(BUCKET).remove([path, ...(storedThumb ? [storedThumb] : [])]);
-    throw new Error(`No se pudo registrar ${file.name}: ${error?.message ?? 'sin respuesta'}`);
+  if (error || !data) throw new Error(`No se pudo registrar ${file.name}: ${error?.message ?? 'sin respuesta'}`);
+
+  const undo = async () => {
+    await supabase.storage.from(BUCKET).remove([path, ...(thumb ? [thumbPath] : [])]);
+    await supabase.from('player_files').delete().eq('id', id);
+  };
+
+  const { error: uploadError } = await supabase.storage
+    .from(BUCKET)
+    .upload(path, file, { contentType, cacheControl: '3600', upsert: false });
+  if (uploadError) {
+    await undo();
+    throw new Error(`No se pudo subir ${file.name}: ${uploadError.message}`);
   }
+
+  if (thumb) {
+    const { error: thumbError } = await supabase.storage
+      .from(BUCKET)
+      .upload(thumbPath, thumb, { contentType: 'image/jpeg', cacheControl: '31536000', upsert: false });
+    // La fila dice que hay miniatura: si no se pudo subir, mejor deshacer todo
+    // y que reintente, antes que una rejilla con un hueco roto para siempre.
+    if (thumbError) {
+      await undo();
+      throw new Error(`No se pudo subir la miniatura de ${file.name}: ${thumbError.message}`);
+    }
+  }
+
   return data as PlayerFile;
 }
 

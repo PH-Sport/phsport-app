@@ -10,6 +10,21 @@
 -- Las carpetas NO tienen tabla: son fijas y las mismas para todos (spec §5),
 -- y las dice el código (lib/utils/players.ts). Un archivo sin carpeta es un
 -- envío del jugador que la agencia todavía no ha colocado: eso es «Enviados».
+--
+-- Revisada con contexto limpio el 2026-09-17 antes de aplicarse; de ahí salen
+-- el valor JUGADOR del enum antiguo, las restricciones de ruta en
+-- player_files, la guardia de p_user_id en use_invitation y la regla de
+-- borrado del cubo atada al id del archivo.
+
+-- ─── 0. La casilla antigua tiene que poder decir «jugador» ────────────────
+--
+-- `main` (producción, misma base) sigue leyendo `profiles.role` y trata a
+-- todo DESIGNER como diseñador: lo lista en Equipo y le reparte diseños. Un
+-- jugador no puede nacer DESIGNER ni un segundo. El valor nuevo no se puede
+-- usar en la misma transacción que lo crea; por eso aquí solo aparece dentro
+-- de cuerpos de función, que se evalúan al ejecutarse. Se va con la 047.
+
+alter type public.role_enum add value if not exists 'JUGADOR';
 
 -- ─── 1. players: la ficha, que existe antes que la cuenta ────────────────
 
@@ -76,7 +91,14 @@ create table public.player_files (
   mime_type text,
   size_bytes bigint not null default 0 check (size_bytes >= 0),
   uploaded_by uuid references public.profiles(id) on delete set null default auth.uid(),
-  created_at timestamptz not null default now()
+  created_at timestamptz not null default now(),
+  -- La ruta va atada a la fila: {player_id}/{id}.{ext} y {player_id}/{id}.thumb.jpg.
+  -- Sin esto un jugador podía crear una fila suya apuntando a un objeto ajeno
+  -- y borrarlo con la regla del cubo (hallazgo de la revisión del 2026-09-17).
+  constraint player_files_path_matches_row
+    check (storage_path like player_id::text || '/' || id::text || '.%'),
+  constraint player_files_thumb_matches_row
+    check (thumb_path is null or thumb_path = player_id::text || '/' || id::text || '.thumb.jpg')
 );
 
 create index player_files_player_folder_idx
@@ -230,12 +252,31 @@ begin
     raise exception 'Esta invitación ya ha alcanzado el límite de usos';
   end if;
 
+  -- La cuenta que se engancha tiene que ser la de quien llama. Si el alta no
+  -- devuelve sesión (confirmación de correo activada), quien llama es anon:
+  -- entonces solo vale un perfil recién nacido, sin roles y sin ficha. Sin
+  -- esto, un enlace válido servía para degradar a JUGADOR a cualquier cuenta
+  -- de la agencia cuyo uuid se conociera (revisión del 2026-09-17).
+  if auth.uid() is not null then
+    if auth.uid() <> p_user_id then
+      raise exception 'La invitación solo puede usarla la cuenta que acaba de crearse';
+    end if;
+  elsif not exists (
+    select 1 from public.profiles p
+    where p.id = p_user_id
+      and p.created_at > now() - interval '15 minutes'
+      and not exists (select 1 from public.profile_roles pr where pr.profile_id = p.id)
+      and not exists (select 1 from public.players pl where pl.profile_id = p.id)
+  ) then
+    raise exception 'La invitación solo puede usarla una cuenta recién creada';
+  end if;
+
   insert into public.invitation_uses (invitation_id, user_id, email, full_name)
   values (p_invitation_id, p_user_id, p_email, p_full_name);
 
   -- Rama del jugador (spec §8): la cuenta queda marcada como JUGADOR y
-  -- enganchada a esa ficha sola; sin roles. La casilla antigua `role` se
-  -- queda en su valor por defecto: `main` no la lee para nada de esto.
+  -- enganchada a esa ficha sola; sin roles. La casilla antigua `role` dice
+  -- también JUGADOR, para que `main` no lo tome por diseñador.
   if v_invitation.player_id is not null then
     update public.players
     set profile_id = p_user_id
@@ -247,7 +288,8 @@ begin
     end if;
 
     update public.profiles
-    set kind = 'JUGADOR'
+    set kind = 'JUGADOR',
+        role = 'JUGADOR'::public.role_enum
     where id = p_user_id;
 
     return true;
@@ -277,6 +319,44 @@ begin
   where id = p_user_id;
 
   return true;
+end;
+$function$;
+
+-- ─── 5b. handle_new_user v3: el jugador nace jugador, no diseñador ─────────
+--
+-- Entre el alta y use_invitation pasan segundos, pero si use_invitation falla
+-- el perfil se queda como nació. Con el defecto (DESIGNER/AGENCIA), `main` lo
+-- listaba en Equipo y le repartía diseños. La pantalla de alta de jugador
+-- manda `kind: 'JUGADOR'` en los metadatos, y aquí se respeta: quien se lo
+-- ponga sin invitación solo consigue una cuenta que no puede nada. Sigue
+-- siendo la misma función de la 045, con ese detalle más.
+
+create or replace function public.handle_new_user()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $function$
+declare
+  v_player boolean := coalesce(new.raw_user_meta_data->>'kind', '') = 'JUGADOR';
+begin
+  insert into public.profiles (id, given_name, family_name, alias, kind, role)
+  values (
+    new.id,
+    coalesce(
+      nullif(btrim(new.raw_user_meta_data->>'given_name'), ''),
+      nullif(btrim(split_part(new.raw_user_meta_data->>'full_name', ' ', 1)), ''),
+      'Usuario'
+    ),
+    coalesce(
+      nullif(btrim(new.raw_user_meta_data->>'family_name'), ''),
+      nullif(btrim(split_part(new.raw_user_meta_data->>'full_name', ' ', 2)), '')
+    ),
+    nullif(btrim(new.raw_user_meta_data->>'alias'), ''),
+    case when v_player then 'JUGADOR'::public.account_kind else 'AGENCIA'::public.account_kind end,
+    case when v_player then 'JUGADOR'::public.role_enum else 'DESIGNER'::public.role_enum end
+  );
+  return new;
 end;
 $function$;
 
@@ -320,15 +400,20 @@ create policy jugadores_insert_own on storage.objects
   );
 
 -- Borrar el objeto exige que su fila siga sin colocar y sea suya: por eso la
--- app borra primero el objeto del cubo y después la fila, nunca al revés.
+-- app borra primero el objeto del cubo y después la fila, nunca al revés. La
+-- fila se busca por la ruta misma (jugador del primer tramo, id del archivo
+-- del nombre), no por coincidencia de columnas: así no vale una fila falsa.
 create policy jugadores_delete_own_unplaced on storage.objects
   for delete
   using (
     bucket_id = 'jugadores'
+    and (storage.foldername(name))[1] = public.own_player_id(auth.uid())::text
     and exists (
       select 1
       from public.player_files f
-      where (f.storage_path = storage.objects.name or f.thumb_path = storage.objects.name)
+      where f.player_id::text = (storage.foldername(name))[1]
+        and f.id::text = split_part(storage.filename(name), '.', 1)
+        and (f.storage_path = name or f.thumb_path = name)
         and f.folder is null
         and f.uploaded_by = auth.uid()
     )

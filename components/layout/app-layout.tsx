@@ -16,15 +16,20 @@ interface AppLayoutProps {
 }
 
 export function AppLayout({ children }: AppLayoutProps) {
-  const { status } = useAuth();
+  const { status, profile } = useAuth();
   const router = useRouter();
   const hydrated = useHydrated();
 
+  // Un futbolista no pisa el panel de la agencia: su marco es (jugador). El
+  // middleware ya lo desvía en servidor; esto cubre la navegación en cliente.
+  const isPlayer = profile?.kind === 'JUGADOR';
+
   useEffect(() => {
     if (status === 'UNAUTHENTICATED') router.push('/login');
-  }, [status, router]);
+    else if (status === 'AUTHENTICATED' && isPlayer) router.replace('/area-personal');
+  }, [status, isPlayer, router]);
 
-  if (status !== 'AUTHENTICATED') {
+  if (status !== 'AUTHENTICATED' || isPlayer) {
     return (
       <div className="flex min-h-svh items-center justify-center bg-background">
         <div

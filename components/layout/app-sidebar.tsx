@@ -39,6 +39,7 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   Settings,
+  Users,
 } from 'lucide-react';
 import { Hint } from '@/components/ui/tooltip';
 import { useAuth } from '@/lib/auth/auth-context';
@@ -151,6 +152,9 @@ export function buildNavItems(mode: ViewMode): NavItem[] {
       ? { href: '/equipo', label: 'Semana', icon: CalendarRange }
       : { href: '/mi-semana', label: 'Semana', icon: CalendarRange },
     { href: '/disenos', label: 'Diseños', icon: Palette },
+    // La cartera de jugadores es de todo el departamento creativo (spec §5):
+    // la ven las dos caras de la agencia. La tab bar se adapta al número.
+    { href: '/jugadores', label: 'Jugadores', icon: Users },
   ];
 }
 

@@ -62,18 +62,28 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
-  if (user) {
-    // Si hay usuario y trata de ir a login/register -> redirigir según rol
-    if (isPublicRoute && !isAuthHandler) {
-      // Con sesión, /login y /invite llevan a la casa que le toca a la cuenta.
-      const { data: raw } = await supabase
-        .from('profiles')
-        .select(PROFILE_WITH_ROLES_SELECT)
-        .eq('id', user.id)
-        .maybeSingle()
+  if (user && !isAuthHandler) {
+    const { data: raw } = await supabase
+      .from('profiles')
+      .select(PROFILE_WITH_ROLES_SELECT)
+      .eq('id', user.id)
+      .maybeSingle()
+    const mode = viewModeFor(raw ? toProfile(raw) : null)
 
+    // Con sesión, /login y /invite llevan a la casa que le toca a la cuenta.
+    if (isPublicRoute) {
       const url = request.nextUrl.clone()
-      url.pathname = homeFor(viewModeFor(raw ? toProfile(raw) : null))
+      url.pathname = homeFor(mode)
+      return NextResponse.redirect(url)
+    }
+
+    // Cada clase de cuenta tiene su marco (spec §1): un futbolista no pisa el
+    // panel de la agencia, y la agencia no tiene área personal. Los marcos lo
+    // repiten en el cliente; aquí se decide antes de servir nada.
+    const isPlayerArea = path.startsWith('/area-personal')
+    if ((mode === 'player') !== isPlayerArea) {
+      const url = request.nextUrl.clone()
+      url.pathname = homeFor(mode)
       return NextResponse.redirect(url)
     }
   }

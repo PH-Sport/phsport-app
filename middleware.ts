@@ -16,6 +16,7 @@ export const config = {
     '/ajustes/:path*',
     '/equipo/:path*',
     '/ayuda/:path*',
+    '/jugadores/:path*',
     '/area-personal/:path*',
   ],
 }

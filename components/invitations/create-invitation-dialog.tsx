@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { logger } from '@/lib/utils/logger';
+import { generateInviteToken, inviteExpiry, inviteUrl } from '@/lib/services/invitations/token';
 import { useRoles } from '@/lib/hooks/use-roles';
 import {
   Dialog,
@@ -50,17 +51,6 @@ export function CreateInvitationDialog({
   const [createdToken, setCreatedToken] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
-  const generateToken = () => {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    const bytes = new Uint8Array(16);
-    crypto.getRandomValues(bytes);
-    let token = '';
-    for (let i = 0; i < 16; i++) {
-      token += chars.charAt(bytes[i] % chars.length);
-    }
-    return token;
-  };
-
   const handleCreate = async () => {
     if (!roleId) {
       toast.error('Elige un rol');
@@ -70,11 +60,10 @@ export function CreateInvitationDialog({
 
     try {
       const supabase = createClient();
-      const token = generateToken();
-      
+      const token = generateInviteToken();
+
       // Caducidad corta: 24h, 1 uso (evita invitaciones "flotando")
-      const expiresAt = new Date();
-      expiresAt.setHours(expiresAt.getHours() + 24);
+      const expiresAt = inviteExpiry();
 
       // `role_id` es el rol de verdad; la columna antigua `role` se queda en su
       // valor por defecto hasta que la migración 046 la retire. `created_by` lo
@@ -98,7 +87,7 @@ export function CreateInvitationDialog({
       setCreatedToken(token);
       
       // Auto-copy to clipboard
-      const url = `${window.location.origin}/invite/${token}`;
+      const url = inviteUrl(token);
       try {
         await navigator.clipboard.writeText(url);
         setCopied(true);
@@ -118,7 +107,7 @@ export function CreateInvitationDialog({
   const copyToClipboard = async () => {
     if (!createdToken) return;
     
-    const url = `${window.location.origin}/invite/${createdToken}`;
+    const url = inviteUrl(createdToken);
     try {
       await navigator.clipboard.writeText(url);
       setCopied(true);
@@ -140,7 +129,7 @@ export function CreateInvitationDialog({
 
   const getInviteUrl = () => {
     if (!createdToken || typeof window === 'undefined') return '';
-    return `${window.location.origin}/invite/${createdToken}`;
+    return inviteUrl(createdToken);
   };
 
   return (

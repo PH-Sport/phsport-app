@@ -13,16 +13,22 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth/auth-context';
+import { homeFor, viewModeFor } from '@/lib/utils/access';
 
 export default function JugadorLayout({ children }: { children: React.ReactNode }) {
-  const { status } = useAuth();
+  const { status, profile } = useAuth();
   const router = useRouter();
+
+  // Este marco es del futbolista. La agencia no tiene área personal: a su casa.
+  const mode = viewModeFor(profile);
+  const wrongPlace = status === 'AUTHENTICATED' && !!profile && mode !== 'player';
 
   useEffect(() => {
     if (status === 'UNAUTHENTICATED') router.push('/login');
-  }, [status, router]);
+    else if (wrongPlace) router.replace(homeFor(mode));
+  }, [status, wrongPlace, mode, router]);
 
-  if (status !== 'AUTHENTICATED') {
+  if (status !== 'AUTHENTICATED' || wrongPlace) {
     return (
       <div className="flex min-h-svh items-center justify-center bg-background">
         <div

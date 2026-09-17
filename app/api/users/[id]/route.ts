@@ -1,12 +1,14 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createClient } from '@/lib/supabase/server';
+import { loadAccess } from '@/lib/api/access';
 import {
   validationErrorResponse,
   internalErrorResponse,
   unauthorizedResponse,
   forbiddenResponse,
   notFoundResponse,
+  conflictFromDbError,
 } from '@/lib/api/errors';
 
 const updateUserSchema = z
@@ -14,28 +16,25 @@ const updateUserSchema = z
     given_name: z.string().trim().min(1, 'El nombre no puede estar vacío').max(80).optional(),
     family_name: z.string().trim().max(80).nullable().optional(),
     alias: z.string().trim().max(80).nullable().optional(),
-    role: z.enum(['ADMIN', 'DESIGNER']).optional(),
+    role_ids: z.array(z.string().uuid()).min(1, 'Elige un rol').optional(),
   })
   .refine(
     (d) =>
       d.given_name !== undefined ||
       d.family_name !== undefined ||
       d.alias !== undefined ||
-      d.role !== undefined,
+      d.role_ids !== undefined,
     { message: 'Nada que actualizar' }
   );
 
 /**
- * PATCH /api/users/[id] — renombrar y/o cambiar el rol de un miembro.
- * Solo Mánager (ADMIN). El cambio de rol es una acción extraordinaria con guardas:
- * no puedes cambiar tu propio rol ni dejar al equipo sin ningún Mánager.
- * La política RLS `profiles_owner_admin_upd` ya autoriza a un admin a editar
- * cualquier perfil, así que no hace falta service-role.
+ * PATCH /api/users/[id] — renombrar a un miembro y/o dejarle exactamente estos roles.
+ * Requiere `gestionar_roles`: quien gestiona los roles gestiona también la
+ * ficha del compañero. La RLS de `profiles` y de `profile_roles` exige lo
+ * mismo, así que no hace falta service-role. La guardia de la base impide
+ * quedarse sin nadie que gestione roles; aquí solo se traduce su error.
  */
-export async function PATCH(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const reqId = crypto.randomUUID();
   const { id } = await params;
   if (!id) return NextResponse.json({ error: 'id requerido' }, { status: 400 });
@@ -50,58 +49,42 @@ export async function PATCH(
   const { data: { user }, error: userError } = await supabase.auth.getUser();
   if (userError || !user) return unauthorizedResponse();
 
-  const { data: me, error: meError } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single();
-  if (meError) return internalErrorResponse(meError, 'role check', reqId);
-  if (me?.role !== 'ADMIN') return forbiddenResponse();
+  const access = await loadAccess(supabase, user.id);
+  if (!access.can('gestionar_roles')) return forbiddenResponse();
 
-  // Estado actual del objetivo (para guardas de rol).
   const { data: target, error: targetError } = await supabase
     .from('profiles')
-    .select('id, role')
+    .select('id')
     .eq('id', id)
     .single();
   if (targetError || !target) return notFoundResponse('Usuario');
 
-  if (body.role !== undefined && body.role !== target.role) {
-    // No puedes cambiar tu propio rol (evita autobloqueo).
+  if (body.role_ids !== undefined) {
+    // No te cambias tu propio rol (evita autobloqueo; la guardia de la base cubre el resto).
     if (id === user.id) {
-      return NextResponse.json(
-        { error: 'No puedes cambiar tu propio rol' },
-        { status: 403 }
-      );
+      return NextResponse.json({ error: 'No puedes cambiar tu propio rol' }, { status: 403 });
     }
-    // No dejar al equipo sin ningún Mánager.
-    if (target.role === 'ADMIN' && body.role === 'DESIGNER') {
-      const { count, error: countError } = await supabase
-        .from('profiles')
-        .select('id', { count: 'exact', head: true })
-        .eq('role', 'ADMIN');
-      if (countError) return internalErrorResponse(countError, 'admin count', reqId);
-      if ((count ?? 0) <= 1) {
-        return NextResponse.json(
-          { error: 'Debe quedar al menos un Mánager en el equipo' },
-          { status: 409 }
-        );
-      }
-    }
+    const { error: rolesError } = await supabase.rpc('set_profile_roles', {
+      p_profile_id: id,
+      p_role_ids: body.role_ids,
+    });
+    if (rolesError) return conflictFromDbError(rolesError) ?? internalErrorResponse(rolesError, 'set roles', reqId);
   }
+
+  const hasNameChange = body.given_name !== undefined || body.family_name !== undefined || body.alias !== undefined;
+  if (!hasNameChange) return NextResponse.json({ ok: true });
 
   const updateData: Record<string, unknown> = {};
   if (body.given_name !== undefined) updateData.given_name = body.given_name;
   if (body.family_name !== undefined) updateData.family_name = body.family_name || null;
   if (body.alias !== undefined) updateData.alias = body.alias || null;
-  if (body.role !== undefined) updateData.role = body.role;
   updateData.updated_at = new Date().toISOString();
 
   const { data: updated, error } = await supabase
     .from('profiles')
     .update(updateData)
     .eq('id', id)
-    .select('id, given_name, family_name, alias, full_name, display_name, role')
+    .select('id, given_name, family_name, alias, full_name, display_name')
     .single();
 
   if (error) return internalErrorResponse(error, 'user update', reqId);

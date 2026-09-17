@@ -51,3 +51,12 @@ export function forbiddenResponse(): NextResponse {
 export function notFoundResponse(resource = 'Recurso'): NextResponse {
   return NextResponse.json({ error: `${resource} no encontrado` }, { status: 404 });
 }
+
+/**
+ * La guardia de la base (trigger) y los `raise … using errcode = 'check_violation'`
+ * llegan como 23514. Se devuelven como 409 con su mensaje, que ya está en castellano.
+ */
+export function conflictFromDbError(error: { code?: string; message?: string } | null): NextResponse | null {
+  if (!error || error.code !== '23514') return null;
+  return NextResponse.json({ error: error.message ?? 'Conflicto' }, { status: 409 });
+}

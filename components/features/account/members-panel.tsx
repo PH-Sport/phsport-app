@@ -7,9 +7,10 @@
  *
  * Acciones sobre un miembro:
  * - Renombrar: a la vista (acción normal).
- * - Eliminar: en "Zona avanzada" (plegada) — acción extraordinaria, siempre con
- *   confirmación, solo con `gestionar_roles`. Conserva los diseños del usuario.
- *   (El rol se elige aquí también; llega con la tarea 7 del plan de permisos.)
+ * - Cambiar rol / Eliminar: en "Zona avanzada" (plegada) — acciones extraordinarias,
+ *   siempre con confirmación, solo con `gestionar_roles`. El rol se elige de la
+ *   lista fija (un rol por persona; la tabla admite varios para cuando lleguen
+ *   los agentes). Eliminar conserva los diseños del usuario.
  */
 
 import { useState } from 'react';
@@ -19,12 +20,14 @@ import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { SPRINGS, TWEENS, STAGGER } from '@/components/ui/animations';
 import { Collapse } from '@/components/ui/collapse';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { roleBadgeLabel, VIEW_MODE_ACCENT, viewModeFor } from '@/lib/utils/access';
 import { useAuth } from '@/lib/auth/auth-context';
 import { createClient } from '@/lib/supabase/client';
 import { useUsersData, type Member } from '@/lib/hooks/use-users-data';
+import { useRoles } from '@/lib/hooks/use-roles';
 import { CreateInvitationDialog } from '@/components/invitations/create-invitation-dialog';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 
@@ -36,23 +39,29 @@ const rise = {
 export function MembersPanel() {
   const { profile, access } = useAuth();
   const { users, mutate } = useUsersData();
+  const { roles } = useRoles();
 
   const [inviteOpen, setInviteOpen] = useState(false);
   const [member, setMember] = useState<Member | null>(null);
   const [givenDraft, setGivenDraft] = useState('');
   const [familyDraft, setFamilyDraft] = useState('');
   const [aliasDraft, setAliasDraft] = useState('');
+  const [roleDraft, setRoleDraft] = useState<string>('');
   const [advancedOpen, setAdvancedOpen] = useState(false);
-  const [busy, setBusy] = useState<null | 'save' | 'delete'>(null);
+  const [busy, setBusy] = useState<null | 'save' | 'roles' | 'delete'>(null);
+  const [confirmRole, setConfirmRole] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   const isSelf = member?.id === profile?.id;
+  const currentRoleId = member?.roles[0]?.id ?? '';
+  const draftRoleName = roles.find((r) => r.id === roleDraft)?.name ?? '';
 
   const openMember = (m: Member) => {
     setMember(m);
     setGivenDraft(m.given_name || '');
     setFamilyDraft(m.family_name || '');
     setAliasDraft(m.alias || '');
+    setRoleDraft(m.roles[0]?.id ?? '');
     setAdvancedOpen(false);
   };
 
@@ -65,6 +74,7 @@ export function MembersPanel() {
     given_name?: string;
     family_name?: string | null;
     alias?: string | null;
+    role_ids?: string[];
   }) => {
     if (!member) return false;
     const res = await fetch(`/api/users/${member.id}`, {
@@ -104,6 +114,23 @@ export function MembersPanel() {
       closeMember();
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'No se pudo actualizar');
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const handleSaveRole = async () => {
+    if (!member || !roleDraft) return;
+    setBusy('roles');
+    try {
+      await patchUser({ role_ids: [roleDraft] });
+      toast.success('Rol actualizado');
+      mutate();
+      setConfirmRole(false);
+      closeMember();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'No se pudo cambiar el rol');
+      setConfirmRole(false);
     } finally {
       setBusy(null);
     }
@@ -282,7 +309,7 @@ export function MembersPanel() {
                     Se unió el {format(new Date(member.created_at), 'dd/MM/yyyy')}
                   </p>
 
-                  {/* Zona avanzada: eliminar (extraordinario). Oculta para uno mismo y para quien no gestiona roles. */}
+                  {/* Zona avanzada: rol + eliminar (extraordinario). Oculta para uno mismo y para quien no gestiona roles. */}
                   {!isSelf && access.can('gestionar_roles') && (
                     <div className="rounded-xl border border-border/60">
                       <button
@@ -301,7 +328,28 @@ export function MembersPanel() {
                         </motion.span>
                       </button>
                       <Collapse open={advancedOpen}>
-                        <div className="space-y-2 px-3 pb-3 pt-1">
+                        <div className="space-y-3 px-3 pb-3 pt-1">
+                          <p className="text-eyebrow text-muted-foreground">Rol</p>
+                          <Select value={roleDraft} onValueChange={setRoleDraft}>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Elige un rol" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {roles.map((r) => (
+                                <SelectItem key={r.id} value={r.id}>
+                                  {r.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <button
+                            type="button"
+                            onClick={() => setConfirmRole(true)}
+                            disabled={!roleDraft || roleDraft === currentRoleId}
+                            className="flex h-11 w-full items-center justify-center rounded-lg border border-border px-3 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted/40 hover:text-foreground disabled:opacity-50 md:h-9"
+                          >
+                            Cambiar rol
+                          </button>
                           <button
                             type="button"
                             onClick={() => setConfirmDelete(true)}
@@ -339,6 +387,17 @@ export function MembersPanel() {
           </>
         )}
       </AnimatePresence>
+
+      <ConfirmDialog
+        open={confirmRole}
+        onOpenChange={(o) => !o && setConfirmRole(false)}
+        onConfirm={handleSaveRole}
+        title={`¿Cambiar el rol a ${draftRoleName}?`}
+        description={`${member?.full_name || 'Este usuario'} pasará a tener los permisos de ese rol y dejará de tener los del actual.`}
+        confirmLabel="Cambiar rol"
+        variant="warning"
+        loading={busy === 'roles'}
+      />
 
       <ConfirmDialog
         open={confirmDelete}

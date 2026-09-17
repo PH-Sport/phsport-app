@@ -5,14 +5,12 @@ export const metadata = {
 };
 
 /**
- * VISTA PREVIA — sin funcionalidad y con datos inventados.
+ * La casa del futbolista. Es la única página de su marco: sin panel, sin
+ * barra lateral, sin tab bar (spec §1). Llega aquí al iniciar sesión, y el
+ * middleware lo trae de vuelta si intenta entrar en el panel de la agencia.
  *
- * Está en `preview` para poder mirarla desde la PWA instalada y decidir la
- * disposición antes de construir el sistema de carpetas. Se llega por el botón
- * del final de Ajustes, que solo se dibuja para cuentas de desarrollador.
- *
- * Cuando el área personal sea de verdad, esta página deja de ser una maqueta:
- * el marco y la disposición se quedan, y los datos dejan de ser de mentira.
+ * Nació como maqueta con datos inventados (septiembre de 2026) para decidir
+ * la disposición desde la PWA; la disposición se quedó y los datos son reales.
  */
 export default function AreaPersonalPage() {
   return <AreaPersonal />;

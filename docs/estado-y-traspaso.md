@@ -893,23 +893,18 @@ Mario recorrió `preview` el 2026-09-17 (antes de que existieran las tablas de
 jugadores) y señaló tres cosas, **las tres atendidas ese mismo día** (commit
 siguiente al `5529cc5`):
 
-- **La banda clara sobre la cabecera** en el iPhone (PWA instalada). Cuatro
-  pasadas, y cada una enseñó algo (detalle en «Cosas que conviene saber»):
-  (1) sin fondo en `html`, Safari 26 pintaba blanco la barra de estado —
-  arreglado el día 18—; (2) seguía viéndose «parte de la barra borrosa», y un
-  contorno fucsia de diagnóstico más las capturas de Mario demostraron que
-  **iOS 26 pinta desde la barra de estado un velo de cristal que baja ~24 px
-  sobre el contenido** (la burbuja del avatar se aclaraba fila a fila, medido
-  píxel a píxel); (3) se probó bajar la cabecera 24 px en la PWA (`cccb72c`),
-  y entonces Mario aportó el dato clave: **bajar y volver a subir quita el
-  velo**, así que no es permanente, es un estado mal calculado al arrancar
-  —casi seguro por la animación de entrada del contenido— que iOS corrige
-  con el primer desplazamiento; (4) **arreglo vigente:** fuera el hueco de 24
-  px, y en su lugar `IosEdgeNudge` (solo iOS standalone): 700 ms tras montar
-  el marco, si la página está arriba del todo, un `scrollTo(0, 1)` y vuelta a
-  0, que es lo que hace Mario con el dedo. **Pendiente de que Mario lo
-  confirme en la PWA**; si no bastara, el hueco de 24 px está en el historial
-  (`cccb72c`) y funciona, a costa de espacio permanente.
+- **La banda clara sobre la cabecera** en el iPhone (PWA instalada). Cinco
+  pasadas; el detalle, en «Cosas que conviene saber». En corto: (1) sin fondo
+  en `html`, Safari 26 pintaba blanco la barra de estado — arreglado el 18;
+  (2) seguía «parte de la barra borrosa»: un contorno fucsia de diagnóstico y
+  las capturas de Mario demostraron un velo de cristal de iOS 26 que baja ~24
+  px y desenfoca lo que pilla (la burbuja del avatar, medido píxel a píxel);
+  (3) bajar la cabecera 24 px lo escondía, a costa de espacio; (4) un
+  empujón de scroll al arrancar no hizo nada; (5) **Mario dio la pista:** el
+  velo desaparece justo cuando la cabecera se vuelve opaca al desplazar.
+  **Arreglo vigente (`5373676`):** `IosEdgeSentinel`, un elemento sticky de
+  1 px con el fondo de la página, antes de la cabecera en los dos marcos.
+  **Pendiente de que Mario lo confirme en la PWA.**
 - **El perfil se abre en una hoja desde abajo en móvil** (`cccb72c`), la
   misma pieza que Notificaciones (asa, arrastrar o tocar fuera para cerrar),
   a petición de Mario: nombre, correo y rol arriba; Ajustes, Miembros, Ayuda;
@@ -982,15 +977,18 @@ septiembre), porque sobre una app que va a tirones nada parece fluido.
   sigue ahí, pero del color de la página. No se puede reproducir con el WebKit
   de escritorio de Playwright; solo en un iPhone con iOS 26.
 - **Y en la app instalada, iOS 26 además pinta un velo de cristal** desde la
-  barra de estado hacia abajo (~24 px, se desvanece), por encima de lo que
-  haya: se nota en formas con color (la burbuja del avatar se ve «borrosa» por
-  arriba), no en fondo liso. Con `black-translucent` es peor (más inset que
-  rellenar). **Es un estado, no un tatuaje:** aparece al arrancar y el primer
-  desplazamiento real lo quita. Por eso `IosEdgeNudge` (montado en los dos
-  marcos) hace un scroll de 1 px y vuelta cuando la entrada ha terminado.
-  Cómo se midió: muestrear una captura del iPhone columna a columna (un
-  script de Node que decodifica el PNG) y ver el color del avatar aclararse
-  hacia arriba. No se reproduce con el WebKit de Playwright.
+  barra de estado hacia abajo (~24 px, se desvanece) **cuando el elemento
+  pegado al borde superior es transparente**; con cualquier fondo, aunque
+  sea al 30 %, usa borde duro y no hay velo. La cabecera es transparente
+  arriba del todo a propósito (el título se ve a través), así que
+  `IosEdgeSentinel` (1 px sticky, `bg-background`, antes de la cabecera en
+  `app-layout.tsx` y en `app/(jugador)/layout.tsx`) es quien le da el color.
+  Si se crea otro marco con algo pegado arriba, que lleve el centinela. Lo
+  que NO funcionó, para no repetirlo: reservar 24 px de hueco (funciona pero
+  cuesta espacio) y un scroll de 1 px al arrancar (no era la causa). Cómo se
+  midió: muestrear una captura del iPhone columna a columna (script de Node
+  que decodifica el PNG) y ver el color del avatar aclararse hacia arriba.
+  No se reproduce con el WebKit de Playwright.
 - **Los dos «2ª PORTUGAL - J2» no son un duplicado**: son dos piezas del mismo
   partido, para jugadores distintos. El modelo lo permite y es correcto.
 - **Lo que hay detrás de la app —cuentas, claves, correo, DNS— está en

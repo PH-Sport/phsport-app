@@ -10,7 +10,7 @@ import { AppSidebar, SidebarProvider, useSidebar } from './app-sidebar';
 import { MobileTabBar } from './mobile-tab-bar';
 import { PageTitleProvider } from './page-title-context';
 import { Header } from './header';
-import { IosEdgeNudge } from './ios-edge-nudge';
+import { IosEdgeSentinel } from './ios-edge-sentinel';
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -58,8 +58,6 @@ export function AppLayout({ children }: AppLayoutProps) {
         <MainArea>{hydrated ? children : null}</MainArea>
         {/* Navegación móvil: tab bar inferior flotante (en escritorio no existe). */}
         <MobileTabBar />
-        {/* Quita el velo que iOS 26 deja bajo la barra de estado al arrancar la PWA. */}
-        <IosEdgeNudge />
       </PageTitleProvider>
     </SidebarProvider>
   );
@@ -74,6 +72,8 @@ function MainArea({ children }: { children: React.ReactNode }) {
       transition={SPRINGS.smooth}
       className="min-h-svh"
     >
+      {/* Antes que la cabecera: le da a iOS 26 un fondo que leer en el borde. */}
+      <IosEdgeSentinel />
       <Header />
       <main id="main-content" className="animate-page-enter">
         {children}

@@ -161,7 +161,7 @@ cimiento de agentes, scouts y jugadores a la vez.
 
 **Implementado el 2026-09-17** (migraciones 044 y 045 aplicadas; plan en
 `docs/superpowers/plans/2026-09-16-permisos-rbac.md`; estado en el §3 de
-septiembre de `docs/estado-y-traspaso.md`). La 047, que borra lo antiguo,
+septiembre de `docs/estado-y-traspaso.md`). La 048, que borra lo antiguo,
 espera al merge a `main`.
 
 **Consecuencia de no tener escalafón:** quien puede invitar puede invitar a

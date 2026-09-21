@@ -198,8 +198,18 @@ diseñadores. Lee cuanto quieras; para escribir, pregunta.
 **Producción y preview comparten base, y `main` va por detrás.** Una migración
 que quite una columna que `main` todavía lee tumba producción. Por eso las
 migraciones se parten en «añadir» (se aplican cuando se escriben) y «quitar»
-(esperan al merge): la 046 es el ejemplo. Antes de escribir DDL que borre algo,
+(esperan al merge): la 048 es el ejemplo. Antes de escribir DDL que borre algo,
 mirar qué lee `main` con `git grep <columna> main -- app lib components`.
+
+**La app corre en Dublín porque la base está en Irlanda** (`vercel.json`,
+`regions: ["dub1"]`). Sin eso Vercel la ponía en Washington y cada consulta
+desde el servidor cruzaba el Atlántico: 1,3–3,5 s en empezar a responder. Si
+algún día la base se muda, se muda esto con ella. Y **cada consulta a la base
+que se añada al middleware la pagan todas las navegaciones**: lo que el
+servidor necesite saber en cada petición debe viajar en la sesión
+(`app_metadata`, que escribe la base; nunca `user_metadata`, que lo edita el
+usuario). Para comprobar dónde corre, mirar la cabecera `x-vercel-id` de una
+respuesta: `cdg1::dub1` es «entró por París, se ejecutó en Dublín».
 
 **Ante un fallo visual, mira la pantalla antes de teorizar.** Hay matriz de
 Playwright: se puede cargar una página, medir cajas, leer estilos calculados y

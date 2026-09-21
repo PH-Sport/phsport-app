@@ -1,12 +1,14 @@
 # Estado del proyecto y traspaso
 
-> **Actualizado:** 2026-09-17, al cerrar en código los cuatro puntos del salto
-> a «app de la agencia» (§3 y §4 de septiembre): permisos por roles, fichas de
-> jugadores con alta por enlace, carpetas y archivos, y el almacén. Las tres
-> migraciones (044, 045, 046) están **aplicadas**: las dos últimas esa misma
-> tarde, con permiso expreso de Mario, y comprobadas con sesiones simuladas. Lo
-> que falta es el recorrido de verdad desde el iPhone y los retoques de fluidez
-> que Mario vio (pendiente 12). `preview` va por delante de `main` y no se sube
+> **Actualizado:** 2026-09-21, al mudar la app a Dublín (§5 de septiembre): el
+> servidor pasa de 1,3–3,5 s a 0,4–0,9 s en empezar a responder, y la clase de
+> cuenta viaja en la sesión (migración 047, aplicada). Queda lo demás que Mario
+> vio en el iPhone —la banda de la cabecera (con contorno de diagnóstico puesto),
+> el pulido y las transiciones de Jugadores— y el recorrido de jugadores:
+> pendiente 12. Antes, el 2026-09-17, al cerrar en código los cuatro puntos del
+> salto a «app de la agencia» (§3 y §4): permisos por roles, fichas de jugadores
+> con alta por enlace, carpetas y archivos, y el almacén, con las migraciones
+> 044, 045 y 046 aplicadas. `preview` va por delante de `main` y no se sube
 > hasta que Mario lo dé por bueno: primero se termina todo aquí.
 > Antes, el 2026-09-14, al arrancar el salto de «panel del equipo de
 > diseño» a «app de la agencia» — ver el §2 de septiembre y el pendiente 8, que
@@ -434,7 +436,7 @@ spec. Aquí, lo que cambia el estado y lo que no se deduce del código.
 2026-09-16, registrada en Supabase como `roles_y_permisos`); la **045 cambia
 las políticas** para que pregunten por permiso y cierra dos agujeros (aplicada
 el 2026-09-17 con permiso expreso de Mario, registrada como
-`politicas_por_permiso`); la **047 borra lo antiguo** —`profiles.role`,
+`politicas_por_permiso`); la **048 borra lo antiguo** —`profiles.role`,
 `invitations.role`, `is_admin`, `role_enum`— y **solo puede ir después del
 merge a `main`**, porque hasta entonces producción lee esas columnas. (El
 número 046 lo ocupó la migración de jugadores, §4.)
@@ -513,7 +515,7 @@ lo que cambia el estado.
   registrada como `jugadores_y_archivos`. Sesiones simuladas: Mario crea una
   ficha y su enlace, Loren las ve, una cuenta ajena no ve ni crea nada, y el
   enlace se valida como anon con el nombre del jugador. **La que borra lo
-  antiguo del rol pasa a ser la 047.**
+  antiguo del rol pasa a ser la 048.**
 - **Revisada con contexto limpio antes de aplicarse.** Sacó tres cosas
   serias, corregidas el mismo día: (1) un jugador podía crear una fila suya
   apuntando a un objeto ajeno y borrarlo con la regla del cubo — ahora la ruta
@@ -564,6 +566,60 @@ navegador o el iPhone. La base sí (sesiones simuladas de arriba) y lo
 automático también, en cada fase: tipos, lint, 190 tests, build. **El recorrido
 entero desde el iPhone** (crear ficha → enlace → alta con otro correo → subir →
 mover → borrar) es el pendiente 12, junto con los retoques de fluidez.
+
+### 5. La app se muda a Dublín (`9395c3f`, 2026-09-21)
+
+**El síntoma:** «va muy lenta y tarda en cargar», en un iPhone de última
+generación. **La medida** (curl contra staging con la sesión de Mario, el
+2026-09-18): entre **1,3 y 3,5 segundos solo en empezar a responder**, antes
+de descargar o pintar nada. La cabecera `x-vercel-id` decía `cdg1::iad1`: la
+petición entraba por París y **la app se ejecutaba en Washington**, con la
+base de datos en Irlanda (`eu-west-1`). Cada página hacía dos consultas a la
+base desde el servidor —validar la sesión y leer el perfil para saber si la
+cuenta es de agencia o de jugador— y cada una cruzaba el Atlántico ida y
+vuelta. El teléfono no tenía nada que hacer: esperaba.
+
+**Qué se hizo:**
+
+- **`vercel.json` con `regions: ["dub1"]`.** Las funciones corren en Dublín,
+  al lado de la base. Es lo único que hay en ese archivo; se decidió por
+  archivo y no por panel para que viaje con el repo.
+- **La clase de cuenta viaja en la sesión.** La migración 047
+  (`kind_en_la_sesion`) copia `profiles.kind` a `app_metadata` de la cuenta
+  (un trigger, y relleno de las ocho). `app_metadata` lo escribe solo la base
+  —el usuario no puede tocarlo—, por eso vale para decidir acceso; Supabase lo
+  devuelve con la sesión, así que el middleware ya no lee el perfil en cada
+  navegación: solo en dos casos raros (entrar en `/login` con sesión, o pisar
+  el marco equivocado), donde además necesita saber si la cara es de mánager
+  o de diseñador.
+- Queda **una** consulta por navegación: validar la sesión contra Supabase
+  Auth (`getUser`). Quitarla también es posible con `getClaims`, que verifica
+  el token en local sin llamar a nadie, **pero exige pasar el proyecto a claves
+  de firma asimétricas** (hoy usa la clave simétrica antigua; el endpoint JWKS
+  devuelve `{"keys":[]}`). Es un cambio en el panel de Supabase con rotación
+  de claves: se hará aparte, con Mario delante, si tras la mudanza sigue
+  haciendo falta.
+
+**Resultado, medido igual el 2026-09-21 contra el despliegue del `9395c3f`:**
+`x-vercel-id: cdg1::dub1` (la app corre en Dublín) y el servidor empieza a
+responder en **0,4–0,9 s** (nueve peticiones a `/inicio`, `/jugadores` y
+`/disenos`, tres pasadas), frente a 1,3–3,5 s antes. Lo que queda de ese
+tiempo es la validación de la sesión (una llamada a Supabase Auth) más el
+render; para bajarlo más, `getClaims` (arriba). Falta que Mario lo note en el
+iPhone: lo medido es el servidor, no el pintado en el teléfono.
+
+**Lo que se descartó:** el *custom access token hook* de Supabase (meter el
+`kind` en el token al emitirlo). Habría servido igual, pero hay que activarlo
+a mano en el panel y el token tarda hasta una hora en refrescarse; con
+`getUser` el `app_metadata` llega siempre fresco y no hay nada que activar.
+
+**Lo que hay que saber:** el conector de Vercel de Claude Code **no ve el
+proyecto** aunque Mario lo transfirió a su cuenta: ve el equipo `rodz-dev`
+vacío, y el despliegue `phsport-…-rodz-dev.vercel.app` le devuelve «no
+encontrado». Es un permiso de la aplicación conectada, no del proyecto
+(`vercel.com/account/authentication` → *Connected Applications*). Mientras
+tanto, la región se lee de la cabecera `x-vercel-id` de cualquier respuesta,
+y los despliegues se localizan por la API de GitHub (`deployments` del commit).
 
 ---
 
@@ -768,15 +824,17 @@ una por MCP con el nombre sin prefijo, que es como están las últimas.
 - **Instalar Xcode** para probar iOS real (18 y 26) sin depender del móvil de
   Mario. No está instalado; se maneja con `xcrun simctl`, no con Playwright.
 
-### 11. Aplicar la 047 tras el merge a `main` (la 045 y la 046 ya están)
+### 11. Aplicar la 048 tras el merge a `main` (la 045, la 046 y la 047 ya están)
 
 **La 045 y la 046 se aplicaron el 2026-09-17** por MCP, registradas como
 `politicas_por_permiso` y `jugadores_y_archivos`, con permiso expreso de Mario
 (el modo automático de permisos las había bloqueado por la mañana; no se rodeó:
 se esperó a que él lo dijera). Antes se comprobó que los 8 perfiles tenían rol;
-después, sesiones simuladas para las dos (§3 y §4 de septiembre).
+después, sesiones simuladas para las dos (§3 y §4 de septiembre). **La 047**
+(`kind_en_la_sesion`) se aplicó el 2026-09-21 con el mismo permiso: solo añade
+un trigger y rellena `app_metadata` de las ocho cuentas (§5 de septiembre).
 
-**Lo que queda es la 047, y va después del merge**, cuando Vercel tenga
+**Lo que queda es la 048, y va después del merge**, cuando Vercel tenga
 desplegado en producción el código de `preview`: borra `profiles.role`,
 `invitations.role`, `is_admin` y `role_enum` (con su valor `JUGADOR` de la 046).
 Está descrita en el plan de permisos, tarea 11 (allí se llamaba 046; el número
@@ -792,10 +850,16 @@ jugadores) y señaló tres cosas, **las tres atendidas ese mismo día** (commit
 siguiente al `5529cc5`):
 
 - **La banda clara sobre la cabecera** en el iPhone, tocando título, campana y
-  avatar. No era un degradado de la app: es Safari 26 pintando su tinte con el
-  fondo de `html`, que no estaba definido. Ahora `html` lleva el fondo de la
-  página. Ver «Cosas que conviene saber». **Solo Mario puede confirmarlo**, en
-  el iPhone: el WebKit de Playwright no lo reproduce.
+  avatar. Primer diagnóstico: Safari 26 pintando su tinte con el fondo de
+  `html`, que no estaba definido; se le puso el fondo de la página. **No
+  funcionó** (Mario, 2026-09-21; lo usa todo desde la PWA instalada). En vez de
+  otro intento a ciegas, la cabecera lleva desde el `9395c3f` un **contorno
+  fucsia de diagnóstico, solo para cuentas de desarrollador**: si la banda cae
+  dentro del contorno y no es fucsia, la pinta el sistema sobre la caja de la
+  cabecera (efecto de borde de iOS 26 sobre elementos pegados arriba); si es
+  fucsia arriba del todo, es la propia barra creyéndose desplazada; si se sale
+  del contorno, es la barra de estado de la PWA. Con la respuesta se arregla
+  y se quita el contorno. El WebKit de Playwright no lo reproduce.
 - **Iconos junto al título** en las pantallas de Jugadores: fuera, como en el
   resto de la app (criterio de hace tiempo: título desnudo).
 - **Navegación plana y brusca:** las pantallas de Jugadores entran ahora como
@@ -814,10 +878,27 @@ PLAYWRIGHT_PASS="$USER_PASSWORD" npx playwright test --project=sesion`, y luego
 Es la cuenta de Mario (gestor): mira y crea datos de prueba que luego hay que
 borrar (hoy existe la ficha «Juan Cruz», sin cuenta, creada por él).
 
-**Queda:** el recorrido entero de jugadores desde el iPhone (crear ficha →
-enlace → alta con otro correo, sin sesión abierta → subir desde el móvil →
-mover, entregar, borrar desde la agencia), anotar aquí lo que falle, y después
-decidir el merge (pendiente 11).
+**El 2026-09-21 Mario amplió la lista** al volver tras unos días: la banda
+sigue; en Jugadores nota una tipografía distinta y le falta pulido; las
+animaciones no se le notan; y, sobre todo, **la app va lenta incluso en un
+iPhone de última generación**. El rendimiento se atacó primero (§5 de
+septiembre), porque sobre una app que va a tirones nada parece fluido.
+
+**Queda, en este orden:**
+
+1. Que Mario mire el contorno fucsia y diga dónde cae la banda; arreglar y
+   quitar el contorno.
+2. Medir el rendimiento tras la mudanza a Dublín; si sigue lenta, el siguiente
+   escalón es el arranque en el propio teléfono (§5).
+3. Pulido de Jugadores: la fuente monoespaciada solo para cifras y fechas (en
+   las frases —«Sin cuenta», «0 archivos»— se coló), y una pasada pantalla a
+   pantalla contra Ajustes y Equipo, con capturas antes de subir.
+4. Transiciones entre páginas (entrar en una ficha desliza, volver retira,
+   las pestañas se funden): hoy Next cambia de pantalla de golpe y el
+   movimiento que hay es solo dentro de cada página.
+5. El recorrido entero de jugadores desde el iPhone (crear ficha → enlace →
+   alta con otro correo, sin sesión abierta → subir desde el móvil → mover,
+   entregar, borrar desde la agencia), y después decidir el merge (pendiente 11).
 
 ---
 

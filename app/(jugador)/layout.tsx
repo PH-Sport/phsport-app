@@ -14,7 +14,6 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth/auth-context';
 import { homeFor, viewModeFor } from '@/lib/utils/access';
-import { IosEdgeSentinel } from '@/components/layout/ios-edge-sentinel';
 
 export default function JugadorLayout({ children }: { children: React.ReactNode }) {
   const { status, profile } = useAuth();
@@ -41,9 +40,6 @@ export default function JugadorLayout({ children }: { children: React.ReactNode 
   }
 
   return (
-    <div className="min-h-svh bg-background">
-      <IosEdgeSentinel />
-      {children}
-    </div>
+    <div className="min-h-svh bg-background">{children}</div>
   );
 }

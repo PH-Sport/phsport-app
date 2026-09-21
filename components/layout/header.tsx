@@ -52,7 +52,15 @@ export function Header() {
         // ese 1% de transparencia es invisible y sale gratis, así que se queda
         // como red de seguridad. https://1ar.io/updates/safari-26-liquid-glass-web/
         'transition-colors duration-200 ease-out-expo md:border-border md:bg-background/90 md:backdrop-blur-sm',
-        collapsed ? 'border-border bg-background/[0.99]' : 'border-transparent bg-transparent'
+        //
+        // Y el 2 % de abajo tampoco. iOS 26 (app instalada) mira el elemento
+        // pegado al borde superior y lee su fondo: si es transparente, aplica
+        // un velo de cristal que desenfoca los primeros ~24 px (la burbuja del
+        // avatar salía «borrosa»); con cualquier fondo, aunque sea al 30 %, usa
+        // borde duro. Un hilo de 1 px aparte no le sirvió: mira a la cabecera.
+        // Al 2 % del color de la página es invisible —el título se sigue viendo
+        // a través— pero para iOS ya «tiene fondo». Medido con Mario, 2026-09-21.
+        collapsed ? 'border-border bg-background/[0.99]' : 'border-transparent bg-background/[0.02]'
       )}
     >
       {/* Móvil: 56px de alto — aire para los controles de 44px (como las apps nativas). */}

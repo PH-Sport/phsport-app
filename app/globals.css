@@ -137,6 +137,24 @@
   * {
     @apply border-border;
   }
+  :root {
+    /* Aire bajo la barra de estado en la app instalada de iOS: ver abajo. */
+    --ios-standalone-top: 0px;
+  }
+  /* iOS 26 pinta desde la barra de estado un velo de cristal que baja unos
+     24 px sobre el contenido y se desvanece; no hay CSS ni meta que lo quite
+     (medido el 2026-09-21 en la burbuja del avatar: su mitad de arriba se
+     aclaraba fila a fila). Lo único que funciona es no poner nada debajo: en
+     la app instalada, la cabecera y el contenido bajan ese margen y el velo
+     cae sobre fondo liso, donde no se nota. Solo iOS standalone: Safari,
+     Android y escritorio no lo pintan y no deben pagar el hueco. */
+  @media (display-mode: standalone) {
+    @supports (-webkit-touch-callout: none) {
+      :root {
+        --ios-standalone-top: 24px;
+      }
+    }
+  }
   html {
     /* Táctil: sin flash gris de WebKit al tocar; el feedback lo dan los estados propios */
     -webkit-tap-highlight-color: transparent;

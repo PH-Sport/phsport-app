@@ -123,8 +123,10 @@ export function AreaPersonal() {
 
   return (
     // svh y no vh: en iOS la barra del navegador se come el 100vh y la última
-    // fila queda debajo del borde. Las safe-area son para la PWA instalada.
-    <div className="mx-auto flex h-svh w-full max-w-lg flex-col pb-[env(safe-area-inset-bottom)] pt-[env(safe-area-inset-top)]">
+    // fila queda debajo del borde. Las safe-area son para la PWA instalada, y
+    // --ios-standalone-top (globals.css) es el aire bajo el velo de cristal de
+    // iOS 26: aquí también hay un avatar pegado arriba.
+    <div className="mx-auto flex h-svh w-full max-w-lg flex-col pb-[env(safe-area-inset-bottom)] pt-[calc(env(safe-area-inset-top)+var(--ios-standalone-top))]">
       <input
         ref={inputRef}
         type="file"

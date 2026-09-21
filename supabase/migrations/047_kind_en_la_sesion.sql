@@ -13,7 +13,7 @@
 -- Solo añade: un trigger y un relleno de las ocho cuentas. `main` no lee
 -- app_metadata para nada y sigue igual.
 
-create function public.sync_kind_to_auth()
+create or replace function public.sync_kind_to_auth()
 returns trigger
 language plpgsql
 security definer
@@ -32,6 +32,9 @@ revoke execute on function public.sync_kind_to_auth() from public, anon, authent
 
 -- AFTER: el perfil nace desde un trigger AFTER INSERT de auth.users
 -- (handle_new_user), así que la cuenta ya existe cuando esto escribe en ella.
+-- (Reaplicable: `or replace` arriba y este `drop if exists`, para que volver a
+-- pasarla no falle con «already exists».)
+drop trigger if exists trg_profiles_kind_to_auth on public.profiles;
 create trigger trg_profiles_kind_to_auth
   after insert or update of kind on public.profiles
   for each row execute function public.sync_kind_to_auth();

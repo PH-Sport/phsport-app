@@ -592,13 +592,31 @@ vuelta. El teléfono no tenía nada que hacer: esperaba.
   navegación: solo en dos casos raros (entrar en `/login` con sesión, o pisar
   el marco equivocado), donde además necesita saber si la cara es de mánager
   o de diseñador.
-- Queda **una** consulta por navegación: validar la sesión contra Supabase
-  Auth (`getUser`). Quitarla también es posible con `getClaims`, que verifica
-  el token en local sin llamar a nadie, **pero exige pasar el proyecto a claves
-  de firma asimétricas** (hoy usa la clave simétrica antigua; el endpoint JWKS
-  devuelve `{"keys":[]}`). Es un cambio en el panel de Supabase con rotación
-  de claves: se hará aparte, con Mario delante, si tras la mudanza sigue
-  haciendo falta.
+- En una navegación dentro del panel queda **una** consulta: validar la sesión
+  contra Supabase Auth (`getUser`) desde el middleware. En una **carga
+  completa** (abrir la PWA, recargar) son tres: esa, más otro `getUser` y la
+  lectura del perfil que hace el layout raíz en servidor (`getServerAuth`);
+  el segundo `getUser` es el redundante, si algún día hay que rascar. Y un
+  matiz de geografía que sacó la revisión: el middleware corre en el borde
+  (el punto de entrada, París para Mario), no en Dublín, así que su `getUser`
+  va de París a Irlanda; el del layout sí sale de Dublín. Quitar el del
+  middleware del todo es posible con `getClaims`, que verifica el token en
+  local sin llamar a nadie, **pero exige pasar el proyecto a claves de firma
+  asimétricas** (hoy usa la clave simétrica antigua; el endpoint JWKS devuelve
+  `{"keys":[]}`). Es un cambio en el panel de Supabase con rotación de claves:
+  se hará aparte, con Mario delante, si sigue haciendo falta.
+- **Revisado con contexto limpio el mismo día.** Dos cosas corregidas en el
+  commit siguiente: (1) si la sesión y el perfil discrepan sobre la clase de
+  cuenta (claim sin poner, editado a mano), el middleware rebotaba sin fin
+  entre `/area-personal` y sí mismo; ahora, cuando ya ha leído el perfil,
+  manda el perfil. (2) **Venía de antes:** sin cookie, `getUser` devuelve un
+  error de «sesión ausente» y el middleware lo trataba como fallo y servía la
+  página protegida entera al anónimo (comprobado: `curl` sin cookies a
+  `/inicio` daba 200); ahora «sin sesión» es sin sesión y va a `/login` en
+  servidor. Y la 047 se hizo reaplicable. Lo que la revisión no pudo
+  comprobar: un alta real de jugador (el trigger 047 aún no ha corrido en un
+  alta; tras la primera, `select raw_app_meta_data->>'kind' from auth.users
+  where id = …` debe decir `JUGADOR`).
 
 **Resultado, medido igual el 2026-09-21 contra el despliegue del `9395c3f`:**
 `x-vercel-id: cdg1::dub1` (la app corre en Dublín) y el servidor empieza a

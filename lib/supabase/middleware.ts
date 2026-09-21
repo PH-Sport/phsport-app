@@ -39,7 +39,13 @@ export async function updateSession(request: NextRequest) {
     error: userError,
   } = await supabase.auth.getUser()
 
-  if (userError) {
+  // Sin cookie de sesión, getUser() no devuelve «usuario nulo» sin más: devuelve
+  // también un error (AuthSessionMissingError). Tratarlo como fallo salía caro:
+  // el anónimo se servía la página protegida entera y era el cliente quien lo
+  // mandaba a /login (revisión del 2026-09-21). Sin sesión es «sin sesión»; el
+  // retorno temprano se reserva para errores de verdad (red, Auth caído).
+  const noSession = !user && (!userError || userError.name === 'AuthSessionMissingError')
+  if (userError && !noSession) {
     logger.serverError('[Auth] getUser error in middleware:', userError)
     return response
   }
@@ -88,7 +94,13 @@ export async function updateSession(request: NextRequest) {
           .select(PROFILE_WITH_ROLES_SELECT)
           .eq('id', user.id)
           .maybeSingle()
-        url.pathname = homeFor(viewModeFor(raw ? toProfile(raw) : null))
+        const mode = viewModeFor(raw ? toProfile(raw) : null)
+        // Si la sesión y el perfil discrepan (claim sin poner, o editado a
+        // mano), manda el perfil: es lo que leen la RLS y los marcos del
+        // cliente. Sin esto, un perfil de jugador con la sesión diciendo
+        // «agencia» rebotaba entre /area-personal y sí mismo sin fin.
+        if (!isPublicRoute && (mode === 'player') === isPlayerArea) return response
+        url.pathname = homeFor(mode)
       }
       return NextResponse.redirect(url)
     }

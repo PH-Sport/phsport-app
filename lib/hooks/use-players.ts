@@ -4,7 +4,7 @@ import useSWR from 'swr';
 import type { PostgrestError } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/lib/auth/auth-context';
-import { folderCounts, type FolderView, type PlayerFile } from '@/lib/utils/players';
+import { folderCounts, latestInvite, type FolderView, type PlayerFile } from '@/lib/utils/players';
 
 /** Una ficha en la lista de Jugadores, con lo justo para la segunda línea. */
 export interface PlayerSummary {
@@ -31,11 +31,6 @@ interface RawPlayerRow {
   created_at: string;
   player_files: Pick<PlayerFile, 'folder'>[] | null;
   invitations: { id: string; token: string; expires_at: string | null }[] | null;
-}
-
-export function latestInvite<T extends { expires_at: string | null }>(invites: T[] | null | undefined): T | null {
-  if (!invites?.length) return null;
-  return [...invites].sort((a, b) => (b.expires_at ?? '').localeCompare(a.expires_at ?? ''))[0];
 }
 
 async function fetchPlayers(): Promise<PlayerSummary[]> {

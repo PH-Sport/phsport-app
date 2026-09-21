@@ -4,8 +4,7 @@ import useSWR from 'swr';
 import type { PostgrestError } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/lib/auth/auth-context';
-import type { PlayerFile } from '@/lib/utils/players';
-import { latestInvite } from './use-players';
+import { latestInvite, type PlayerFile } from '@/lib/utils/players';
 
 /** Una ficha entera, con la cuenta enganchada (si la hay) y su enlace vivo. */
 export interface PlayerDetail {

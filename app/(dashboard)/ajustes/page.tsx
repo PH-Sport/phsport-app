@@ -5,7 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Save, Loader2 } from 'lucide-react';
 import { DashboardPage } from '@/components/ui/dashboard-page';
-import { Surface } from '@/components/ui/surface';
+import { Section } from '@/components/ui/section';
 import { Button } from '@/components/ui/button';
 import { SPRINGS, STAGGER } from '@/components/ui/animations';
 import { cn } from '@/lib/utils';
@@ -25,27 +25,6 @@ const rise = {
   hidden: { opacity: 0, y: 12 },
   show: { opacity: 1, y: 0, transition: SPRINGS.gentle },
 };
-
-/** Subapartado del concepto D: rótulo eyebrow + descripción, placa debajo. */
-function Section({
-  label,
-  hint,
-  children,
-}: {
-  label: string;
-  hint: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <section>
-      <p className="text-eyebrow text-primary">{label}</p>
-      <p className="mt-0.5 text-sm text-muted-foreground">{hint}</p>
-      <Surface variant="grouped" className="mt-3">
-        {children}
-      </Surface>
-    </section>
-  );
-}
 
 function SettingsContent() {
   const { user, profile, access } = useAuth();

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { format } from 'date-fns';
@@ -29,9 +29,8 @@ import { DashboardPage } from '@/components/ui/dashboard-page';
 import { RowSeparator } from '@/components/ui/row';
 import { SPRINGS, STAGGER } from '@/components/ui/animations';
 import { PlayerDetailSkeleton } from '@/components/skeletons/player-detail-skeleton';
-import { Section } from '@/components/features/players/section';
-import { useAuth } from '@/lib/auth/auth-context';
-import { homeFor, viewModeFor } from '@/lib/utils/access';
+import { Section } from '@/components/ui/section';
+import { useRequireDepartment } from '@/lib/hooks/use-require-department';
 import { usePlayer, usePlayerFiles } from '@/lib/hooks/use-player';
 import { createClient } from '@/lib/supabase/client';
 import { inviteUrl } from '@/lib/services/invitations/token';
@@ -55,18 +54,12 @@ const rise = {
 export default function PlayerDetailPage() {
   const router = useRouter();
   const { id } = useParams<{ id: string }>();
-  const { profile, access, status } = useAuth();
-  const authLoading = status === 'INITIALIZING';
-  const allowed = access.inDepartment('creativo');
+  const { allowed, authLoading, denied } = useRequireDepartment('creativo');
   const { player, isLoading, mutate } = usePlayer(allowed ? id : null);
   const { files } = usePlayerFiles(allowed ? id : null);
   const [now, setNow] = useState(() => new Date());
 
-  useEffect(() => {
-    if (!authLoading && profile && !allowed) router.replace(homeFor(viewModeFor(profile)));
-  }, [authLoading, profile, allowed, router]);
-
-  if (!authLoading && profile && !allowed) return null;
+  if (denied) return null;
 
   const showSkeleton = authLoading || (isLoading && !player);
   const counts = folderCounts(files);
@@ -157,7 +150,11 @@ export default function PlayerDetailPage() {
             </motion.div>
 
             <motion.div variants={rise}>
+              {/* La clave reinicia el formulario si la ficha cambia por otra
+                  sesión: sin ella, los campos guardaban el nombre viejo y
+                  «Guardar» pisaba el cambio ajeno. */}
               <AdvancedZone
+                key={`${player.id}:${player.given_name}:${player.family_name ?? ''}`}
                 player={player}
                 onSaved={() => mutate()}
                 onDeleted={() => router.replace('/jugadores')}

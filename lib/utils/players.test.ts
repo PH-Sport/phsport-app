@@ -11,6 +11,7 @@ import {
   groupFilesByBatch,
   isFolder,
   isFolderView,
+  latestInvite,
   MAX_FILE_BYTES,
   playerInitials,
   playerSubtitle,
@@ -76,10 +77,30 @@ describe('carpetas', () => {
 describe('lotes', () => {
   it('agrupa por rótulo, del más reciente al más antiguo, y dentro por orden de subida', () => {
     const files = [
-      file({ id: 'j11-b', folder: 'fotos', batch: 'Jornada 11', created_at: '2026-09-28T10:05:00Z' }),
-      file({ id: 'j12-a', folder: 'fotos', batch: 'Jornada 12', created_at: '2026-10-12T10:00:00Z' }),
-      file({ id: 'j11-a', folder: 'fotos', batch: 'Jornada 11', created_at: '2026-09-28T10:00:00Z' }),
-      file({ id: 'j12-b', folder: 'fotos', batch: 'Jornada 12', created_at: '2026-10-12T10:01:00Z' }),
+      file({
+        id: 'j11-b',
+        folder: 'fotos',
+        batch: 'Jornada 11',
+        created_at: '2026-09-28T10:05:00Z',
+      }),
+      file({
+        id: 'j12-a',
+        folder: 'fotos',
+        batch: 'Jornada 12',
+        created_at: '2026-10-12T10:00:00Z',
+      }),
+      file({
+        id: 'j11-a',
+        folder: 'fotos',
+        batch: 'Jornada 11',
+        created_at: '2026-09-28T10:00:00Z',
+      }),
+      file({
+        id: 'j12-b',
+        folder: 'fotos',
+        batch: 'Jornada 12',
+        created_at: '2026-10-12T10:01:00Z',
+      }),
     ];
     const batches = groupFilesByBatch(files);
     expect(batches.map((b) => b.label)).toEqual(['Jornada 12', 'Jornada 11']);
@@ -98,6 +119,31 @@ describe('lotes', () => {
     expect(batches.map((b) => b.label)).toEqual(['4 oct', '3 oct']);
     expect(batches[1].files).toHaveLength(2);
   });
+
+  it('el día es el local, el mismo que el rótulo: la misma noche no se parte en dos', () => {
+    // Los tests corren en TZ=UTC (vitest.config); se simula Madrid desplazando
+    // la hora: 23:30Z del 3 y 08:00Z del 4 son el mismo día solo si la clave y
+    // el rótulo usan el mismo calendario. En UTC son días distintos y deben
+    // salir dos lotes con rótulos distintos, nunca dos lotes con el mismo rótulo.
+    const files = [
+      file({ id: 'noche', created_at: '2026-10-03T23:30:00Z' }),
+      file({ id: 'manana', created_at: '2026-10-04T08:00:00Z' }),
+    ];
+    const batches = groupFilesByBatch(files);
+    const labels = batches.map((b) => b.label);
+    expect(new Set(labels).size).toBe(labels.length);
+  });
+});
+
+describe('enlaces', () => {
+  it('elige el enlace más reciente y devuelve null sin enlaces', () => {
+    expect(latestInvite(null)).toBeNull();
+    expect(latestInvite([])).toBeNull();
+    const a = { id: 'a', expires_at: '2026-10-12T00:00:00Z' };
+    const b = { id: 'b', expires_at: '2026-10-13T00:00:00Z' };
+    expect(latestInvite([a, b])?.id).toBe('b');
+    expect(latestInvite([b, a])?.id).toBe('b');
+  });
 });
 
 describe('archivos', () => {
@@ -111,9 +157,13 @@ describe('archivos', () => {
 
   it('rechaza lo que pesa de más, lo vacío y lo que no es imagen ni vídeo', () => {
     expect(checkUploadable({ name: 'a.jpg', size: 5_000_000, type: 'image/jpeg' })).toBeNull();
-    expect(checkUploadable({ name: 'a.jpg', size: MAX_FILE_BYTES + 1, type: 'image/jpeg' })).toMatch(/máximo/);
+    expect(
+      checkUploadable({ name: 'a.jpg', size: MAX_FILE_BYTES + 1, type: 'image/jpeg' })
+    ).toMatch(/máximo/);
     expect(checkUploadable({ name: 'a.jpg', size: 0, type: 'image/jpeg' })).toMatch(/vacío/);
-    expect(checkUploadable({ name: 'a.pdf', size: 10, type: 'application/pdf' })).toMatch(/no es una imagen/);
+    expect(checkUploadable({ name: 'a.pdf', size: 10, type: 'application/pdf' })).toMatch(
+      /no es una imagen/
+    );
     // Safari no pone tipo a los HEIC: vale la extensión.
     expect(checkUploadable({ name: 'IMG_2.heic', size: 10, type: '' })).toBeNull();
   });
@@ -150,9 +200,9 @@ describe('la ficha en la lista', () => {
     expect(
       playerSubtitle({ hasAccount: false, counts, inviteExpiresAt: '2026-10-13T09:30:00Z' }, now)
     ).toBe('Sin cuenta · enlace caduca en 21 h');
-    expect(playerSubtitle({ hasAccount: false, counts, inviteExpiresAt: '2026-10-11T09:30:00Z' }, now)).toBe(
-      'Sin cuenta'
-    );
+    expect(
+      playerSubtitle({ hasAccount: false, counts, inviteExpiresAt: '2026-10-11T09:30:00Z' }, now)
+    ).toBe('Sin cuenta');
   });
 
   it('saca iniciales', () => {

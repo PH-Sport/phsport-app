@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useSWRConfig } from 'swr';
@@ -20,9 +20,9 @@ import {
 import { DashboardPage } from '@/components/ui/dashboard-page';
 import { RowSeparator } from '@/components/ui/row';
 import { PlayerDetailSkeleton } from '@/components/skeletons/player-detail-skeleton';
-import { Section } from '@/components/features/players/section';
+import { Section } from '@/components/ui/section';
 import { useAuth } from '@/lib/auth/auth-context';
-import { homeFor, viewModeFor } from '@/lib/utils/access';
+import { useRequireDepartment } from '@/lib/hooks/use-require-department';
 import { usePlayer } from '@/lib/hooks/use-player';
 import { createClient } from '@/lib/supabase/client';
 import { uploadPlayerFile } from '@/lib/services/players/files';
@@ -57,10 +57,9 @@ const rise = {
 export default function NewDeliveryPage() {
   const router = useRouter();
   const { id } = useParams<{ id: string }>();
-  const { user, profile, access, status } = useAuth();
+  const { user } = useAuth();
   const { mutate } = useSWRConfig();
-  const authLoading = status === 'INITIALIZING';
-  const allowed = access.inDepartment('creativo');
+  const { allowed, authLoading, denied } = useRequireDepartment('creativo');
   const { player, isLoading } = usePlayer(allowed ? id : null);
 
   const [folder, setFolder] = useState<Folder>('fotos');
@@ -69,11 +68,7 @@ export default function NewDeliveryPage() {
   const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    if (!authLoading && profile && !allowed) router.replace(homeFor(viewModeFor(profile)));
-  }, [authLoading, profile, allowed, router]);
-
-  if (!authLoading && profile && !allowed) return null;
+  if (denied) return null;
 
   const addFiles = (list: FileList | null) => {
     if (!list) return;

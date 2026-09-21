@@ -51,11 +51,12 @@ export function NewPlayerDialog({ open, onOpenChange, onCreated }: NewPlayerDial
     }
     setSaving(true);
     const supabase = createClient();
-    const { data, error }: { data: { id: string } | null; error: PostgrestError | null } = await supabase
-      .from('players')
-      .insert({ given_name: given, family_name: familyName.trim() || null })
-      .select('id')
-      .single();
+    const { data, error }: { data: { id: string } | null; error: PostgrestError | null } =
+      await supabase
+        .from('players')
+        .insert({ given_name: given, family_name: familyName.trim() || null })
+        .select('id')
+        .single();
     setSaving(false);
     if (error || !data) {
       logger.error('Error creating player:', error);

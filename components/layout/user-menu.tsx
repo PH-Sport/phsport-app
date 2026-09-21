@@ -249,7 +249,7 @@ export function UserMenu() {
                     <Settings className="mr-2 h-4 w-4" />
                     <span>Ajustes</span>
                   </DropdownMenuItem>
-                  {(access.can('invitar_personal') || access.can('gestionar_roles')) && (
+                  {canMembers && (
                     <DropdownMenuItem
                       onClick={() => router.push('/ajustes?tab=miembros')}
                       className="text-foreground hover:bg-accent cursor-pointer"

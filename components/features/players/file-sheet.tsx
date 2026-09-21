@@ -83,7 +83,7 @@ export function FileSheet({
     }
     let cancelled = false;
     const path = kind === 'image' && file.thumb_path ? file.thumb_path : file.storage_path;
-    signedUrl(createClient(), path)
+    signedUrl(createClient(), path, false, kind === 'video' ? 600 : 60)
       .then((url) => {
         if (!cancelled) setPreviewUrl(url);
       })

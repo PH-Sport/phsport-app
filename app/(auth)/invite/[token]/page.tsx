@@ -346,7 +346,7 @@ export default function InvitePage() {
         )}
 
         <AuthSubmitButton loading={submitting} loadingLabel="Creando cuenta...">
-          {isPlayer ? 'Crear cuenta' : 'Crear Cuenta'}
+          Crear cuenta
         </AuthSubmitButton>
       </form>
     </div>

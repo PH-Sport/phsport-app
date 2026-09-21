@@ -1,9 +1,8 @@
 import { Surface } from '@/components/ui/surface';
 
 /**
- * Subapartado de una ficha: rótulo eyebrow + descripción, placa debajo. Es el
- * mismo patrón que Ajustes usa para sus apartados; vive aquí porque las
- * pantallas de jugadores lo repiten tres veces.
+ * Subapartado (concepto D): rótulo eyebrow + descripción, placa debajo. Lo
+ * usan Ajustes y las pantallas de Jugadores; antes cada uno tenía su copia.
  */
 export function Section({
   label,

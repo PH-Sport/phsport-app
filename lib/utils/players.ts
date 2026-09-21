@@ -144,7 +144,8 @@ export function formatBytes(n: number): string {
   const kb = n / 1024;
   if (kb < 1024) return `${Math.round(kb)} KB`;
   const mb = kb / 1024;
-  if (mb < 1024) return `${mb.toLocaleString('es-ES', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} MB`;
+  if (mb < 1024)
+    return `${mb.toLocaleString('es-ES', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} MB`;
   return `${(mb / 1024).toLocaleString('es-ES', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} GB`;
 }
 
@@ -188,7 +189,9 @@ export interface FileBatch {
 export function groupFilesByBatch(files: PlayerFile[]): FileBatch[] {
   const byKey = new Map<string, FileBatch & { latest: string }>();
   for (const f of files) {
-    const day = f.created_at.slice(0, 10);
+    // El día LOCAL, el mismo calendario que el rótulo: con el día UTC, dos
+    // archivos de la misma noche caían en lotes distintos rotulados igual.
+    const day = format(new Date(f.created_at), 'yyyy-MM-dd');
     const key = f.batch ? `b:${f.batch}` : `d:${day}`;
     let batch = byKey.get(key);
     if (!batch) {
@@ -217,6 +220,14 @@ export function formatDay(iso: string): string {
 }
 
 // ─── La ficha en la lista ─────────────────────────────────────
+
+/** El enlace más reciente de una ficha, caducado o no; quien lo lee decide. */
+export function latestInvite<T extends { expires_at: string | null }>(
+  invites: T[] | null | undefined
+): T | null {
+  if (!invites?.length) return null;
+  return [...invites].sort((a, b) => (b.expires_at ?? '').localeCompare(a.expires_at ?? ''))[0];
+}
 
 /** «21 h», «35 min», o null si ya caducó. */
 export function expiresInLabel(expiresAt: string | Date, now: Date): string | null {

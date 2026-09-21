@@ -23,6 +23,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { FileGrid } from '@/components/features/players/file-grid';
 import { FileList } from '@/components/features/players/file-list';
 import { FileSheet } from '@/components/features/players/file-sheet';
@@ -39,6 +40,7 @@ import {
   folderCover,
   folderLabel,
   FOLDERS,
+  playerInitials,
   SENT,
   type Folder,
   type FolderView,
@@ -63,7 +65,7 @@ const rise = {
 export function AreaPersonal() {
   const { user, profile, logout } = useAuth();
   const { player, isLoading: playerLoading } = useOwnPlayer();
-  const { files, mutate } = usePlayerFiles(player?.id ?? null);
+  const { files, isLoading: filesLoading, mutate } = usePlayerFiles(player?.id ?? null);
   const [vista, setVista] = useState<Vista>('inicio');
   const [selected, setSelected] = useState<PlayerFile | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -113,7 +115,9 @@ export function AreaPersonal() {
     else toast.error(`${failed} de ${accepted.length} no se pudieron enviar. Prueba otra vez.`);
   };
 
-  if (playerLoading) {
+  // Hasta que llegan la ficha Y sus archivos: si no, las portadas dirían «0
+  // archivos» un instante y luego saltarían al número real.
+  if (playerLoading || (player && filesLoading && files.length === 0)) {
     return (
       <div className="flex min-h-svh items-center justify-center">
         <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" aria-label="Cargando" />
@@ -193,35 +197,47 @@ function Avatar({
   displayName?: string | null;
   onLogout: () => Promise<void>;
 }) {
-  const iniciales = (displayName ?? '?')
-    .split(' ')
-    .map((p) => p[0])
-    .filter(Boolean)
-    .slice(0, 2)
-    .join('')
-    .toUpperCase();
+  const iniciales = playerInitials(displayName ?? '');
+  // Salir pide confirmación, como en el panel: un toque de más no te echa.
+  const [confirmOpen, setConfirmOpen] = useState(false);
   return (
     // Sin cabecera ni menú de usuario en este marco, el avatar es la única
     // puerta para salir. Sin nombre debajo: él ya sabe quién es.
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <button
-          type="button"
-          aria-label="Tu cuenta"
-          className="flex h-11 w-11 items-center justify-center rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        >
-          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/15 text-xs font-bold text-primary">
-            {iniciales}
-          </span>
-        </button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuItem onSelect={() => void onLogout()} className="cursor-pointer">
-          <LogOut className="mr-2 h-4 w-4" />
-          Cerrar sesión
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <button
+            type="button"
+            aria-label="Tu cuenta"
+            className="flex h-11 w-11 items-center justify-center rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/15 text-xs font-bold text-primary">
+              {iniciales}
+            </span>
+          </button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem onSelect={() => setConfirmOpen(true)} className="cursor-pointer">
+            <LogOut className="mr-2 h-4 w-4" />
+            Cerrar sesión
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+      <ConfirmDialog
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        title="¿Cerrar sesión?"
+        description="Tendrás que volver a iniciar sesión para ver tus carpetas."
+        confirmLabel="Cerrar sesión"
+        cancelLabel="Cancelar"
+        variant="warning"
+        onConfirm={() => {
+          setConfirmOpen(false);
+          void onLogout();
+        }}
+        customIcon="/images/logo-ph-sport.svg"
+      />
+    </>
   );
 }
 
@@ -242,8 +258,7 @@ function SinFicha({
       <div className="flex flex-1 flex-col items-center justify-center gap-2 px-8 text-center">
         <h1 className="text-2xl font-bold tracking-tight">Área personal</h1>
         <p className="text-sm text-muted-foreground">
-          Tu cuenta todavía no está enganchada a ninguna ficha. Dile a la agencia que te mande un
-          enlace nuevo.
+          Tu cuenta no está enganchada a ninguna ficha. Avisa a la agencia para que lo revise.
         </p>
       </div>
     </>

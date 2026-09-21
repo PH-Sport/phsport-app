@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
@@ -12,8 +12,7 @@ import { UserAvatar } from '@/components/ui/user-avatar';
 import { SPRINGS, STAGGER } from '@/components/ui/animations';
 import { PlayersSkeleton } from '@/components/skeletons/players-skeleton';
 import { NewPlayerDialog } from '@/components/features/players/new-player-dialog';
-import { useAuth } from '@/lib/auth/auth-context';
-import { homeFor, viewModeFor } from '@/lib/utils/access';
+import { useRequireDepartment } from '@/lib/hooks/use-require-department';
 import { usePlayers, type PlayerSummary } from '@/lib/hooks/use-players';
 import { playerSubtitle } from '@/lib/utils/players';
 import { cn } from '@/lib/utils';
@@ -29,19 +28,12 @@ const rise = {
  */
 export default function PlayersPage() {
   const router = useRouter();
-  const { profile, access, status } = useAuth();
-  const authLoading = status === 'INITIALIZING';
-  const allowed = access.inDepartment('creativo');
+  const { authLoading, denied } = useRequireDepartment('creativo');
   const { players, isLoading, mutate } = usePlayers();
   const [newOpen, setNewOpen] = useState(false);
   const [now] = useState(() => new Date());
 
-  // Solo el departamento creativo gestiona jugadores; el resto, a su casa.
-  useEffect(() => {
-    if (!authLoading && profile && !allowed) router.replace(homeFor(viewModeFor(profile)));
-  }, [authLoading, profile, allowed, router]);
-
-  if (!authLoading && profile && !allowed) return null;
+  if (denied) return null;
 
   const showSkeleton = authLoading || (isLoading && players.length === 0);
 

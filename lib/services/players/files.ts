@@ -147,11 +147,20 @@ export async function movePlayerFile(
   if (error) throw new Error(`No se pudo mover el archivo: ${error.message}`);
 }
 
-/** URL firmada de un minuto: el cubo es privado y no hay URL pública. */
-export async function signedUrl(supabase: SupabaseClient, path: string, download = false): Promise<string> {
+/**
+ * URL firmada: el cubo es privado y no hay URL pública. Un minuto para
+ * descargar; la vista previa de un vídeo pide el archivo por trozos mientras
+ * se reproduce o se busca, así que esa lleva diez minutos (`seconds`).
+ */
+export async function signedUrl(
+  supabase: SupabaseClient,
+  path: string,
+  download = false,
+  seconds = 60
+): Promise<string> {
   const { data, error } = await supabase.storage
     .from(BUCKET)
-    .createSignedUrl(path, 60, download ? { download: true } : undefined);
+    .createSignedUrl(path, seconds, download ? { download: true } : undefined);
   if (error || !data) throw new Error(`No se pudo preparar la descarga: ${error?.message ?? 'sin respuesta'}`);
   return data.signedUrl;
 }

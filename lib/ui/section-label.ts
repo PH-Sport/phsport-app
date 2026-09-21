@@ -4,6 +4,7 @@ const SECTION_LABELS: Record<string, string> = {
   equipo: 'Semana',
   'mi-semana': 'Semana',
   disenos: 'Diseños',
+  jugadores: 'Jugadores',
   ajustes: 'Ajustes',
   ayuda: 'Ayuda',
 };

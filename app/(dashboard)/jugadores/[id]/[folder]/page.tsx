@@ -1,8 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import { useSWRConfig } from 'swr';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Upload } from 'lucide-react';
@@ -14,8 +14,7 @@ import { PlayerDetailSkeleton } from '@/components/skeletons/player-detail-skele
 import { FileGrid } from '@/components/features/players/file-grid';
 import { FileList } from '@/components/features/players/file-list';
 import { FileSheet } from '@/components/features/players/file-sheet';
-import { useAuth } from '@/lib/auth/auth-context';
-import { homeFor, viewModeFor } from '@/lib/utils/access';
+import { useRequireDepartment } from '@/lib/hooks/use-require-department';
 import { usePlayer, usePlayerFiles } from '@/lib/hooks/use-player';
 import { filesIn, folderLabel, isFolderView, SENT, type PlayerFile } from '@/lib/utils/players';
 
@@ -31,27 +30,20 @@ const rise = {
  * mover, eliminar.
  */
 export default function PlayerFolderPage() {
-  const router = useRouter();
   const { id, folder } = useParams<{ id: string; folder: string }>();
-  const { profile, access, status } = useAuth();
   const { mutate: mutateGlobal } = useSWRConfig();
-  const authLoading = status === 'INITIALIZING';
-  const allowed = access.inDepartment('creativo');
+  const { allowed, authLoading, denied } = useRequireDepartment('creativo');
   const view = isFolderView(folder) ? folder : null;
   const { player, isLoading } = usePlayer(allowed ? id : null);
   const { files, isLoading: filesLoading, mutate } = usePlayerFiles(allowed ? id : null);
   const [selected, setSelected] = useState<PlayerFile | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
 
-  useEffect(() => {
-    if (!authLoading && profile && !allowed) router.replace(homeFor(viewModeFor(profile)));
-  }, [authLoading, profile, allowed, router]);
-
-  if (!authLoading && profile && !allowed) return null;
+  if (denied) return null;
 
   const shown = view ? filesIn(files, view) : [];
   const title = view === SENT ? 'Enviados por él' : view ? folderLabel(view) : 'Carpeta';
-  const showSkeleton = authLoading || ((isLoading || filesLoading) && !player);
+  const showSkeleton = authLoading || (isLoading && !player) || (filesLoading && files.length === 0);
 
   const changed = () => {
     mutate();

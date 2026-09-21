@@ -19,11 +19,7 @@ export function Header() {
   return (
     <header
       className={cn(
-        // El pt suma el aire de la app instalada de iOS (--ios-standalone-top,
-        // globals.css): el velo de cristal de la barra de estado cae sobre
-        // este margen vacío y no sobre la campana y el avatar. Con el -mb-14
-        // de abajo, el contenido baja lo mismo, así que el título tampoco lo pisa.
-        'z-30 border-b pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] pt-[calc(env(safe-area-inset-top)+var(--ios-standalone-top))]',
+        'z-30 border-b pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] pt-[env(safe-area-inset-top)]',
         // Móvil: flota sobre el contenido en vez de reservarle 56px de alto. Con
         // el título grande a la vista, la mitad izquierda de esta barra está
         // vacía, así que ocupar esa franja salía caro donde menos sobra.

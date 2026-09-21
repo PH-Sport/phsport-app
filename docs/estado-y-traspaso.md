@@ -626,6 +626,32 @@ tiempo es la validación de la sesión (una llamada a Supabase Auth) más el
 render; para bajarlo más, `getClaims` (arriba). Falta que Mario lo note en el
 iPhone: lo medido es el servidor, no el pintado en el teléfono.
 
+**Y en el teléfono, que era donde de verdad se iba el tiempo (`7f4e6bd`).**
+Mario no notó la mudanza, así que se cronometró el arranque con el perfil de
+iPhone contra el build de producción en local (script en el scratchpad de la
+sesión; la receta cabe aquí: Playwright + WebKit + `devices['iPhone 15']` +
+la sesión guardada, anotando cada petición y cuándo aparece el contenido).
+Dos hallazgos, los dos de la app y no de la red:
+
+- **El esqueleto tardaba ~600 ms en irse.** `PageTransition` usa
+  `AnimatePresence mode="wait"`: el contenido no se monta hasta que el
+  esqueleto termina su salida, y la salida iba con el mismo muelle «gentle»
+  que la entrada, que tarda ~600 ms en asentarse aunque el recorrido sea de
+  4 px. Medido: datos de Jugadores a los 330 ms, contenido a los 970. La
+  salida pasa al tween rápido (120 ms); la entrada conserva el muelle.
+  **Afecta a todas las páginas.**
+- **Inicio pedía la lista de diseñadores tarde:** solo cuando el dashboard se
+  montaba, es decir, después de los diseños y del esqueleto. Ahora la página
+  la pide desde el principio, en paralelo (SWR la comparte por clave).
+
+Resultado en local (misma máquina, misma red; sirve para comparar, no como
+cifra absoluta): **Inicio en frío de 2,5 s a 0,85 s**; primera visita a
+Jugadores de 970 a 440 ms; **entre pestañas ya visitadas, 40–70 ms**. Lo que
+queda de la primera visita a cada pestaña es descargar su código y pedir sus
+datos; Diseños es la más pesada (850 ms) porque carga el calendario. Y en el
+iPhone, además, cada consulta a Supabase sale del teléfono hacia Irlanda
+(~100 ms cada una): Inicio hace cinco.
+
 **Lo que se descartó:** el *custom access token hook* de Supabase (meter el
 `kind` en el token al emitirlo). Habría servido igual, pero hay que activarlo
 a mano en el panel y el token tarda hasta una hora en refrescarse; con
@@ -906,8 +932,13 @@ septiembre), porque sobre una app que va a tirones nada parece fluido.
 
 1. Que Mario mire el contorno fucsia y diga dónde cae la banda; arreglar y
    quitar el contorno.
-2. Medir el rendimiento tras la mudanza a Dublín; si sigue lenta, el siguiente
-   escalón es el arranque en el propio teléfono (§5).
+2. ~~Medir el rendimiento tras la mudanza a Dublín; si sigue lenta, el
+   siguiente escalón es el arranque en el propio teléfono.~~ Hecho el mismo
+   día (§5): el esqueleto se iba con muelle y retenía el contenido medio
+   segundo en cada página; Inicio pedía tarde a los diseñadores. Falta que
+   Mario lo note en la PWA; si aún no, lo siguiente es el código que se
+   descarga (Diseños carga el calendario, 333 kB) y el segundo `getUser` del
+   layout raíz.
 3. Pulido de Jugadores: la fuente monoespaciada solo para cifras y fechas (en
    las frases —«Sin cuenta», «0 archivos»— se coló), y una pasada pantalla a
    pantalla contra Ajustes y Equipo, con capturas antes de subir.

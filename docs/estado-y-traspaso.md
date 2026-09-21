@@ -945,15 +945,18 @@ septiembre), porque sobre una app que va a tirones nada parece fluido.
    Mario lo note en la PWA; si aún no, lo siguiente es el código que se
    descarga (Diseños carga el calendario, 333 kB) y el segundo `getUser` del
    layout raíz.
-3. Pulido de Jugadores: la fuente monoespaciada solo para cifras y fechas (en
-   las frases —«Sin cuenta», «0 archivos»— se coló), y una pasada pantalla a
-   pantalla contra Ajustes y Equipo, con capturas antes de subir.
+3. ~~Pulido de Jugadores: la fuente monoespaciada solo para cifras y fechas.~~
+   Hecho (`c208bcf`): las frases van en la fuente normal; la mono queda en
+   iniciales, fechas y tamaños, como en Equipo. Queda la pasada pantalla a
+   pantalla contra Ajustes y Equipo si Mario ve algo más.
 4. Transiciones entre páginas (entrar en una ficha desliza, volver retira,
    las pestañas se funden): hoy Next cambia de pantalla de golpe y el
    movimiento que hay es solo dentro de cada página.
 5. El recorrido entero de jugadores desde el iPhone (crear ficha → enlace →
    alta con otro correo, sin sesión abierta → subir desde el móvil → mover,
-   entregar, borrar desde la agencia), y después decidir el merge (pendiente 11).
+   entregar, borrar desde la agencia). **Anotado el 2026-09-21 como pendiente
+   a petición de Mario**; sin fecha. Después, decidir el merge (pendiente
+   11), que Mario quiere que espere.
 
 ---
 

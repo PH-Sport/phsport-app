@@ -198,7 +198,7 @@ diseñadores. Lee cuanto quieras; para escribir, pregunta.
 **Producción y preview comparten base, y `main` va por detrás.** Una migración
 que quite una columna que `main` todavía lee tumba producción. Por eso las
 migraciones se parten en «añadir» (se aplican cuando se escriben) y «quitar»
-(esperan al merge): la 048 es el ejemplo. Antes de escribir DDL que borre algo,
+(esperan al merge): la que borra el rol antiguo (hoy numerada 049) es el ejemplo. Antes de escribir DDL que borre algo,
 mirar qué lee `main` con `git grep <columna> main -- app lib components`.
 
 **La app corre en Dublín porque la base está en Irlanda** (`vercel.json`,
@@ -210,6 +210,15 @@ servidor necesite saber en cada petición debe viajar en la sesión
 (`app_metadata`, que escribe la base; nunca `user_metadata`, que lo edita el
 usuario). Para comprobar dónde corre, mirar la cabecera `x-vercel-id` de una
 respuesta: `cdg1::dub1` es «entró por París, se ejecutó en Dublín».
+
+**Una política del cubo que consulte `player_files` tiene que decir
+`storage.objects.name`, con apellido.** Las dos tablas tienen una columna
+`name`; dentro del `exists (… from player_files f where …)` un `name` a secas
+es `f.name`, la política compila, Postgres la deparsea sin quejarse y queda
+muerta (pasó en la 046; lo sacó una revisión, no un error). Al escribir o
+cambiar una política de `storage.objects`, leerla de vuelta en `pg_policies`
+y buscar `f.name`. Y probarla **como jugador**: una sesión simulada de la
+agencia no la ejercita (receta en el §4 de septiembre del estado).
 
 **Ante un fallo visual, mira la pantalla antes de teorizar.** Hay matriz de
 Playwright: se puede cargar una página, medir cajas, leer estilos calculados y

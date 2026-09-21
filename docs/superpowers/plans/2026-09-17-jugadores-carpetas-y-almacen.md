@@ -32,7 +32,7 @@
 
 1. **Numeración:** la migración de este plan es la **046**
    (`046_jugadores_y_archivos.sql`). La que borra lo antiguo del rol pasa a
-   llamarse **048** (`adios_role_enum`; era 047 hasta que el número lo ocupó la de la sesión, el 2026-09-21); el plan de permisos y el estado se
+   llamarse **049** (`adios_role_enum`; fue 047 y 048 hasta que esos números los ocuparon la de la sesión y la del cubo, el 2026-09-21); el plan de permisos y el estado se
    actualizan.
 2. **Tablas:** `players` (la ficha) y `player_files` (todos los archivos, sean
    entregas o envíos). Las carpetas **no tienen tabla**: son una constante del
@@ -71,7 +71,7 @@
 | C | `app/(dashboard)/jugadores/[id]/page.tsx` · `app/(auth)/invite/[token]/page.tsx` |
 | D | `app/(dashboard)/jugadores/[id]/entrega/page.tsx` · `app/(dashboard)/jugadores/[id]/[folder]/page.tsx` |
 | E | `components/features/jugador/area-personal.tsx` (real) · borrar `lib/jugador/datos-de-muestra.ts` · `app/(dashboard)/ajustes/page.tsx` (quitar la vista previa) |
-| F | `docs/estado-y-traspaso.md` · spec (Abierto, §9) · `lib/help/tips.ts` · `README.md` · plan de permisos (048) |
+| F | `docs/estado-y-traspaso.md` · spec (Abierto, §9) · `lib/help/tips.ts` · `README.md` · plan de permisos (049) |
 
 ---
 
@@ -162,9 +162,9 @@ Commit: `feat(jugador): el área personal deja de ser una maqueta`
 ## Fase F — Documentación y remates
 
 - [x] Spec: §9 almacén; Abierto actualizado; §5/§8 «implementado».
-- [x] Estado: §4 de septiembre; pendiente 11 incluye la 046; 048 en vez de 046
+- [x] Estado: §4 de septiembre; pendiente 11 incluye la 046; 049 en vez de 046
   para lo antiguo del rol.
-- [x] Plan de permisos: tarea 11 → 048.
+- [x] Plan de permisos: tarea 11 → 049.
 - [x] Un consejo en `lib/help/tips.ts` para «Enviados por él».
 - [x] README: una línea sobre jugadores.
 

@@ -62,7 +62,7 @@ acuerdo tácito y no constaba en ningún sitio.
 migración 044 (y la 045 cuando se aplique) están en producción antes que su
 código, porque `preview` y producción comparten base. Las dos están pensadas
 para convivir con `main`: añaden reglas y columnas, no quitan ninguna que
-`main` lea. La que quita —la 046— espera al merge. Ver §3 de septiembre.
+`main` lea. La que quita —la 049, que borra el rol antiguo— espera al merge. Ver §3 de septiembre.
 
 Entre el 2026-08-22 y el 2026-09-16 estuvieron igualadas. Lo que sigue se deja
 escrito porque explica por qué tres migraciones del repo no hay que ejecutarlas
@@ -436,7 +436,7 @@ spec. Aquí, lo que cambia el estado y lo que no se deduce del código.
 2026-09-16, registrada en Supabase como `roles_y_permisos`); la **045 cambia
 las políticas** para que pregunten por permiso y cierra dos agujeros (aplicada
 el 2026-09-17 con permiso expreso de Mario, registrada como
-`politicas_por_permiso`); la **048 borra lo antiguo** —`profiles.role`,
+`politicas_por_permiso`); la **049 borra lo antiguo** —`profiles.role`,
 `invitations.role`, `is_admin`, `role_enum`— y **solo puede ir después del
 merge a `main`**, porque hasta entonces producción lee esas columnas. (El
 número 046 lo ocupó la migración de jugadores, §4.)
@@ -515,7 +515,7 @@ lo que cambia el estado.
   registrada como `jugadores_y_archivos`. Sesiones simuladas: Mario crea una
   ficha y su enlace, Loren las ve, una cuenta ajena no ve ni crea nada, y el
   enlace se valida como anon con el nombre del jugador. **La que borra lo
-  antiguo del rol pasa a ser la 048.**
+  antiguo del rol pasa a ser la 049.**
 - **Revisada con contexto limpio antes de aplicarse.** Sacó tres cosas
   serias, corregidas el mismo día: (1) un jugador podía crear una fila suya
   apuntando a un objeto ajeno y borrarlo con la regla del cubo — ahora la ruta
@@ -561,11 +561,48 @@ de un minuto, en pestaña nueva (en iOS es lo que deja guardar en Fotos).
 - Los lotes son un rótulo por archivo (`player_files.batch`), no una entidad:
   se agrupa por él y, sin él, por día.
 
+**Revisión completa con contexto limpio (2026-09-21, a petición de Mario;
+notas: profesionalidad 6/10, limpieza 7/10).** Un hallazgo grave y una
+docena menores, casi todos corregidos ese día (`8180011` y el commit
+siguiente):
+
+- **La regla del cubo que deja al jugador borrar lo suyo estaba muerta**
+  desde la 046: dentro del `exists`, un `name` sin cualificar apuntaba a
+  `player_files.name`, no al objeto. Ningún jugador había podido quitar un
+  envío del cubo; se borraba la fila y quedaban dos objetos huérfanos. La
+  **048** (`cubo_reglas_del_jugador`, aplicada) la reescribe cualificando
+  `storage.objects.name` y endurece la de subida: sin fila no se sube (antes
+  un jugador podía llenar el cubo con objetos invisibles). **Verificada con
+  un jugador simulado** dentro de una transacción deshecha: crear la cuenta
+  en `auth.users` (dispara el perfil JUGADOR y el claim), la ficha, tres
+  filas y cuatro objetos, y como ese jugador borrar lo suyo sin colocar (2),
+  no lo colocado (0), no lo entregado (0), subir sin fila (denegado) y con
+  fila (ok). Para borrar objetos a mano hay que `set_config('storage.allow_delete_query','true',true)`.
+- Corregidos además: lotes sin rótulo agrupados por día UTC y rotulados en
+  local (la misma noche salía partida en dos lotes con el mismo rótulo);
+  «Jugadores» sin rótulo de sección en la barra móvil; el formulario de la
+  zona avanzada no seguía a la ficha si otra sesión la renombraba; el vídeo
+  en vista previa con URL de un minuto; «Cerrar sesión» del jugador sin
+  confirmar; el texto de la cuenta sin ficha prometía un enlace que no
+  existe; destellos de «vacío» antes de cargar; y limpieza: una guarda de
+  departamento en vez de cuatro copias (`useRequireDepartment`), un solo
+  `Section` (`components/ui/section.tsx`, también en Ajustes), `latestInvite`
+  a la lógica pura con test, `playerInitials` en uso, `canMembers` una vez.
+- **Sin corregir, anotados:** (a) una cuenta de jugador cuya ficha se borra
+  queda huérfana y sin salida —no se puede reenganchar con un enlace nuevo ni
+  aparece en Miembros—; hace falta decidir si el enlace debe poder enganchar
+  una cuenta existente o si Miembros debe listar jugadores. (b) Una subida
+  cortada a medias (cerrar la PWA en «Subiendo 2 de 5») deja una fila sin
+  objeto, visible y sin descarga. (c) La lista de fichas descarga todas las
+  filas de archivos para contar; con 150 jugadores serán decenas de miles
+  por abrir `/jugadores`: un conteo agregado lo arregla. (d) Entrega y
+  carpeta reutilizan el esqueleto de la ficha.
+
 **Lo que no se ha comprobado:** la app con datos reales de jugadores desde un
-navegador o el iPhone. La base sí (sesiones simuladas de arriba) y lo
-automático también, en cada fase: tipos, lint, 190 tests, build. **El recorrido
-entero desde el iPhone** (crear ficha → enlace → alta con otro correo → subir →
-mover → borrar) es el pendiente 12, junto con los retoques de fluidez.
+navegador o el iPhone. La base sí (sesiones simuladas de arriba, incluida la
+de jugador) y lo automático también, en cada fase: tipos, lint, tests, build.
+**El recorrido entero desde el iPhone** (crear ficha → enlace → alta con otro
+correo → subir → mover → borrar) es el pendiente 12.
 
 ### 5. La app se muda a Dublín (`9395c3f`, 2026-09-21)
 
@@ -725,7 +762,7 @@ es mecánico —`SET search_path = ''` y cualificar— pero toca funciones vivas
 merece su propia tanda con verificación una por una, no ir de paso.
 
 **Avance (2026-09-17):** `handle_new_user` queda arreglada en la 045 (reescrita
-con `search_path = ''`), e `is_admin` desaparece en la 046, cuando ya no la use
+con `search_path = ''`), e `is_admin` desaparece en la 049, cuando ya no la use
 ninguna política. Quedan las otras doce.
 
 ### 5. `invitations.role` y `profiles.role` no comparten tipo — HECHO el 2026-09-16
@@ -868,7 +905,7 @@ una por MCP con el nombre sin prefijo, que es como están las últimas.
 - **Instalar Xcode** para probar iOS real (18 y 26) sin depender del móvil de
   Mario. No está instalado; se maneja con `xcrun simctl`, no con Playwright.
 
-### 11. Aplicar la 048 tras el merge a `main` (la 045, la 046 y la 047 ya están)
+### 11. Aplicar la 049 tras el merge a `main` (la 045, la 046, la 047 y la 048 ya están)
 
 **La 045 y la 046 se aplicaron el 2026-09-17** por MCP, registradas como
 `politicas_por_permiso` y `jugadores_y_archivos`, con permiso expreso de Mario
@@ -878,7 +915,7 @@ después, sesiones simuladas para las dos (§3 y §4 de septiembre). **La 047**
 (`kind_en_la_sesion`) se aplicó el 2026-09-21 con el mismo permiso: solo añade
 un trigger y rellena `app_metadata` de las ocho cuentas (§5 de septiembre).
 
-**Lo que queda es la 048, y va después del merge**, cuando Vercel tenga
+**Lo que queda es la 049, y va después del merge**, cuando Vercel tenga
 desplegado en producción el código de `preview`: borra `profiles.role`,
 `invitations.role`, `is_admin` y `role_enum` (con su valor `JUGADOR` de la 046).
 Está descrita en el plan de permisos, tarea 11 (allí se llamaba 046; el número

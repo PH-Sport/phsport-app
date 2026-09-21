@@ -4,6 +4,8 @@
 
 **Objetivo:** sustituir la casilla `profiles.role` (`ADMIN`/`DESIGNER`) por roles con permisos, de forma que la base de datos y el servidor pregunten lo mismo —«¿tiene esta cuenta este permiso?»— y un futbolista pueda entrar sin ser ni lo uno ni lo otro.
 
+> **Nota de lectura (2026-09-21):** este plan se escribió cuando la migración que borra lo antiguo del rol iba a ser la «046». Ese número y los dos siguientes los ocuparon después la de jugadores (046), la de la sesión (047) y la del cubo (048): donde el texto diga «046» en ese sentido, léase **049**. No se reescribe el histórico.
+
 **Arquitectura:** tres tablas nuevas (`roles`, `role_permissions`, `profile_roles`) y una casilla dura `profiles.kind` (`AGENCIA`/`JUGADOR`). **Los roles son fijos** (decisión de Mario, 2026-09-16): los tres los siembra la migración y cambiarlos es otra migración; la app solo asigna un rol a cada persona. Tres funciones SQL (`has_permission`, `in_department`, `is_staff`) que usan las políticas RLS; el código deriva lo mismo de una consulta anidada del perfil con una función pura (`deriveAccess`). Se hace en tres migraciones: **044 añade** sin quitar nada, **045 cierra** las políticas, **046 borra** lo antiguo — y la 046 solo se aplica cuando `main` ya lleva el código nuevo, porque producción y preview comparten base.
 
 **Stack:** Next.js 15 (App Router), Supabase (Postgres 17, RLS, RPC), SWR, zod, vitest.
@@ -2120,16 +2122,16 @@ Commit propuesto: `docs(permisos): queda escrito cómo funcionan los roles y qu�
 
 ## Después del merge a `main`
 
-### Tarea 11: migración 048 — borrar lo antiguo
+### Tarea 11: migración 049 — borrar lo antiguo
 
 > **Renumerada el 2026-09-17:** el 046 lo ocupó la migración de jugadores y
 > archivos (plan `2026-09-17-jugadores-carpetas-y-almacen.md`). Donde el SQL
-> de abajo diga «046», léase 048 (el 047 lo ocupó la de la sesión, `kind_en_la_sesion`); el nombre por MCP sigue siendo `adios_role_enum`.
+> de abajo diga «046», léase 049 (el 047 lo ocupó la de la sesión, `kind_en_la_sesion`, y el 048 la del cubo, `cubo_reglas_del_jugador`); el nombre por MCP sigue siendo `adios_role_enum`.
 
 **Solo cuando `main` lleve el código de este plan desplegado.** Comprobar con `git log --oneline main..preview` (vacío para lo de aquí) y con el panel de Vercel que producción está en ese commit.
 
 **Archivos:**
-- Crear: `supabase/migrations/048_adios_role_enum.sql`
+- Crear: `supabase/migrations/049_adios_role_enum.sql`
 
 - [ ] **Paso 1: escribir el archivo**
 

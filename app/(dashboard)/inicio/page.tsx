@@ -16,6 +16,7 @@ import { DesignerDashboard } from '@/components/features/dashboard/designer-dash
 import { AdminDashboard } from '@/components/features/dashboard/admin-dashboard';
 import { DesignDetailSheet } from '@/components/features/designs/design-detail-sheet';
 import { useDashboard } from '@/lib/hooks/use-dashboard';
+import { useDesigners } from '@/lib/hooks/use-designers';
 import { useUpcomingWork } from '@/lib/hooks/use-upcoming-work';
 import { upcomingLabel } from '@/lib/utils/upcoming-work';
 import { PulseDot } from '@/components/ui/pulse-dot';
@@ -38,6 +39,11 @@ const GREETING_STORAGE_KEY = 'phsport:greeting:last';
 export default function Dashboard() {
   const { user, profile } = useAuth();
   const { items, isLoading, mutate, error } = useDashboard();
+  // La lista de diseñadores la usan los dos dashboards, pero solo se montan
+  // cuando el esqueleto se ha ido: pedida desde aquí sale a la vez que los
+  // diseños en vez de después (medido: arrancaba medio segundo tarde). SWR la
+  // comparte por clave, así que el dashboard la encuentra ya cargada.
+  useDesigners();
   const [assigning, setAssigning] = useState(false);
 
   // Detalle de diseño al tocar una fila del dashboard (mismo patrón que Equipo).

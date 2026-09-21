@@ -65,6 +65,14 @@ export function PageTransition({
       ? ({ opacity: TWEENS.base, y: SPRINGS.gentle } as Transition)
       : speedToTransition[speed]);
 
+  // La SALIDA va siempre con el tween rápido, nunca con el muelle. Con
+  // mode="wait", el contenido no se monta hasta que el esqueleto termina de
+  // irse, y un muelle «gentle» tarda ~600 ms en asentarse aunque el recorrido
+  // sea de 4 px: medido el 2026-09-21, los datos de Jugadores llegaban a los
+  // 330 ms y el contenido no aparecía hasta los 970. Ese hueco era la
+  // sensación de lentitud, no la red. La ENTRADA conserva su muelle.
+  const exitTarget = { ...selectedAnimation.exit, transition: TWEENS.fast };
+
   return (
     <AnimatePresence mode="wait">
       {loading ? (
@@ -72,7 +80,7 @@ export function PageTransition({
           key="skeleton"
           initial={selectedAnimation.initial}
           animate={selectedAnimation.animate}
-          exit={selectedAnimation.exit}
+          exit={exitTarget}
           transition={resolvedTransition}
         >
           {skeleton}
@@ -82,7 +90,7 @@ export function PageTransition({
           key="content"
           initial={selectedAnimation.initial}
           animate={selectedAnimation.animate}
-          exit={selectedAnimation.exit}
+          exit={exitTarget}
           transition={resolvedTransition}
         >
           {children}

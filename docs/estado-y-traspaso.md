@@ -893,18 +893,19 @@ Mario recorrió `preview` el 2026-09-17 (antes de que existieran las tablas de
 jugadores) y señaló tres cosas, **las tres atendidas ese mismo día** (commit
 siguiente al `5529cc5`):
 
-- **La banda clara sobre la cabecera** en el iPhone (PWA instalada). Cinco
-  pasadas; el detalle, en «Cosas que conviene saber». En corto: (1) sin fondo
-  en `html`, Safari 26 pintaba blanco la barra de estado — arreglado el 18;
-  (2) seguía «parte de la barra borrosa»: un contorno fucsia de diagnóstico y
-  las capturas de Mario demostraron un velo de cristal de iOS 26 que baja ~24
-  px y desenfoca lo que pilla (la burbuja del avatar, medido píxel a píxel);
-  (3) bajar la cabecera 24 px lo escondía, a costa de espacio; (4) un
-  empujón de scroll al arrancar no hizo nada; (5) **Mario dio la pista:** el
-  velo desaparece justo cuando la cabecera se vuelve opaca al desplazar.
-  **Arreglo vigente (`5373676`):** `IosEdgeSentinel`, un elemento sticky de
-  1 px con el fondo de la página, antes de la cabecera en los dos marcos.
-  **Pendiente de que Mario lo confirme en la PWA.**
+- **La banda clara sobre la cabecera** en el iPhone (PWA instalada).
+  **Resuelta el 2026-09-21 (`842993e`), confirmada por Mario.** Seis pasadas;
+  el detalle, en «Cosas que conviene saber». En corto: (1) sin fondo en
+  `html`, Safari 26 pintaba blanco la barra de estado — arreglado el 18; (2)
+  seguía «parte de la barra borrosa»: un contorno fucsia de diagnóstico y las
+  capturas de Mario demostraron un velo de cristal de iOS 26 que baja ~24 px
+  y desenfoca lo que pilla (la burbuja del avatar, medido píxel a píxel); (3)
+  bajar la cabecera 24 px lo escondía, a costa de espacio; (4) un empujón de
+  scroll al arrancar no hizo nada; (5) un hilo de 1 px con fondo antes de la
+  cabecera, tampoco; (6) **Mario dio la pista** —el velo desaparece justo
+  cuando la cabecera se vuelve opaca al desplazar— y la cabecera pasa a
+  llevar el color de la página **al 2 %** arriba del todo: invisible, pero
+  para iOS «tiene fondo».
 - **El perfil se abre en una hoja desde abajo en móvil** (`cccb72c`), la
   misma pieza que Notificaciones (asa, arrastrar o tocar fuera para cerrar),
   a petición de Mario: nombre, correo y rol arriba; Ajustes, Miembros, Ayuda;
@@ -936,9 +937,7 @@ septiembre), porque sobre una app que va a tirones nada parece fluido.
 
 **Queda, en este orden:**
 
-1. ~~Que Mario mire el contorno fucsia y diga dónde cae la banda; arreglar y
-   quitar el contorno.~~ Hecho (arriba). Falta que Mario confirme en la PWA
-   que ya no ve la burbuja borrosa.
+1. ~~La banda de la cabecera.~~ Resuelta y confirmada por Mario el 2026-09-21.
 2. ~~Medir el rendimiento tras la mudanza a Dublín; si sigue lenta, el
    siguiente escalón es el arranque en el propio teléfono.~~ Hecho el mismo
    día (§5): el esqueleto se iba con muelle y retenía el contenido medio
@@ -977,18 +976,17 @@ septiembre), porque sobre una app que va a tirones nada parece fluido.
   sigue ahí, pero del color de la página. No se puede reproducir con el WebKit
   de escritorio de Playwright; solo en un iPhone con iOS 26.
 - **Y en la app instalada, iOS 26 además pinta un velo de cristal** desde la
-  barra de estado hacia abajo (~24 px, se desvanece) **cuando el elemento
-  pegado al borde superior es transparente**; con cualquier fondo, aunque
-  sea al 30 %, usa borde duro y no hay velo. La cabecera es transparente
-  arriba del todo a propósito (el título se ve a través), así que
-  `IosEdgeSentinel` (1 px sticky, `bg-background`, antes de la cabecera en
-  `app-layout.tsx` y en `app/(jugador)/layout.tsx`) es quien le da el color.
-  Si se crea otro marco con algo pegado arriba, que lleve el centinela. Lo
-  que NO funcionó, para no repetirlo: reservar 24 px de hueco (funciona pero
-  cuesta espacio) y un scroll de 1 px al arrancar (no era la causa). Cómo se
-  midió: muestrear una captura del iPhone columna a columna (script de Node
-  que decodifica el PNG) y ver el color del avatar aclararse hacia arriba.
-  No se reproduce con el WebKit de Playwright.
+  barra de estado hacia abajo (~24 px, se desvanece) **cuando la cabecera
+  —el elemento pegado al borde superior— es transparente**; con cualquier
+  fondo, aunque sea al 2 %, usa borde duro y no hay velo. Por eso la cabecera
+  lleva `bg-background/[0.02]` arriba del todo (`header.tsx`): invisible, el
+  título se ve a través, y iOS contento. Lo que NO funcionó, para no
+  repetirlo: reservar 24 px de hueco (funciona pero cuesta espacio), un scroll
+  de 1 px al arrancar (no era la causa) y un elemento sticky de 1 px con fondo
+  antes de la cabecera (iOS mira a la cabecera, no a un hilo). Cómo se midió:
+  muestrear una captura del iPhone columna a columna (script de Node que
+  decodifica el PNG) y ver el color del avatar aclararse hacia arriba. No se
+  reproduce con el WebKit de Playwright.
 - **Los dos «2ª PORTUGAL - J2» no son un duplicado**: son dos piezas del mismo
   partido, para jugadores distintos. El modelo lo permite y es correcto.
 - **Lo que hay detrás de la app —cuentas, claves, correo, DNS— está en

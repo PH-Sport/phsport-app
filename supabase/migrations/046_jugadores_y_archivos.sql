@@ -22,7 +22,8 @@
 -- todo DESIGNER como diseñador: lo lista en Equipo y le reparte diseños. Un
 -- jugador no puede nacer DESIGNER ni un segundo. El valor nuevo no se puede
 -- usar en la misma transacción que lo crea; por eso aquí solo aparece dentro
--- de cuerpos de función, que se evalúan al ejecutarse. Se va con la 047.
+-- de cuerpos de función, que se evalúan al ejecutarse. Se va con la 049 (la
+-- que borra lo antiguo del rol; era «047» cuando se escribió esto).
 
 alter type public.role_enum add value if not exists 'JUGADOR';
 
@@ -403,6 +404,12 @@ create policy jugadores_insert_own on storage.objects
 -- app borra primero el objeto del cubo y después la fila, nunca al revés. La
 -- fila se busca por la ruta misma (jugador del primer tramo, id del archivo
 -- del nombre), no por coincidencia de columnas: así no vale una fila falsa.
+--
+-- OJO: tal como está aquí abajo, esta política estaba MUERTA. Dentro del
+-- `exists`, `name` sin cualificar se ata a `f.name` (player_files también
+-- tiene esa columna), no a `storage.objects.name`. La 048 la sustituye con
+-- el nombre cualificado y endurece la de subida. Se deja como se aplicó,
+-- porque el registro de Supabase es este.
 create policy jugadores_delete_own_unplaced on storage.objects
   for delete
   using (

@@ -159,7 +159,7 @@ export function FileSheet({
             <div className="mx-auto w-full max-w-lg">
               <SheetHeader className="text-left">
                 <SheetTitle className="truncate pr-8">{file.name}</SheetTitle>
-                <SheetDescription className="font-mono tabular text-xs">
+                <SheetDescription className="text-xs tabular">
                   {formatDay(file.created_at)} · {formatBytes(file.size_bytes)}
                   {file.folder
                     ? ` · ${isFolder(file.folder) ? folderLabel(file.folder) : file.folder}`

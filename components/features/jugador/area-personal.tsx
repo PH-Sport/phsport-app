@@ -377,7 +377,7 @@ function CoverCard({
       />
       <span className="absolute inset-x-4 bottom-3.5 z-10 text-left text-white">
         <span className="block text-lg font-semibold tracking-tight">{folderLabel(folder)}</span>
-        <span className="font-mono tabular text-xs opacity-85">
+        <span className="text-xs tabular opacity-85">
           {count} {count === 1 ? 'archivo' : 'archivos'}
         </span>
       </span>

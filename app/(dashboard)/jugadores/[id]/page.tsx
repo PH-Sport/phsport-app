@@ -135,7 +135,7 @@ export default function PlayerDetailPage() {
                           {view === SENT ? 'Enviados por él' : folderLabel(view)}
                         </span>
                         <span className="flex items-center gap-2">
-                          <span className="font-mono tabular text-xs text-muted-foreground">
+                          <span className="text-xs tabular text-muted-foreground">
                             {counts[view]} {counts[view] === 1 ? 'archivo' : 'archivos'}
                           </span>
                           <ChevronRight className="h-4 w-4 text-muted-foreground" aria-hidden />
@@ -231,7 +231,7 @@ function AccountSection({
       {account ? (
         <div className="flex flex-col gap-0.5">
           <span className="text-[15px]">Con cuenta · {account.display_name}</span>
-          <span className="font-mono tabular text-xs text-muted-foreground">
+          <span className="text-xs text-muted-foreground">
             desde el {format(new Date(account.created_at), "d 'de' MMMM", { locale: es })}
           </span>
         </div>
@@ -240,7 +240,7 @@ function AccountSection({
           <div className="flex items-center justify-between gap-3">
             <span className="flex min-w-0 flex-col gap-0.5">
               <span className="text-[15px]">Sin cuenta todavía</span>
-              <span className="font-mono tabular text-xs text-muted-foreground">
+              <span className="text-xs tabular text-muted-foreground">
                 {liveInvite ? `Enlace creado · caduca en ${left}` : 'Sin enlace vivo'}
               </span>
             </span>

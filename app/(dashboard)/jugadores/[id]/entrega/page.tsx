@@ -268,7 +268,7 @@ export default function NewDeliveryPage() {
                                     </span>
                                     <span
                                       className={cn(
-                                        'font-mono tabular text-xs',
+                                        'text-xs tabular',
                                         item.error ? 'text-destructive' : 'text-muted-foreground'
                                       )}
                                     >

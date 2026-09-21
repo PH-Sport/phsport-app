@@ -134,7 +134,7 @@ function PlayerRow({ player, now }: { player: PlayerSummary; now: Date }) {
             <span className="ml-2 text-xs font-normal text-muted-foreground">Inactivo</span>
           )}
         </span>
-        <span className="truncate font-mono tabular text-xs text-muted-foreground">{subtitle}</span>
+        <span className="truncate text-xs tabular text-muted-foreground">{subtitle}</span>
       </span>
       <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
     </Link>

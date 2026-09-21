@@ -5,6 +5,7 @@ import { UserMenu } from './user-menu';
 import { NotificationsDropdown } from './notifications-dropdown';
 import { ViewAsPill } from './view-as-pill';
 import { usePageTitleCollapsed } from './page-title-context';
+import { useViewAs } from '@/lib/auth/view-as-context';
 import { sectionLabelFor } from '@/lib/ui/section-label';
 import { cn } from '@/lib/utils';
 
@@ -15,6 +16,15 @@ export function Header() {
   // desplazar. Escritorio: nada de esto aplica — rótulo y línea, siempre, como
   // antes de la fase 1.5. De ahí las contrapartes md: de ambas transiciones.
   const collapsed = usePageTitleCollapsed();
+  // DIAGNÓSTICO TEMPORAL (2026-09-21), solo cuentas de desarrollador: en el
+  // iPhone (PWA, iOS 26) aparece una banda clara sobre la cabecera y no se
+  // reproduce fuera de ahí. Se dibuja el contorno de la caja de la cabecera
+  // en fucsia y, cuando la barra se pone opaca, su fondo también. Así se sabe
+  // quién pinta la banda: si cae dentro del contorno y NO es fucsia, es el
+  // sistema sobre la caja; si es fucsia arriba del todo, es la propia barra
+  // creyéndose desplazada; si se sale del contorno, es la barra de estado.
+  // Quitar en cuanto se sepa (pendiente 12 del estado).
+  const { isDev } = useViewAs();
 
   return (
     <header
@@ -52,7 +62,9 @@ export function Header() {
         // ese 1% de transparencia es invisible y sale gratis, así que se queda
         // como red de seguridad. https://1ar.io/updates/safari-26-liquid-glass-web/
         'transition-colors duration-200 ease-out-expo md:border-border md:bg-background/90 md:backdrop-blur-sm',
-        collapsed ? 'border-border bg-background/[0.99]' : 'border-transparent bg-transparent'
+        collapsed ? 'border-border bg-background/[0.99]' : 'border-transparent bg-transparent',
+        isDev && 'outline outline-2 -outline-offset-2 outline-dashed outline-fuchsia-500',
+        isDev && collapsed && 'bg-fuchsia-500/30'
       )}
     >
       {/* Móvil: 56px de alto — aire para los controles de 44px (como las apps nativas). */}

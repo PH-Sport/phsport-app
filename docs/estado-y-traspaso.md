@@ -893,17 +893,26 @@ Mario recorrió `preview` el 2026-09-17 (antes de que existieran las tablas de
 jugadores) y señaló tres cosas, **las tres atendidas ese mismo día** (commit
 siguiente al `5529cc5`):
 
-- **La banda clara sobre la cabecera** en el iPhone, tocando título, campana y
-  avatar. Primer diagnóstico: Safari 26 pintando su tinte con el fondo de
-  `html`, que no estaba definido; se le puso el fondo de la página. **No
-  funcionó** (Mario, 2026-09-21; lo usa todo desde la PWA instalada). En vez de
-  otro intento a ciegas, la cabecera lleva desde el `9395c3f` un **contorno
-  fucsia de diagnóstico, solo para cuentas de desarrollador**: si la banda cae
-  dentro del contorno y no es fucsia, la pinta el sistema sobre la caja de la
-  cabecera (efecto de borde de iOS 26 sobre elementos pegados arriba); si es
-  fucsia arriba del todo, es la propia barra creyéndose desplazada; si se sale
-  del contorno, es la barra de estado de la PWA. Con la respuesta se arregla
-  y se quita el contorno. El WebKit de Playwright no lo reproduce.
+- **La banda clara sobre la cabecera** en el iPhone (PWA instalada). Costó
+  tres pasadas y las tres están en «Cosas que conviene saber», porque cada una
+  enseñó algo: (1) sin fondo en `html`, Safari 26 pintaba blanco la barra de
+  estado —arreglado el día 18—; (2) con eso, seguía viéndose «parte de la
+  barra borrosa», y un contorno fucsia de diagnóstico en la cabecera (solo
+  para cuentas dev) más las capturas de Mario demostraron que **iOS 26 pinta
+  desde la barra de estado un velo de cristal que baja ~24 px sobre el
+  contenido y se desvanece**: la mitad de arriba de la burbuja del avatar se
+  aclaraba fila a fila (medido píxel a píxel). No hay CSS ni meta que lo
+  quite, y `black-translucent` lo empeora (otros proyectos lo confirman). (3)
+  **Arreglo (`cccb72c`):** en la app instalada de iOS —y solo ahí—, la
+  cabecera y el contenido bajan 24 px (`--ios-standalone-top` en
+  `globals.css`), así que el velo cae sobre fondo liso, donde no se nota. El
+  contorno fucsia se fue en el mismo commit. **Pendiente de que Mario lo mire
+  en la PWA**; el WebKit de Playwright no reproduce el velo.
+- **El perfil se abre en una hoja desde abajo en móvil** (`cccb72c`), la
+  misma pieza que Notificaciones (asa, arrastrar o tocar fuera para cerrar),
+  a petición de Mario: nombre, correo y rol arriba; Ajustes, Miembros, Ayuda;
+  «Ver como» plegable para cuentas dev; Cerrar sesión. En escritorio el
+  desplegable no cambia.
 - **Iconos junto al título** en las pantallas de Jugadores: fuera, como en el
   resto de la app (criterio de hace tiempo: título desnudo).
 - **Navegación plana y brusca:** las pantallas de Jugadores entran ahora como
@@ -930,8 +939,9 @@ septiembre), porque sobre una app que va a tirones nada parece fluido.
 
 **Queda, en este orden:**
 
-1. Que Mario mire el contorno fucsia y diga dónde cae la banda; arreglar y
-   quitar el contorno.
+1. ~~Que Mario mire el contorno fucsia y diga dónde cae la banda; arreglar y
+   quitar el contorno.~~ Hecho (arriba). Falta que Mario confirme en la PWA
+   que ya no ve la burbuja borrosa.
 2. ~~Medir el rendimiento tras la mudanza a Dublín; si sigue lenta, el
    siguiente escalón es el arranque en el propio teléfono.~~ Hecho el mismo
    día (§5): el esqueleto se iba con muelle y retenía el contenido medio
@@ -969,6 +979,17 @@ septiembre), porque sobre una app que va a tirones nada parece fluido.
   día `html` lleva el mismo fondo que `body` (`app/globals.css`): la banda
   sigue ahí, pero del color de la página. No se puede reproducir con el WebKit
   de escritorio de Playwright; solo en un iPhone con iOS 26.
+- **Y en la app instalada, iOS 26 además pinta un velo de cristal** desde la
+  barra de estado hacia abajo (~24 px, se desvanece), por encima de lo que
+  haya: se nota en formas con color (la burbuja del avatar se ve «borrosa» por
+  arriba), no en fondo liso. No hay forma de quitarlo; `black-translucent` lo
+  extiende más. La app reserva ese margen solo en iOS standalone
+  (`--ios-standalone-top`, detectado con `display-mode: standalone` +
+  `-webkit-touch-callout`), y la cabecera y el área personal lo suman a su
+  `padding-top`. Cualquier cosa nueva que se pegue al borde superior en la
+  PWA tiene que sumarlo también. Cómo se midió: muestrear una captura del
+  iPhone columna a columna (un script de Node que decodifica el PNG) y ver
+  el color del avatar aclararse hacia arriba.
 - **Los dos «2ª PORTUGAL - J2» no son un duplicado**: son dos piezas del mismo
   partido, para jugadores distintos. El modelo lo permite y es correcto.
 - **Lo que hay detrás de la app —cuentas, claves, correo, DNS— está en

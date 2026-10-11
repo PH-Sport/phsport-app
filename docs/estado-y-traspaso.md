@@ -812,13 +812,18 @@ ejecuta).
 - **El diálogo de confirmación del rol** dice que la persona «dejará de tener los
   del actual» también cuando se le añade un rol en un departamento nuevo, y con
   dos departamentos eso engaña. Es el texto del plan; sin corregir.
-- **La revisión de la migración dejó anotado un retoque, a hacer antes de
-  aplicarla:** `profile_roles_manage_agentes` es `for all`, así que un director
-  podría también hacer `UPDATE` de filas de Agentes (por ejemplo, pasar el rol
-  Director de una persona a otra), y el trigger de auditoría solo mira `INSERT`
-  y `DELETE`. Ninguna función usa `UPDATE`; se corrige partiendo la política en
-  `for insert with check` y `for delete using`. Si ya está hecho al leer esto,
-  quitar esta viñeta.
+- **Sobre `profile_roles`, un director solo puede `INSERT` y `DELETE` filas de
+  Agentes, y las dos cosas quedan en la auditoría.** La revisión final de la
+  rama vio que la política original (`profile_roles_manage_agentes`) era
+  `for all`: un director podía hacer `UPDATE` de una fila de Agentes y pasar el
+  rol Director de una persona a otra sin que `audit_log` registrara nada, porque
+  el trigger solo escucha `INSERT` y `DELETE`. Se partió, antes de aplicar la
+  050, en `profile_roles_insert_agentes` y `profile_roles_delete_agentes`; sin
+  política de `UPDATE`, un `UPDATE` de un director se queda en 0 filas (nada
+  lo necesita: `set_department_role` borra e inserta). Por la tabla sí puede
+  borrar filas de Agentes, incluido el único rol de alguien: queda auditado
+  como `REVOKE` y Mario puede deshacerlo; lo que no se ofrece es hacerlo desde
+  la interfaz ni desde `set_department_role`.
 
 **Qué se comprobó (2026-10-11).** Tipos, lint, 216 tests y build en verde. Con
 una sesión de Gestor creativo, en iPhone 15 (WebKit) y en Chrome de escritorio,
@@ -1139,8 +1144,10 @@ Lo hecho y por qué, en el §1 de octubre. Esto es lo que falta, **en este orden
 1. **Aplicar la 050** (`agentes_roles_y_permisos`), con permiso expreso de Mario.
    Plan, tarea 6: aplicar con el MCP de Supabase, leer de vuelta roles y
    permisos, sesiones simuladas dentro de transacciones que se deshacen y
-   comprobar que nada se quedó escrito. Antes, el retoque de la política que
-   anota el §1 de octubre. Después, repetir la comprobación que quedó a medias
+   comprobar que nada se quedó escrito. Entre las sesiones simuladas va el
+   `UPDATE` de un director sobre su propia fila de Director, que tiene que dejar
+   0 filas (la política ya está partida en `INSERT` y `DELETE`; §1 de octubre).
+   Después, repetir la comprobación que quedó a medias
    en la tarea 7: el diálogo de invitar tiene que ofrecer **cinco** roles (los
    tres de creativo, Agente y Director).
 2. **Integrar `feat/campograma` en `preview`**, solo con la 050 aplicada. Ahí el

@@ -59,15 +59,22 @@ join (values
 -- ─── 3. Repartir roles de Agentes sin tocar los de creativo ───────────────
 --
 -- Se suma a `profile_roles_manage` (gestionar_roles, todo): las políticas
--- permisivas se combinan con OR.
+-- permisivas se combinan con OR. Solo INSERT y DELETE, a propósito: no hay
+-- política de UPDATE para Agentes porque un UPDATE movería un rol de una
+-- persona a otra sin dejar rastro (la auditoría de `profile_roles` solo
+-- escucha INSERT y DELETE, 044 §6). Nada necesita UPDATE: set_department_role
+-- borra y vuelve a insertar, y ningún cliente escribe en esta tabla.
 
-create policy profile_roles_manage_agentes on public.profile_roles
-  for all
-  using (
+create policy profile_roles_insert_agentes on public.profile_roles
+  for insert
+  with check (
     public.has_permission(auth.uid(), 'gestionar_agentes')
     and public.role_department(role_id) = 'agentes'
-  )
-  with check (
+  );
+
+create policy profile_roles_delete_agentes on public.profile_roles
+  for delete
+  using (
     public.has_permission(auth.uid(), 'gestionar_agentes')
     and public.role_department(role_id) = 'agentes'
   );
@@ -76,8 +83,10 @@ create policy profile_roles_manage_agentes on public.profile_roles
 -- departamentos. set_profile_roles (044 §5) reemplaza TODOS los roles de la
 -- persona: con dos departamentos, cambiar uno borraba el otro. SECURITY
 -- INVOKER: la RLS de profile_roles decide quién puede (gestionar_roles para
--- todo, gestionar_agentes para Agentes). Quitarle a alguien su único rol no
--- se ofrece en esta fase: siempre se pone uno.
+-- todo, gestionar_agentes para Agentes). Esta función no ofrece quitarle a
+-- alguien su único rol: siempre se pone uno. Por la tabla sí se puede: un
+-- director puede borrar filas de Agentes (queda auditado como REVOKE y Mario
+-- lo deshace). La interfaz no lo ofrece.
 
 create function public.set_department_role(p_profile_id uuid, p_department text, p_role_id uuid)
 returns void

@@ -145,3 +145,54 @@ describe('roleBadgeLabel', () => {
     expect(roleBadgeLabel(null)).toBe('—');
   });
 });
+
+const agente = {
+  id: 'r5',
+  name: 'Agente',
+  department: 'agentes' as const,
+  permissions: [] as const,
+};
+const director = {
+  id: 'r4',
+  name: 'Director',
+  department: 'agentes' as const,
+  permissions: ['invitar_agentes', 'gestionar_agentes'] as const,
+};
+
+describe('la cara de agente', () => {
+  const withRoles = (roles: ProfileWithRoles['roles']): ProfileWithRoles => ({ ...base, roles });
+
+  it('quien solo es de Agentes ve la cara de agente y entra al campograma', () => {
+    expect(viewModeFor(withRoles([agente]))).toBe('agent');
+    expect(viewModeFor(withRoles([director]))).toBe('agent');
+    expect(homeFor('agent')).toBe('/campograma');
+  });
+
+  it('quien es de los dos departamentos conserva su cara de creativo', () => {
+    expect(viewModeFor(withRoles([gestor, director]))).toBe('manager');
+    expect(viewModeFor(withRoles([disenador, agente]))).toBe('designer');
+  });
+
+  it('un rol de Agentes da el departamento aunque no traiga permisos', () => {
+    const a = deriveAccess(withRoles([agente]));
+    expect(a.inDepartment('agentes')).toBe(true);
+    expect(a.inDepartment('creativo')).toBe(false);
+  });
+
+  it('normalizeProfile ya no descarta el departamento de Agentes', () => {
+    const raw = {
+      ...base,
+      profile_roles: [
+        {
+          role: {
+            id: 'r4',
+            name: 'Director',
+            department: 'agentes',
+            role_permissions: [{ permission: 'invitar_agentes' }, { permission: 'gestionar_agentes' }],
+          },
+        },
+      ],
+    };
+    expect(normalizeProfile(raw).roles).toEqual([director]);
+  });
+});

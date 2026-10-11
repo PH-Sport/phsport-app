@@ -14,10 +14,15 @@ export const PERMISSIONS = [
   'invitar_jugadores',
   'gestionar_roles',
   'recibir_asignaciones',
+  // Los de Agentes van aparte de los de creativo a propósito: `gestionar_roles`
+  // y `invitar_personal` abren también borrar cuentas, leer la auditoría y
+  // mandar avisos, y un director no debe tener nada de eso.
+  'invitar_agentes',
+  'gestionar_agentes',
 ] as const;
 export type Permission = (typeof PERMISSIONS)[number];
 
-export const DEPARTMENTS = ['creativo'] as const;
+export const DEPARTMENTS = ['creativo', 'agentes'] as const;
 export type Department = (typeof DEPARTMENTS)[number];
 
 /** Barrera dura: un futbolista no tiene roles, tenga lo que tenga en la tabla. */
@@ -150,14 +155,19 @@ export function deriveAccess(
  * quien recibe asignaciones ve su semana y su panel; quien no, el del equipo.
  * Sin perfil resuelto, la cara de menos privilegio (igual que antes).
  */
-export type ViewMode = 'manager' | 'designer' | 'player';
+export type ViewMode = 'manager' | 'designer' | 'agent' | 'player';
 
 export function viewModeFor(
   profile: Pick<ProfileWithRoles, 'kind' | 'roles'> | null | undefined
 ): ViewMode {
   if (!profile) return 'designer';
   if (profile.kind === 'JUGADOR') return 'player';
-  return deriveAccess(profile).can('recibir_asignaciones') ? 'designer' : 'manager';
+  const access = deriveAccess(profile);
+  // Solo es «agente» quien no tiene nada en creativo: quien tiene los dos
+  // departamentos conserva su cara de creativo y ve el campograma como una
+  // entrada más de la navegación.
+  if (!access.inDepartment('creativo') && access.inDepartment('agentes')) return 'agent';
+  return access.can('recibir_asignaciones') ? 'designer' : 'manager';
 }
 
 /** Página de entrada tras iniciar sesión. */
@@ -167,6 +177,8 @@ export function homeFor(mode: ViewMode): string {
       return '/area-personal';
     case 'designer':
       return '/mi-semana';
+    case 'agent':
+      return '/campograma';
     default:
       return '/inicio';
   }
@@ -176,6 +188,7 @@ export function homeFor(mode: ViewMode): string {
 export const VIEW_MODE_ACCENT: Record<ViewMode, string> = {
   manager: 'bg-primary/15 text-primary',
   designer: 'bg-role-designer/15 text-role-designer',
+  agent: 'bg-foreground/10 text-foreground',
   player: 'bg-muted text-muted-foreground',
 };
 

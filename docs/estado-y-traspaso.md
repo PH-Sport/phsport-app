@@ -1,6 +1,12 @@
 # Estado del proyecto y traspaso
 
-> **Actualizado:** 2026-09-21, al mudar la app a Dublín (§5 de septiembre): el
+> **Actualizado:** 2026-10-11, al llegar en código el departamento de Agentes,
+> primera fase del campograma dentro de la app (§1 de octubre): roles, cara y
+> navegación propios, y Miembros e invitaciones acotados. Vive en la rama
+> `feat/campograma`, sin integrar en `preview`, y **no debe integrarse hasta
+> que se aplique la migración 050**: está escrita y revisada, pero espera el
+> permiso de Mario (pendiente 13). Antes, el 2026-09-21, al mudar la app a Dublín
+> (§5 de septiembre): el
 > servidor pasa de 1,3–3,5 s a 0,4–0,9 s en empezar a responder, y la clase de
 > cuenta viaja en la sesión (migración 047, aplicada). Queda lo demás que Mario
 > vio en el iPhone —la banda de la cabecera (con contorno de diagnóstico puesto),
@@ -702,6 +708,133 @@ encontrado». Es un permiso de la aplicación conectada, no del proyecto
 tanto, la región se lee de la cabecera `x-vercel-id` de cualquier respuesta,
 y los despliegues se localizan por la API de GitHub (`deployments` del commit).
 
+## Qué se hizo en octubre de 2026, y por qué
+
+### 1. El departamento de Agentes (fase 1 del campograma)
+
+**El diseño está en `docs/superpowers/specs/2026-10-11-campograma-en-la-app-design.md`
+y el plan, con cada tarea y su verificación, en
+`docs/superpowers/plans/2026-10-11-campograma-fase-1-agentes.md`.** Aquí, lo que
+cambia el estado.
+
+**Para qué.** El campograma vive hoy en otro repositorio (`campograma-ph`), y
+los agentes, que son quienes llevan a los chicos, no pueden tocar nada: cada
+alta o cambio pasa por Mario. Se quiere que lo hagan ellos desde la app. Esta
+fase solo prepara el terreno —el departamento y sus cuentas—; la cartera y el
+campograma llegan en las fases 2 a 4.
+
+**Dónde está.** Rama `feat/campograma`, salida de `preview` en `bb61fe4`, en la
+carpeta `.claude/worktrees/campograma`. Seis commits de código tras el del
+spec y el plan (`21388c3` → `ec998d2`). No se ha integrado en `preview`.
+
+**Qué hay:**
+
+- **Dos roles fijos en el departamento `agentes`: Agente y Director.** El
+  director trae dos permisos nuevos, `invitar_agentes` y `gestionar_agentes`; el
+  agente no trae ninguno: su acceso es pertenecer al departamento (la cartera de
+  la fase 2 preguntará por `in_department`). No hay más jerarquía que esa. **Los
+  permisos van aparte de los de creativo a propósito:** `gestionar_roles` e
+  `invitar_personal` abren también borrar cuentas, leer la auditoría y mandar
+  avisos, y un director no debe tener nada de eso.
+- **Una cara nueva, `agent`.** `viewModeFor` la devuelve a quien tiene Agentes y
+  nada en creativo, y su página de entrada es `/campograma`. Quien tiene los
+  dos departamentos conserva la cara de creativo y ve el campograma como una
+  entrada más.
+- **Cada pantalla es de un departamento** (`lib/utils/navigation.ts`). De esa
+  tabla salen la barra lateral, la tab bar y la puerta `DepartmentGate`, que
+  devuelve a su casa a quien teclea una ruta que no es suya. Un agente ve solo
+  «Campograma» (más perfil, ajustes y ayuda), sin el «+» de crear diseño. Una
+  cuenta sin ningún departamento —alta a medias, o la sesión aún resolviéndose—
+  se comporta como antes y ve lo de creativo. La base ya impedía leer los datos;
+  esto evita enseñar la pantalla. `/campograma` es por ahora un cascarón con
+  título.
+- **Ayuda** enseña a un agente solo los consejos de su cuenta: los demás hablan
+  de diseños.
+- **Miembros e invitaciones acotados.** Quien tiene `gestionar_roles` (los
+  gestores creativos) reparte todo, como siempre; un director solo ve y reparte
+  Agentes. `PATCH /api/users/[id]` ya no recibe «estos son sus roles» (`role_ids`)
+  sino el rol de **un** departamento (`department_role`) y llama a
+  `set_department_role`. **Por qué:** `set_profile_roles` reemplaza todos los
+  roles de la persona, y con dos departamentos cambiar uno borraba el otro.
+  Miembros enseña un selector por departamento («Rol en creativo», «Rol en
+  Agentes») y el diálogo de invitar ofrece los roles de los departamentos donde
+  se puede invitar, con el de menos permisos marcado (se elige por permisos, no
+  por nombre).
+
+**La migración 050 está escrita y revisada, y NO está aplicada**
+(`supabase/migrations/050_agentes_roles_y_permisos.sql`). Necesita el permiso
+expreso de Mario, porque la base es la de producción. Solo añade: el valor
+`AGENTE` en `role_enum`, los dos roles con sus permisos, `role_department()`,
+la política de `profile_roles` para repartir roles de Agentes,
+`set_department_role()`, `can_manage_invitation()` con las cuatro políticas de
+`invitations`, y `use_invitation` v4. Lo que sustituye se comporta igual para
+todo lo que ya existe: una invitación sin `role_id`, que es la que crea `main`,
+cuenta como de creativo. Aplicada, la base volverá a ir por delante del código,
+a propósito y con la misma razón que con la 044 (ver «Cuidado» arriba).
+
+**Hasta que se aplique, esta rama no se integra en `preview`.** Sin la 050 la
+función `set_department_role` no existe en la base, y cambiar un rol desde
+Ajustes → Miembros falla. Dejarlo en `preview` sería dejar roto ese botón en
+staging.
+
+**Por qué un agente nace `AGENTE` en la casilla antigua `profiles.role`.**
+`main` comparte base con esta rama y toma por diseñador a todo `DESIGNER`: lo
+lista y le reparte trabajo. Un agente que naciera `DESIGNER` aparecería entre
+los diseñadores de producción. Es el mismo truco que con `JUGADOR` en la 046, y
+se acaba igual: la 049, que borra la casilla y su tipo con todos sus valores.
+
+**Dos huecos que no estaban en el plan** (los encontró la revisión de la tarea
+2; `83bd445`). `/campograma` no estaba en el `matcher` de `middleware.ts`: sin
+él, la casa del agente no refrescaba la cookie ni echaba en servidor a un
+anónimo o a un jugador. Y el rótulo de sección de la cabecera salía vacío en
+`/campograma` (`lib/ui/section-label.ts`). Ninguno añade consultas: es el mismo
+`getUser` que paga cada ruta del panel. Para la próxima sección nueva, que son
+tres sitios y no uno: `navigation.ts`, el `matcher` y `section-label.ts`. El
+`matcher` no tiene test automático (es configuración de Next que vitest no
+ejecuta).
+
+**Decisiones y rarezas que se dejan así, para no redescubrirlas:**
+
+- **Un director puede, por la API, dar un rol de Agentes a alguien que solo es
+  de creativo** (la interfaz no se lo ofrece). El spec le deja «dar el rol de
+  Agente o Director» sin acotar a quién, y el resultado —esa persona ve también
+  el campograma— no le da acceso a nada de creativo. Si no se quiere, es una
+  condición más en la política, en otra migración.
+- **Cualquier gestor creativo puede invitar agentes y nombrar directores**,
+  porque `gestionar_roles` vale para todo. Si no se quiere, es una migración de
+  permisos aparte.
+- **Nadie se cambia su propio rol.** Para que Mario vea el campograma necesita un
+  rol de Agentes, y se lo da otro gestor desde Miembros.
+- **La marca de la barra lateral lleva a `/inicio`:** un agente que la pulsa
+  rebota por la puerta hasta `/campograma`, con un instante en blanco. Funciona;
+  si molesta, el enlace debería usar `homeFor(viewModeFor(profile))`.
+- **El diálogo de confirmación del rol** dice que la persona «dejará de tener los
+  del actual» también cuando se le añade un rol en un departamento nuevo, y con
+  dos departamentos eso engaña. Es el texto del plan; sin corregir.
+- **La revisión de la migración dejó anotado un retoque, a hacer antes de
+  aplicarla:** `profile_roles_manage_agentes` es `for all`, así que un director
+  podría también hacer `UPDATE` de filas de Agentes (por ejemplo, pasar el rol
+  Director de una persona a otra), y el trigger de auditoría solo mira `INSERT`
+  y `DELETE`. Ninguna función usa `UPDATE`; se corrige partiendo la política en
+  `for insert with check` y `for delete using`. Si ya está hecho al leer esto,
+  quitar esta viñeta.
+
+**Qué se comprobó (2026-10-11).** Tipos, lint, 216 tests y build en verde. Con
+una sesión de Gestor creativo, en iPhone 15 (WebKit) y en Chrome de escritorio,
+creativo se ve exactamente igual que antes: cuatro entradas más el «+», sin
+Campograma, y `/campograma` tecleado a mano devuelve al inicio. En Miembros, la
+ventana del miembro enseña «Rol en creativo» y un «Rol en Agentes» vacío, y el
+diálogo de invitar los tres roles de creativo con «Diseñador» marcado (serán
+cinco cuando esté la 050). **Lo que no se ha visto nunca es una cuenta de agente
+real:** todo lo de la cara de agente está comprobado solo sobre la lógica pura.
+Eso es el pendiente 13.
+
+**Al integrar esta rama en `preview`**, el párrafo sobre los permisos de
+Agentes que esta rama añadió a `CLAUDE.md` (justo después de «Los permisos se
+definen en un solo sitio…») pasa a `.claude/rules/permisos.md`. Aquí no existe
+ese archivo: las reglas por zona son trabajo sin versionar de otra sesión en la
+carpeta principal.
+
 ---
 
 ## Qué queda pendiente
@@ -917,12 +1050,15 @@ un trigger y rellena `app_metadata` de las ocho cuentas (§5 de septiembre).
 
 **Lo que queda es la 049, y va después del merge**, cuando Vercel tenga
 desplegado en producción el código de `preview`: borra `profiles.role`,
-`invitations.role`, `is_admin` y `role_enum` (con su valor `JUGADOR` de la 046).
+`invitations.role`, `is_admin` y `role_enum` (con sus valores `JUGADOR`, de la
+046, y `AGENTE`, de la 050: un valor de un enum no se puede quitar suelto, se va
+con el tipo entero).
 Está descrita en el plan de permisos, tarea 11 (allí se llamaba 046; el número
 lo ocupó la de jugadores), con el relleno previo de `invitations.role_id` para
 las invitaciones antiguas. Aplicarla antes tumba producción. Con el merge va
 también el despliegue de la función de borrar cuentas (`admin-delete-user`),
-cuyo código ya está en el repo.
+cuyo código ya está en el repo. **La 050 de Agentes va en otro momento: antes
+de integrar su rama en `preview`, no tras el merge a `main`** (pendiente 13).
 
 ### 12. Rodar jugadores en el iPhone y pulir la fluidez
 
@@ -994,6 +1130,43 @@ septiembre), porque sobre una app que va a tirones nada parece fluido.
    entregar, borrar desde la agencia). **Anotado el 2026-09-21 como pendiente
    a petición de Mario**; sin fecha. Después, decidir el merge (pendiente
    11), que Mario quiere que espere.
+
+### 13. Departamento de Agentes: aplicar la 050 y probar con una cuenta de agente
+
+Lo hecho y por qué, en el §1 de octubre. Esto es lo que falta, **en este orden**:
+
+1. **Aplicar la 050** (`agentes_roles_y_permisos`), con permiso expreso de Mario.
+   Plan, tarea 6: aplicar con el MCP de Supabase, leer de vuelta roles y
+   permisos, sesiones simuladas dentro de transacciones que se deshacen y
+   comprobar que nada se quedó escrito. Antes, el retoque de la política que
+   anota el §1 de octubre. Después, repetir la comprobación que quedó a medias
+   en la tarea 7: el diálogo de invitar tiene que ofrecer **cinco** roles (los
+   tres de creativo, Agente y Director).
+2. **Integrar `feat/campograma` en `preview`**, solo con la 050 aplicada. Ahí el
+   párrafo de `CLAUDE.md` sobre los permisos de Agentes se muda a
+   `.claude/rules/permisos.md`.
+3. **Una cuenta de agente de prueba (tarea 9, la hace Mario).** En staging,
+   Ajustes → Miembros → Invitar miembro con el rol Agente; abrir el enlace en una
+   ventana privada y darse de alta con otro correo. Comprobar, en el iPhone y en
+   el ordenador, que: entra directo a «Campograma»; la navegación solo tiene
+   «Campograma», sin el «+»; teclear `/disenos` o `/inicio` a mano le devuelve al
+   campograma; Ayuda solo enseña consejos de la cuenta; y **si al cargar asoma
+   un instante la navegación de creativo** (es lo único que no se puede
+   comprobar de otra forma; mientras la sesión resuelve, la puerta deja pasar).
+   Después, mirar en la base que esa cuenta tiene `role = 'AGENTE'` y que no sale
+   entre los diseñadores de producción. Esa cuenta se queda como la de pruebas
+   del pendiente 2.
+4. **Para que Mario vea el campograma** necesita un rol de Agentes, que le da
+   otro gestor desde Miembros. Con los dos departamentos tendrá cinco entradas en
+   la tab bar del iPhone: mirar que caben.
+
+**No se invita a ningún agente real hasta el merge de `preview` a `main`**:
+usan producción, y `preview` va por delante con la tanda de roles y jugadores
+sin validar del todo (pendientes 11 y 12). Mario quiere que ese merge espere.
+
+**Fase 3:** Ajustes → General sigue enseñando a un agente las preferencias de
+diseños (vista por defecto, avisos de asignación). Se ajusta cuando el
+campograma tenga contenido.
 
 ---
 

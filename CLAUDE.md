@@ -105,7 +105,7 @@ ve no es lo real.
 ## Cómo está montado
 
 ```
-app/(dashboard)/     inicio · mi-semana · disenos · equipo · ajustes · ayuda
+app/(dashboard)/     inicio · mi-semana · disenos · equipo · jugadores · campograma · ajustes · ayuda
 app/api/designs/     rutas de servidor, con validación zod en lib/api/schemas.ts
 components/ui/       sistema de diseño propio (Surface, Row, PulseDot…) + shadcn
 components/layout/   shell: header, sidebar, tab bar móvil
@@ -144,6 +144,15 @@ permisos existen, y Ajustes → Miembros solo elige el rol de cada persona. Para
 preguntar «¿puede?»: en cliente `useAuth().access.can('…')`, en rutas de API
 `loadAccess(supabase, userId)`, y en la base `has_permission(uid, '…')` dentro
 de las políticas. Nunca comparar nombres de rol: un rol se puede renombrar.
+
+**Los permisos de Agentes van aparte de los de creativo** (`invitar_agentes`,
+`gestionar_agentes`), porque `gestionar_roles` abre también borrar cuentas, la
+auditoría y los avisos, y un director no debe tener nada de eso. Repartir un rol
+se hace **por departamento**, con `set_department_role`; `set_profile_roles`
+reemplaza todos los roles de la persona y borraría los del otro departamento, así
+que la app no lo llama. Qué ruta es de qué departamento lo dice
+`lib/utils/navigation.ts`, y de ahí salen la navegación y la puerta de cada
+pantalla.
 
 ## Cómo se trabaja aquí
 

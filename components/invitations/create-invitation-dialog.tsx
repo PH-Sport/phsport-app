@@ -1,9 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { logger } from '@/lib/utils/logger';
 import { generateInviteToken, inviteExpiry, inviteUrl } from '@/lib/services/invitations/token';
 import { useRoles } from '@/lib/hooks/use-roles';
+import { useAuth } from '@/lib/auth/auth-context';
+import { defaultInviteRole, departmentsInvitableBy } from '@/lib/utils/access';
 import {
   Dialog,
   DialogContent,
@@ -37,17 +39,25 @@ export function CreateInvitationDialog({
   onOpenChange,
   onCreated 
 }: CreateInvitationDialogProps) {
-  const { roles } = useRoles();
+  const { roles: allRoles } = useRoles();
+  const { access } = useAuth();
+  // Solo los roles de los departamentos a los que esta cuenta puede invitar:
+  // un director no invita a nadie como Gestor creativo (y la base tampoco le dejaría).
+  const departments = useMemo(() => departmentsInvitableBy(access), [access]);
+  const roles = useMemo(
+    () => allRoles.filter((r) => departments.includes(r.department)),
+    [allRoles, departments]
+  );
   const [roleId, setRoleId] = useState<string>('');
   const [creating, setCreating] = useState(false);
 
-  // Por defecto, «Diseñador» (el rol de quien entra a hacer diseños); si no
-  // existiera, el primero del catálogo.
+  // Por defecto, el rol de menos permisos del primer departamento: «Diseñador»
+  // en creativo, «Agente» en Agentes. Sin comparar nombres.
   useEffect(() => {
     if (!roleId && roles.length) {
-      setRoleId(roles.find((r) => r.name === 'Diseñador')?.id ?? roles[0].id);
+      setRoleId(defaultInviteRole(roles, departments)?.id ?? roles[0].id);
     }
-  }, [roles, roleId]);
+  }, [roles, roleId, departments]);
   const [createdToken, setCreatedToken] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 

@@ -2,15 +2,19 @@
 
 /**
  * Panel de Miembros (dentro de Ajustes) — lenguaje del concepto D.
- * Tarjetas del equipo (clic → popup) e invitar. Lo ve quien invita compañeros o
- * gestiona roles.
+ * Tarjetas del equipo (clic → popup) e invitar. Lo ve quien invita o reparte
+ * roles en algún departamento, y solo ve a la gente de esos departamentos
+ * (`membersVisibleTo`): un director ve únicamente a Agentes.
  *
  * Acciones sobre un miembro:
- * - Renombrar: a la vista (acción normal).
+ * - Renombrar: a la vista (acción normal), solo con `gestionar_roles`; sin él
+ *   los campos quedan de solo lectura.
  * - Cambiar rol / Eliminar: en "Zona avanzada" (plegada) — acciones extraordinarias,
- *   siempre con confirmación, solo con `gestionar_roles`. El rol se elige de la
- *   lista fija (un rol por persona; la tabla admite varios para cuando lleguen
- *   los agentes). Eliminar conserva los diseños del usuario.
+ *   siempre con confirmación. El rol se elige POR DEPARTAMENTO (un rol por
+ *   persona y departamento) y solo en los que esta cuenta puede repartir
+ *   (`departmentsManagedBy`): quien solo reparte en Agentes no ve el selector
+ *   de creativo. Eliminar conserva los diseños del usuario y sigue siendo solo
+ *   de quien gestiona roles.
  */
 
 import { useState } from 'react';
@@ -23,7 +27,15 @@ import { Collapse } from '@/components/ui/collapse';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 import { UserAvatar } from '@/components/ui/user-avatar';
-import { roleBadgeLabel, VIEW_MODE_ACCENT, viewModeFor } from '@/lib/utils/access';
+import {
+  departmentsInvitableBy,
+  departmentsManagedBy,
+  membersVisibleTo,
+  roleBadgeLabel,
+  VIEW_MODE_ACCENT,
+  viewModeFor,
+  type Department,
+} from '@/lib/utils/access';
 import { useAuth } from '@/lib/auth/auth-context';
 import { createClient } from '@/lib/supabase/client';
 import { useUsersData, type Member } from '@/lib/hooks/use-users-data';
@@ -38,7 +50,10 @@ const rise = {
 
 export function MembersPanel() {
   const { profile, access } = useAuth();
-  const { users, mutate } = useUsersData();
+  const { users: allUsers, mutate } = useUsersData();
+  const users = membersVisibleTo(allUsers, access);
+  const managed = departmentsManagedBy(access);
+  const canRename = access.can('gestionar_roles');
   const { roles } = useRoles();
 
   const [inviteOpen, setInviteOpen] = useState(false);
@@ -46,22 +61,26 @@ export function MembersPanel() {
   const [givenDraft, setGivenDraft] = useState('');
   const [familyDraft, setFamilyDraft] = useState('');
   const [aliasDraft, setAliasDraft] = useState('');
-  const [roleDraft, setRoleDraft] = useState<string>('');
+  // Un borrador de rol por departamento: Mario puede tener uno de creativo y
+  // otro de Agentes, y cambiar uno no toca el otro.
+  const [roleDrafts, setRoleDrafts] = useState<Partial<Record<Department, string>>>({});
+  const [confirmDept, setConfirmDept] = useState<Department | null>(null);
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [busy, setBusy] = useState<null | 'save' | 'roles' | 'delete'>(null);
-  const [confirmRole, setConfirmRole] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   const isSelf = member?.id === profile?.id;
-  const currentRoleId = member?.roles[0]?.id ?? '';
-  const draftRoleName = roles.find((r) => r.id === roleDraft)?.name ?? '';
+  const currentRoleIn = (m: Member | null, d: Department) => m?.roles.find((r) => r.department === d)?.id ?? '';
+  const draftRoleName = confirmDept
+    ? roles.find((r) => r.id === roleDrafts[confirmDept])?.name ?? ''
+    : '';
 
   const openMember = (m: Member) => {
     setMember(m);
     setGivenDraft(m.given_name || '');
     setFamilyDraft(m.family_name || '');
     setAliasDraft(m.alias || '');
-    setRoleDraft(m.roles[0]?.id ?? '');
+    setRoleDrafts(Object.fromEntries(managed.map((d) => [d, currentRoleIn(m, d)])));
     setAdvancedOpen(false);
   };
 
@@ -74,7 +93,7 @@ export function MembersPanel() {
     given_name?: string;
     family_name?: string | null;
     alias?: string | null;
-    role_ids?: string[];
+    department_role?: { department: Department; role_id: string };
   }) => {
     if (!member) return false;
     const res = await fetch(`/api/users/${member.id}`, {
@@ -120,17 +139,18 @@ export function MembersPanel() {
   };
 
   const handleSaveRole = async () => {
-    if (!member || !roleDraft) return;
+    const roleId = confirmDept ? roleDrafts[confirmDept] : undefined;
+    if (!member || !confirmDept || !roleId) return;
     setBusy('roles');
     try {
-      await patchUser({ role_ids: [roleDraft] });
+      await patchUser({ department_role: { department: confirmDept, role_id: roleId } });
       toast.success('Rol actualizado');
       mutate();
-      setConfirmRole(false);
+      setConfirmDept(null);
       closeMember();
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'No se pudo cambiar el rol');
-      setConfirmRole(false);
+      setConfirmDept(null);
     } finally {
       setBusy(null);
     }
@@ -206,7 +226,7 @@ export function MembersPanel() {
           );
         })}
 
-        {access.can('invitar_personal') && (
+        {departmentsInvitableBy(access).length > 0 && (
           <button
             type="button"
             onClick={() => setInviteOpen(true)}
@@ -269,7 +289,8 @@ export function MembersPanel() {
                       <input
                         value={givenDraft}
                         onChange={(e) => setGivenDraft(e.target.value)}
-                        className="mt-1.5 h-10 w-full rounded-xl border border-border bg-background px-4 text-base focus:outline-none md:text-sm focus:ring-2 focus:ring-ring"
+                        disabled={!canRename}
+                        className="mt-1.5 h-10 w-full rounded-xl border border-border bg-background px-4 text-base focus:outline-none md:text-sm focus:ring-2 focus:ring-ring disabled:opacity-60"
                       />
                     </div>
                     <div>
@@ -279,7 +300,8 @@ export function MembersPanel() {
                       <input
                         value={familyDraft}
                         onChange={(e) => setFamilyDraft(e.target.value)}
-                        className="mt-1.5 h-10 w-full rounded-xl border border-border bg-background px-4 text-base focus:outline-none md:text-sm focus:ring-2 focus:ring-ring"
+                        disabled={!canRename}
+                        className="mt-1.5 h-10 w-full rounded-xl border border-border bg-background px-4 text-base focus:outline-none md:text-sm focus:ring-2 focus:ring-ring disabled:opacity-60"
                       />
                     </div>
                   </div>
@@ -290,8 +312,9 @@ export function MembersPanel() {
                     <input
                       value={aliasDraft}
                       onChange={(e) => setAliasDraft(e.target.value)}
+                      disabled={!canRename}
                       placeholder={givenDraft || 'Nombre para mostrar'}
-                      className="mt-1.5 h-10 w-full rounded-xl border border-border bg-background px-4 text-base focus:outline-none md:text-sm focus:ring-2 focus:ring-ring"
+                      className="mt-1.5 h-10 w-full rounded-xl border border-border bg-background px-4 text-base focus:outline-none md:text-sm focus:ring-2 focus:ring-ring disabled:opacity-60"
                     />
                     <p className="mt-1 text-[11px] text-muted-foreground">
                       Si lo rellenas, se mostrará en vez del nombre.
@@ -309,8 +332,8 @@ export function MembersPanel() {
                     Se unió el {format(new Date(member.created_at), 'dd/MM/yyyy')}
                   </p>
 
-                  {/* Zona avanzada: rol + eliminar (extraordinario). Oculta para uno mismo y para quien no gestiona roles. */}
-                  {!isSelf && access.can('gestionar_roles') && (
+                  {/* Zona avanzada: rol + eliminar (extraordinario). Oculta para uno mismo y para quien no reparte roles en ningún departamento. */}
+                  {!isSelf && managed.length > 0 && (
                     <div className="rounded-xl border border-border/60">
                       <button
                         type="button"
@@ -329,35 +352,50 @@ export function MembersPanel() {
                       </button>
                       <Collapse open={advancedOpen}>
                         <div className="space-y-3 px-3 pb-3 pt-1">
-                          <p className="text-eyebrow text-muted-foreground">Rol</p>
-                          <Select value={roleDraft} onValueChange={setRoleDraft}>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Elige un rol" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {roles.map((r) => (
-                                <SelectItem key={r.id} value={r.id}>
-                                  {r.name}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <button
-                            type="button"
-                            onClick={() => setConfirmRole(true)}
-                            disabled={!roleDraft || roleDraft === currentRoleId}
-                            className="flex h-11 w-full items-center justify-center rounded-lg border border-border px-3 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted/40 hover:text-foreground disabled:opacity-50 md:h-9"
-                          >
-                            Cambiar rol
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setConfirmDelete(true)}
-                            className="flex h-11 w-full items-center gap-1.5 rounded-lg px-3 text-xs font-medium text-destructive transition-colors hover:bg-destructive/10 md:h-9"
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                            Eliminar usuario
-                          </button>
+                          {managed.map((d) => {
+                            const options = roles.filter((r) => r.department === d);
+                            const draft = roleDrafts[d] ?? '';
+                            return (
+                              <div key={d} className="space-y-2">
+                                <p className="text-eyebrow text-muted-foreground">
+                                  {d === 'creativo' ? 'Rol en creativo' : 'Rol en Agentes'}
+                                </p>
+                                <Select
+                                  value={draft}
+                                  onValueChange={(v) => setRoleDrafts((prev) => ({ ...prev, [d]: v }))}
+                                >
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Sin rol" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {options.map((r) => (
+                                      <SelectItem key={r.id} value={r.id}>
+                                        {r.name}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                                <button
+                                  type="button"
+                                  onClick={() => setConfirmDept(d)}
+                                  disabled={!draft || draft === currentRoleIn(member, d)}
+                                  className="flex h-11 w-full items-center justify-center rounded-lg border border-border px-3 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted/40 hover:text-foreground disabled:opacity-50 md:h-9"
+                                >
+                                  Cambiar rol
+                                </button>
+                              </div>
+                            );
+                          })}
+                          {access.can('gestionar_roles') && (
+                            <button
+                              type="button"
+                              onClick={() => setConfirmDelete(true)}
+                              className="flex h-11 w-full items-center gap-1.5 rounded-lg px-3 text-xs font-medium text-destructive transition-colors hover:bg-destructive/10 md:h-9"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                              Eliminar usuario
+                            </button>
+                          )}
                         </div>
                       </Collapse>
                     </div>
@@ -372,15 +410,18 @@ export function MembersPanel() {
                   >
                     Cancelar
                   </button>
-                  <button
-                    type="button"
-                    onClick={handleSaveName}
-                    disabled={busy === 'save'}
-                    className="flex h-11 items-center gap-1.5 rounded-xl bg-primary px-4 text-xs font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-60 md:h-9"
-                  >
-                    {busy === 'save' && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-                    Guardar
-                  </button>
+                  {/* Renombrar exige gestionar_roles en la API; sin él, el botón solo devolvía un error. */}
+                  {canRename && (
+                    <button
+                      type="button"
+                      onClick={handleSaveName}
+                      disabled={busy === 'save'}
+                      className="flex h-11 items-center gap-1.5 rounded-xl bg-primary px-4 text-xs font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-60 md:h-9"
+                    >
+                      {busy === 'save' && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                      Guardar
+                    </button>
+                  )}
                 </div>
               </motion.div>
             </div>
@@ -389,8 +430,8 @@ export function MembersPanel() {
       </AnimatePresence>
 
       <ConfirmDialog
-        open={confirmRole}
-        onOpenChange={(o) => !o && setConfirmRole(false)}
+        open={confirmDept !== null}
+        onOpenChange={(o) => !o && setConfirmDept(null)}
         onConfirm={handleSaveRole}
         title={`¿Cambiar el rol a ${draftRoleName}?`}
         description={`${member?.full_name || 'Este usuario'} pasará a tener los permisos de ese rol y dejará de tener los del actual.`}

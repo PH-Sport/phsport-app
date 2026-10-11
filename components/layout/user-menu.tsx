@@ -32,7 +32,7 @@ import { useAuth } from '@/lib/auth/auth-context';
 import { useViewAs } from '@/lib/auth/view-as-context';
 import { useDesigners } from '@/lib/hooks/use-designers';
 import { useIsMobile } from '@/lib/hooks/use-is-mobile';
-import { VIEW_MODE_ACCENT, roleBadgeLabel } from '@/lib/utils/access';
+import { VIEW_MODE_ACCENT, canSeeMembers, roleBadgeLabel } from '@/lib/utils/access';
 import { ViewAsMenuSection } from './view-as-menu-section';
 import { cn } from '@/lib/utils';
 
@@ -101,7 +101,7 @@ export function UserMenu() {
   // Etiqueta corta (display_name) en el día a día; el avatar usa el nombre completo para las iniciales.
   const label = realDisplayName || realEmail.split('@')[0] || 'User';
   const avatarName = realName || label;
-  const canMembers = access.can('invitar_personal') || access.can('gestionar_roles');
+  const canMembers = canSeeMembers(access);
 
   // Táctil: el botón mide 44px aunque el avatar siga viéndose de 32px;
   // en escritorio vuelve a ceñirse al avatar. El ring abraza al avatar.

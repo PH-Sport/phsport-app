@@ -197,3 +197,59 @@ export function roleBadgeLabel(profile: Pick<ProfileWithRoles, 'roles'> | null |
   const names = profile?.roles.map((r) => r.name) ?? [];
   return names.length ? names.join(' · ') : '—';
 }
+
+/**
+ * Departamentos cuyos roles puede repartir esta cuenta en Miembros.
+ * `gestionar_roles` es el de siempre y vale para todos; `gestionar_agentes`
+ * solo para Agentes (spec 2026-10-11 §2: un director no hace a nadie Gestor
+ * creativo).
+ */
+export function departmentsManagedBy(access: Pick<Access, 'can'>): Department[] {
+  if (access.can('gestionar_roles')) return [...DEPARTMENTS];
+  return access.can('gestionar_agentes') ? ['agentes'] : [];
+}
+
+/** Departamentos a cuyos roles puede invitar. Misma regla que la RLS de `invitations` (migración 050). */
+export function departmentsInvitableBy(access: Pick<Access, 'can'>): Department[] {
+  if (access.can('gestionar_roles')) return [...DEPARTMENTS];
+  const out: Department[] = [];
+  if (access.can('invitar_personal')) out.push('creativo');
+  if (access.can('invitar_agentes')) out.push('agentes');
+  return out;
+}
+
+export function canSeeMembers(access: Pick<Access, 'can'>): boolean {
+  return departmentsManagedBy(access).length > 0 || departmentsInvitableBy(access).length > 0;
+}
+
+/**
+ * A quién ve en Miembros. Quien gestiona roles, a todos; el resto, solo a la
+ * gente de los departamentos en los que invita o reparte. Ver nombres ajenos
+ * no es un riesgo (la base deja leer perfiles a todo el personal), pero una
+ * tarjeta que no puedes tocar es ruido.
+ */
+export function membersVisibleTo<T extends Pick<ProfileWithRoles, 'roles'>>(
+  members: T[],
+  access: Pick<Access, 'can'>
+): T[] {
+  if (access.can('gestionar_roles')) return members;
+  const depts = new Set<Department>([...departmentsManagedBy(access), ...departmentsInvitableBy(access)]);
+  return members.filter((m) => m.roles.some((r) => depts.has(r.department)));
+}
+
+/**
+ * Rol que viene marcado al invitar: el de menos permisos del primer
+ * departamento que tenga roles. Así sale «Diseñador» para creativo y «Agente»
+ * para Agentes sin comparar nombres (un rol se puede renombrar).
+ */
+export function defaultInviteRole<
+  R extends { id: string; department: Department; permissions: readonly Permission[] },
+>(roles: R[], departments: Department[]): R | undefined {
+  for (const d of departments) {
+    const inDept = roles.filter((r) => r.department === d);
+    if (inDept.length) {
+      return inDept.reduce((least, r) => (r.permissions.length < least.permissions.length ? r : least));
+    }
+  }
+  return undefined;
+}

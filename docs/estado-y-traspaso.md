@@ -733,9 +733,10 @@ spec y el plan (`21388c3` → `ec998d2`). No se ha integrado en `preview`.
   director trae dos permisos nuevos, `invitar_agentes` y `gestionar_agentes`; el
   agente no trae ninguno: su acceso es pertenecer al departamento (la cartera de
   la fase 2 preguntará por `in_department`). No hay más jerarquía que esa. **Los
-  permisos van aparte de los de creativo a propósito:** `gestionar_roles` e
-  `invitar_personal` abren también borrar cuentas, leer la auditoría y mandar
-  avisos, y un director no debe tener nada de eso.
+  permisos van aparte de los de creativo a propósito:** `gestionar_roles` abre
+  también borrar cuentas, leer la auditoría y mandar avisos, y un director no
+  debe tener nada de eso; e `invitar_personal` invita a roles de creativo, que
+  no es lo suyo.
 - **Una cara nueva, `agent`.** `viewModeFor` la devuelve a quien tiene Agentes y
   nada en creativo, y su página de entrada es `/campograma`. Quien tiene los
   dos departamentos conserva la cara de creativo y ve el campograma como una

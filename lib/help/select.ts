@@ -25,6 +25,10 @@ export type HelpView = ViewMode | undefined;
  * gestión mientras la sesión termina de cargar.
  */
 export function tipsForView(view: HelpView, tips: readonly HelpTip[] = HELP_TIPS): HelpTip[] {
+  // «todos» se escribió cuando todo el mundo era de creativo: casi todos esos
+  // consejos hablan de diseños. A un agente solo le sirven los de su cuenta.
+  if (view === 'agent')
+    return tips.filter((tip) => tip.audience === 'todos' && tip.section === 'cuenta');
   return tips.filter((tip) => tip.audience === 'todos' || tip.audience === view);
 }
 

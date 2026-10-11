@@ -804,14 +804,19 @@ ejecuta).
 - **Cualquier gestor creativo puede invitar agentes y nombrar directores**,
   porque `gestionar_roles` vale para todo. Si no se quiere, es una migración de
   permisos aparte.
-- **Nadie se cambia su propio rol.** Para que Mario vea el campograma necesita un
-  rol de Agentes, y se lo da otro gestor desde Miembros.
+- **Nadie se cambia su propio rol, y Miembros no enseña la cuenta de Mario.**
+  Para que Mario vea el campograma necesita un rol de Agentes. La ruta
+  (`app/api/users/[id]/route.ts`) responde 403 si alguien se cambia el suyo, y
+  su cuenta es `is_dev`, que Miembros oculta (`lib/hooks/use-users-data.ts`,
+  `.eq('is_dev', false)`, decisión de la 035): otro gestor tampoco puede
+  dárselo desde la interfaz. **No hay camino por la interfaz; es una decisión
+  pendiente con Mario**, con dos vías: (a) una fila en `profile_roles` metida a
+  mano, con su permiso expreso (es una escritura en producción); (b) enseñar las
+  cuentas `is_dev` en Miembros a quien tenga `gestionar_roles`, que revierte una
+  decisión de la 035 y es de producto.
 - **La marca de la barra lateral lleva a `/inicio`:** un agente que la pulsa
   rebota por la puerta hasta `/campograma`, con un instante en blanco. Funciona;
   si molesta, el enlace debería usar `homeFor(viewModeFor(profile))`.
-- **El diálogo de confirmación del rol** dice que la persona «dejará de tener los
-  del actual» también cuando se le añade un rol en un departamento nuevo, y con
-  dos departamentos eso engaña. Es el texto del plan; sin corregir.
 - **Sobre `profile_roles`, un director solo puede `INSERT` y `DELETE` filas de
   Agentes, y las dos cosas quedan en la auditoría.** La revisión final de la
   rama vio que la política original (`profile_roles_manage_agentes`) era
@@ -1164,9 +1169,14 @@ Lo hecho y por qué, en el §1 de octubre. Esto es lo que falta, **en este orden
    Después, mirar en la base que esa cuenta tiene `role = 'AGENTE'` y que no sale
    entre los diseñadores de producción. Esa cuenta se queda como la de pruebas
    del pendiente 2.
-4. **Para que Mario vea el campograma** necesita un rol de Agentes, que le da
-   otro gestor desde Miembros. Con los dos departamentos tendrá cinco entradas en
-   la tab bar del iPhone: mirar que caben.
+4. **Para que Mario vea el campograma** necesita un rol de Agentes, y por la
+   interfaz no hay cómo dárselo: nadie se cambia el suyo (la ruta responde 403) y
+   Miembros oculta su cuenta por ser `is_dev`. **Decisión pendiente con Mario**,
+   dos vías: (a) una fila en `profile_roles` a mano, con su permiso expreso (es
+   una escritura en producción); (b) mostrar las cuentas `is_dev` en Miembros a
+   quien tenga `gestionar_roles` (revierte una decisión de la 035; es de
+   producto). Con los dos departamentos tendrá cinco entradas en la tab bar del
+   iPhone: mirar que caben.
 
 **No se invita a ningún agente real hasta el merge de `preview` a `main`**:
 usan producción, y `preview` va por delante con la tanda de roles y jugadores

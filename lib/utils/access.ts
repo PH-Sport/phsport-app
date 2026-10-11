@@ -15,8 +15,8 @@ export const PERMISSIONS = [
   'gestionar_roles',
   'recibir_asignaciones',
   // Los de Agentes van aparte de los de creativo a propósito: `gestionar_roles`
-  // y `invitar_personal` abren también borrar cuentas, leer la auditoría y
-  // mandar avisos, y un director no debe tener nada de eso.
+  // abre también borrar cuentas, leer la auditoría y mandar avisos, e
+  // `invitar_personal` invita a creativo; un director no debe tener nada de eso.
   'invitar_agentes',
   'gestionar_agentes',
 ] as const;

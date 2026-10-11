@@ -168,8 +168,8 @@ export const PERMISSIONS = [
   'gestionar_roles',
   'recibir_asignaciones',
   // Los de Agentes van aparte de los de creativo a propósito: `gestionar_roles`
-  // y `invitar_personal` abren también borrar cuentas, leer la auditoría y
-  // mandar avisos, y un director no debe tener nada de eso.
+  // abre también borrar cuentas, leer la auditoría y mandar avisos, e
+  // `invitar_personal` invita a creativo; un director no debe tener nada de eso.
   'invitar_agentes',
   'gestionar_agentes',
 ] as const;
@@ -1554,5 +1554,5 @@ Esa cuenta se queda como la cuenta de pruebas del pendiente 2 de `estado-y-trasp
 - La cartera, el campograma y su edición (fases 2 a 4).
 - Quitarle a alguien su rol de un departamento sin darle otro.
 - Ajustes → General sigue enseñando a un agente las preferencias de diseños (vista por defecto, avisos de asignación). Se ajusta en la fase 3, cuando el campograma tenga contenido.
-- Para que Mario vea el campograma necesita un rol de Agentes. Se lo da otro gestor desde Miembros: nadie se cambia su propio rol.
+- Para que Mario vea el campograma necesita un rol de Agentes, y por la interfaz no hay camino: nadie se cambia su propio rol (la ruta responde 403) y Miembros oculta su cuenta por ser `is_dev` (`lib/hooks/use-users-data.ts`, decisión de la 035). Decisión pendiente con Mario: (a) una fila en `profile_roles` a mano, con su permiso expreso (es una escritura en producción), o (b) mostrar las cuentas `is_dev` en Miembros a quien tenga `gestionar_roles` (revierte una decisión de la 035; es de producto).
 - Los otros tres gestores creativos también podrán invitar agentes y nombrar directores (`gestionar_roles` vale para todo). Si no se quiere, es una migración de permisos aparte.

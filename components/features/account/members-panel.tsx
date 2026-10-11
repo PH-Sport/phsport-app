@@ -429,12 +429,18 @@ export function MembersPanel() {
         )}
       </AnimatePresence>
 
+      {/* Con dos departamentos, «dejará de tener los del actual» solo es cierto si
+          ya tenía rol en ESE departamento; si no, conserva el del otro y suma este. */}
       <ConfirmDialog
         open={confirmDept !== null}
         onOpenChange={(o) => !o && setConfirmDept(null)}
         onConfirm={handleSaveRole}
         title={`¿Cambiar el rol a ${draftRoleName}?`}
-        description={`${member?.full_name || 'Este usuario'} pasará a tener los permisos de ese rol y dejará de tener los del actual.`}
+        description={`${member?.full_name || 'Este usuario'} ${
+          confirmDept && !currentRoleIn(member, confirmDept)
+            ? 'conservará lo que ya tiene y sumará los permisos de ese rol.'
+            : 'pasará a tener los permisos de ese rol y dejará de tener los de su rol actual en ese departamento.'
+        }`}
         confirmLabel="Cambiar rol"
         variant="warning"
         loading={busy === 'roles'}

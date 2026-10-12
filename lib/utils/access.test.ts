@@ -250,3 +250,33 @@ describe('Miembros e invitaciones por departamento', () => {
     expect(defaultInviteRole([], ['agentes'])).toBeUndefined();
   });
 });
+
+describe('la cartera', () => {
+  const directorConBaja = {
+    ...director,
+    permissions: [...director.permissions, 'dar_de_baja_jugadores'] as const,
+  };
+
+  it('normalizeProfile conserva el permiso de dar de baja jugadores', () => {
+    const raw = {
+      ...base,
+      profile_roles: [
+        {
+          role: {
+            id: 'r4',
+            name: 'Director',
+            department: 'agentes',
+            role_permissions: [{ permission: 'dar_de_baja_jugadores' }],
+          },
+        },
+      ],
+    };
+    expect(normalizeProfile(raw).roles[0].permissions).toEqual(['dar_de_baja_jugadores']);
+  });
+
+  it('solo quien tiene el permiso puede dar de baja; ser de Agentes no basta', () => {
+    expect(deriveAccess({ ...base, roles: [directorConBaja] }).can('dar_de_baja_jugadores')).toBe(true);
+    expect(deriveAccess({ ...base, roles: [agente] }).can('dar_de_baja_jugadores')).toBe(false);
+    expect(deriveAccess({ ...base, roles: [gestor] }).can('dar_de_baja_jugadores')).toBe(false);
+  });
+});

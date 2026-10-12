@@ -18,6 +18,11 @@ migraciones se parten en «añadir» (se aplican cuando se escriben) y «quitar�
 ejemplo. Antes de escribir DDL que borre algo, mirar qué lee `main` con
 `git grep <columna> main -- app lib components`.
 
+**Una migración no lleva datos de jugadores**, porque el repo es público (ver
+`CLAUDE.md`, «Trampas que valen para todo el repo»). Se cargan aparte, desde
+fuera del repo; el ejemplo es la carga de la cartera, en la tarea 4 del plan de
+la fase 2 del campograma.
+
 **Una política del cubo que consulte `player_files` tiene que decir
 `storage.objects.name`, con apellido.** Las dos tablas tienen una columna
 `name`; dentro del `exists (… from player_files f where …)` un `name` a secas

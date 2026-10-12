@@ -19,6 +19,9 @@ export const PERMISSIONS = [
   // `invitar_personal` invita a creativo; un director no debe tener nada de eso.
   'invitar_agentes',
   'gestionar_agentes',
+  // Dar de baja y recuperar jugadores de la cartera. Solo Director (spec §2):
+  // un agente da de alta y edita, pero no saca a nadie del campograma.
+  'dar_de_baja_jugadores',
 ] as const;
 export type Permission = (typeof PERMISSIONS)[number];
 

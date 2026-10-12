@@ -24,3 +24,9 @@ reemplaza todos los roles de la persona y borraría los del otro departamento, a
 que la app no lo llama. Qué ruta es de qué departamento lo dice
 `lib/utils/navigation.ts`, y de ahí salen la navegación y la puerta de cada
 pantalla.
+
+**La cartera de Agentes** (`portfolio_*`, migración 051): verla, dar de alta y
+editar es de todo el departamento (`in_department(…, 'agentes')`); dar de baja
+y recuperar es `dar_de_baja_jugadores`, de Director. Esa diferencia la guarda un
+trigger, no la RLS, porque la RLS no distingue columnas. Creativo solo llega a
+`portfolio_names()` (nombre y equipo).

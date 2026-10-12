@@ -1,7 +1,9 @@
 # El campograma entra en la app: departamento de Agentes y cartera editable
 
 **Fecha:** 2026-10-11, decisiones tomadas con Mario el 2026-10-10 y el 2026-10-11
-**Estado:** diseño cerrado, pendiente de que Mario lo revise; nada implementado.
+**Estado:** diseño cerrado. Fases 1 (Agentes) y 2 (la cartera en la base)
+hechas el 2026-10-11 y el 2026-10-12; ver §1 y §2 de octubre en
+`docs/estado-y-traspaso.md`. Siguiente: fase 3.
 **Alcance:** el departamento de Agentes, la cartera de jugadores con su campograma
 y su edición, y el autocompletado de nombres al crear diseños.
 
@@ -212,7 +214,8 @@ aplica con permiso expreso de Mario.
 - **La carga inicial sale del JSON de `campograma-ph`.** A 2026-10-11 ese
   archivo tiene cambios sin commitear (tres altas que pasan a RFEF). Hay que
   commitearlos antes de cargar. Los huecos («sin confirmar», las dudas para Eva)
-  viajan tal cual: nada se rellena por el camino.
+  viajan tal cual: nada se rellena por el camino. (Hecho: se cargó el
+  2026-10-12 desde el commit `5ac5f57`, del 2026-10-10, sin datos en este repo.)
 - **Menores.** La cartera tiene decenas de menores con club y operaciones. Al
   entrar en la app quedan detrás de cuenta y de políticas de base; el historial
   público de `campograma-ph` en GitHub no se arregla con esto, sino con la

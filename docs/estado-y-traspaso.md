@@ -1,9 +1,12 @@
 # Estado del proyecto y traspaso
 
-> **Actualizado:** 2026-10-12: el departamento de Agentes entra en `preview`
+> **Actualizado:** 2026-10-12 (noche): la cartera de Agentes está en la base
+> (fase 2 del campograma, §2 de octubre): migración 051 aplicada, 165 jugadores
+> cargados desde el campograma suelto y comprobados uno a uno, sin datos de
+> jugadores en el repo. Siguiente, la fase 3 (pendiente 13). Antes, ese mismo
+> día: el departamento de Agentes entra en `preview`
 > (rama `feat/campograma` integrada), con la migración 050 aplicada y comprobada
-> en la base (§1 de octubre). Queda la cuenta de agente de prueba y decidir cómo
-> tiene Mario un rol de Agentes (pendiente 13). Antes, el 2026-10-11, al llegar
+> en la base (§1 de octubre). Antes, el 2026-10-11, al llegar
 > en código el departamento de Agentes, primera fase del campograma dentro de la
 > app (§1 de octubre): roles, cara y navegación propios, y Miembros e
 > invitaciones acotados. Antes, el 2026-09-23: el mapa de mejoras de la
@@ -898,13 +901,89 @@ diálogo de invitar los tres roles de creativo con «Diseñador» marcado. Con l
 050 aplicada, el 2026-10-12, ya ofrece los cinco (los tres de creativo, Agente y
 Director) con «Diseñador» marcado, en iPhone 15 y en escritorio, sobre la
 compilación de producción ya integrada en `preview`; creativo sigue sin
-«Campograma» y `/campograma` lleva al inicio. **Lo que no se ha visto nunca es una cuenta de agente
-real:** todo lo de la cara de agente está comprobado solo sobre la lógica pura.
-Eso es el pendiente 13.
+«Campograma» y `/campograma` lleva al inicio. La cara de agente con una cuenta
+real la vio Mario el 2026-10-12 en staging (pendiente 13).
 
 **Integrada en `preview` el 2026-10-12.** El párrafo sobre los permisos de
 Agentes que la rama había añadido a `CLAUDE.md` vive ahora en
 `.claude/rules/permisos.md`, con el resto de lo que hay que saber de permisos.
+
+---
+
+### 2. La cartera en la base (fase 2 del campograma, 2026-10-12)
+
+Plan: `docs/superpowers/plans/2026-10-12-campograma-fase-2-cartera.md`. Rama
+`feat/cartera`, ya integrada. Migración **051** (`cartera`), revisada con contexto limpio y
+aplicada el 2026-10-12 con permiso de Mario.
+
+**Qué hay en la base:**
+
+- `portfolio_categories`: las cuatro del campograma (`elite`, `rfef`,
+  `cantera`, `sinconfirmar`), con RFEF «a secas». Cambian por migración. El
+  entrenador de cada una va en `coach`.
+- `portfolio_players`: la cartera, separada de `players` (las fichas de
+  creativo), con un enlace opcional a ellas, vacío (spec §1). Vacío = «sin
+  confirmar»; `division` nace vacía. La baja no borra: guarda fecha, motivo y
+  quién (`deactivated_*`). Nadie borra filas.
+- `portfolio_changes`: el historial. Lo escribe solo un trigger, con
+  `{campo: {old, new}}` de lo que cambia; guardar sin cambios no deja rastro.
+  `actor_id` nulo es sin sesión (la carga) o una cuenta ya borrada.
+- `portfolio_names()`: la única puerta de creativo. Da nombre y equipo actual
+  (el de la cesión si está cedido; si no, el propietario) de los activos.
+- El permiso `dar_de_baja_jugadores`, de Director, también en
+  `lib/utils/access.ts`.
+
+**Quién puede qué.** Ver, dar de alta y editar: todo Agentes
+(`in_department`). Dar de baja y recuperar: solo con `dar_de_baja_jugadores`,
+y lo guarda un trigger (`guard_portfolio_deactivation`) porque la RLS no
+distingue columnas. Ese trigger pone además la fecha de alta y quién y cuándo
+dio la baja: nadie firma a nombre de otro, un director no se queda en silencio
+con la baja de otro (si cambia el motivo, pasa a firmarla él y queda en el
+historial), y el formulario puede reenviar la fecha de baja con otra precisión sin
+que parezca que la toca. `anon` no tiene ningún privilegio; `authenticated`,
+lectura en categorías e historial y leer, dar de alta y editar en jugadores.
+Se retira todo y se da lo justo, porque en Postgres 17 «todo» incluye
+`MAINTAIN`, y `TRUNCATE` se salta la RLS.
+
+**Por qué los jugadores no están en el repo.** El repo es público en GitHub
+(Mario lo pasará a privado al llegar a producción) y la cartera tiene menores:
+59 nacidos en 2008 o después. Mario dio permiso para versionarlos; se le
+recomendó no hacerlo, porque no se gana nada y pasar a privado no borra lo
+publicado, y estuvo de acuerdo. La carga se generó en el scratchpad de la
+sesión desde `campograma-ph/data/jugadores.json` (commit `5ac5f57`, fechado el
+2026-10-10). Se ejecutó en una sola llamada, con una guardia contra cargar dos
+veces. La receta está en el plan, tarea 4.
+
+**Cómo se comprobó:**
+
+- **Cifras.** 165 jugadores (39, 75, 48 y 3 por categoría), 8 cedidos, 2
+  pendientes, 9 sin club, 165 altas en el historial y el entrenador de `elite`.
+  La huella md5 de las 165 filas, en texto canónico, es igual en el JSON y en
+  la base (`0faae734…`); la del entrenador, también.
+- **Loren como Agente** (sesiones simuladas, método del §1): ve 165, 4 y 165.
+  Da de alta y edita, y las dos cosas dejan rastro; guardar sin cambios no deja
+  historial. Dar de baja, borrar, escribir historial y tocar categorías fallan
+  con 42501; dar de alta ya de baja y ceder sin destino, con 23514. No puede
+  reescribir la fecha de alta, y `portfolio_names()` le devuelve 0.
+- **Loren como Directora:** la baja la firma ella aunque mande otro autor, y la
+  fecha la pone la base. Otro director no se la queda. Un agente edita el
+  nombre de un jugador de baja reenviando la fecha en milisegundos y no se le
+  pide permiso. Al recuperarlo, la fila queda limpia y la recuperación consta
+  en el historial.
+- **Loren de creativo:** 0 en las tablas y 165 nombres con solo `name,team`,
+  9 sin equipo; coincide con la tabla. `anon`: 42501 en la tabla y en la
+  función. Mario con Director prestado: 165 en las dos. Después, nada escrito.
+- **Avisos de seguridad:** pasan de 11 a 12 en «funciones privilegiadas
+  ejecutables con sesión» (`portfolio_names`, el mismo caso que
+  `has_permission`). Nada nuevo de otra clase.
+
+**Desde la carga hay dos copias que no se hablan.** Lo que se cambie en el
+campograma suelto ya no llega a la app. Mientras los agentes no la usen (hasta
+el merge a `main`) da igual, pero antes de pasárselo habrá que cuadrar las dos
+(pendiente 13). Para saber si el JSON ha cambiado, basta repetir la huella.
+
+**Integrada en `preview` el 2026-10-12.** Sin pantallas nuevas: en staging no
+cambia nada visible hasta la fase 3.
 
 ---
 
@@ -1109,7 +1188,7 @@ una por MCP con el nombre sin prefijo, que es como están las últimas.
 - **Instalar Xcode** para probar iOS real (18 y 26) sin depender del móvil de
   Mario. No está instalado; se maneja con `xcrun simctl`, no con Playwright.
 
-### 11. Aplicar la 049 tras el merge a `main` (la 045, la 046, la 047, la 048 y la 050 ya están)
+### 11. Aplicar la 049 tras el merge a `main` (la 045, la 046, la 047, la 048, la 050 y la 051 ya están)
 
 **La 045 y la 046 se aplicaron el 2026-09-17** por MCP, registradas como
 `politicas_por_permiso` y `jugadores_y_archivos`, con permiso expreso de Mario
@@ -1202,30 +1281,44 @@ septiembre), porque sobre una app que va a tirones nada parece fluido.
    a petición de Mario**; sin fecha. Después, decidir el merge (pendiente
    11), que Mario quiere que espere.
 
-### 13. Departamento de Agentes: probar con una cuenta de agente
+### 13. Campograma en la app: fases 3 a 6, y el rol de Agentes de Mario
 
-Lo hecho y por qué, en el §1 de octubre. **La 050 está aplicada y la rama
-integrada en `preview`, con el diálogo de invitar ya comprobado (2026-10-12).**
-Esto es lo que falta, **en este orden**:
+Lo hecho y por qué, en el §1 (Agentes) y el §2 (la cartera en la base) de
+octubre. Las dos están integradas en `preview` y sus migraciones (050 y 051)
+aplicadas.
+**La cuenta de agente de prueba ya existe:** la creó Mario el
+2026-10-12 en staging, con rol Director. Dice que funciona: solo carga
+«Campograma», vacío como se esperaba. En la base tiene `role = 'AGENTE'`, así
+que producción no la toma por diseñador. No dijo nada expreso de si asoma un
+instante la navegación de creativo al cargar: mirarlo cuando el campograma
+tenga contenido. Sirve como cuenta de pruebas de Agentes; la del pendiente 2,
+para pruebas de navegador que creen o borren diseños, sigue faltando (esta no
+es de creativo y la base no le dejaría).
 
-1. **Una cuenta de agente de prueba (tarea 9, la hace Mario).** En staging,
-   Ajustes → Miembros → Invitar miembro con el rol Agente; abrir el enlace en una
-   ventana privada y darse de alta con otro correo. Comprobar, en el iPhone y en
-   el ordenador, que: entra directo a «Campograma»; la navegación solo tiene
-   «Campograma», sin el «+»; teclear `/disenos` o `/inicio` a mano le devuelve al
-   campograma; Ayuda solo enseña consejos de la cuenta; y **si al cargar asoma
-   un instante la navegación de creativo** (es lo único que no se puede
-   comprobar de otra forma; mientras la sesión resuelve, la puerta deja pasar).
-   Después, mirar en la base que esa cuenta tiene `role = 'AGENTE'` y que no sale
-   entre los diseñadores de producción. Esa cuenta se queda como la de pruebas
-   del pendiente 2.
-2. **Para que Mario vea el campograma** necesita un rol de Agentes, y por la
+Lo que falta, **en este orden**:
+
+1. **Fase 3: el campograma, solo consulta** (spec §4): campo, lista, panel,
+   ficha, búsqueda sin acentos sobre toda la cartera, contadores y
+   entrenadores. Lee de `portfolio_*`. Antes de portar el campo, leer las
+   trampas de geometría y de datos del campograma suelto
+   (`campograma-ph/docs/work/active/handoff-2026-09-03.md`, «Trampas»).
+2. **Fases 4 a 6:** editar (alta, edición, baja y recuperación, aviso de
+   duplicado e historial), autocompletado en la tarjeta del chat de creación
+   (con `portfolio_names()`) y retirada del campograma suelto.
+3. **Antes de pasar el campograma a los agentes:** cuadrar la cartera con el
+   campograma suelto si ha cambiado desde el 2026-10-10 (§2, «Desde la carga
+   hay dos copias»).
+4. **Para que Mario vea el campograma** necesita un rol de Agentes, y por la
    interfaz no hay cómo dárselo: nadie se cambia el suyo (la ruta responde 403) y
    Miembros oculta su cuenta por ser `is_dev`. **Decisión pendiente con Mario**,
    dos vías: (a) una fila en `profile_roles` a mano, con su permiso expreso (es
    una escritura en producción); (b) mostrar las cuentas `is_dev` en Miembros a
    quien tenga `gestionar_roles` (revierte una decisión de la 035; es de
-   producto). Con los dos departamentos tendrá cinco entradas en la tab bar del
+   producto). El 2026-10-12 Mario estaba haciendo en otra sesión un perfil de
+   depuración (pendiente 6) que puede cubrirlo; la decisión espera a eso.
+   Mientras no tenga rol de Director, Mario no puede dar de baja jugadores (spec
+   §5 dice «solo directores y Mario»: se resuelve con el rol, sin excepción por
+   nombre). Con los dos departamentos tendrá cinco entradas en la tab bar del
    iPhone: mirar que caben.
 
 **No se invita a ningún agente real hasta el merge de `preview` a `main`**:

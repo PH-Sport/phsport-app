@@ -160,7 +160,7 @@ En la práctica:
 
 ## Trampas que valen para todo el repo
 
-Las de una zona concreta están en su regla (§ Reglas por zona). Estas tres no
+Las de una zona concreta están en su regla (§ Reglas por zona). Estas cuatro no
 son de ninguna:
 
 **Sesiones en paralelo sobre el mismo árbol.** A veces hay otra sesión de Claude
@@ -171,6 +171,12 @@ Code trabajando en el mismo directorio y cambiando de rama. Comprueba
 **La base de datos de desarrollo es la de producción.** No hay entorno de
 staging: `.env.local` apunta al proyecto real. Todo lo que se escriba lo ven los
 diseñadores. Lee cuanto quieras; para escribir, pregunta.
+
+**El repositorio es público en GitHub** (hasta que la app llegue a
+producción). Ningún dato de un jugador —de la cartera de Agentes o de las
+fichas de creativo, y menos de un menor— entra en un archivo versionado: ni en
+una migración, ni en un test, ni en un documento. Los datos se cargan aparte,
+desde fuera del repo; pasar el repo a privado no borra lo que ya se publicó.
 
 **Ante un fallo visual, mira la pantalla antes de teorizar.** Hay matriz de
 Playwright: se puede cargar una página, medir cajas, leer estilos calculados y

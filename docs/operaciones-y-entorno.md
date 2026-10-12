@@ -1,7 +1,9 @@
 # Operaciones y entorno
 
-> **Actualizado:** 2026-09-07, al preparar el salto de la máquina de Windows a un
-> Mac.
+> **Actualizado:** 2026-09-22: las trampas que este documento citaba en
+> `CLAUDE.md` viven ahora en `.claude/rules/`, que pasa a viajar con el repo; y
+> el paso 2 de «Mudarse» gana el matiz de Node en Vercel. Antes, el 2026-09-07,
+> al preparar el salto de la máquina de Windows a un Mac.
 > **Para qué sirve:** lo que hace falta para operar el proyecto y **no se puede
 > deducir leyendo el código**: qué servicios hay detrás, qué clave vive en qué
 > panel, cómo está montado el correo y qué trampas ya se pisaron. Hasta hoy esto
@@ -73,8 +75,8 @@ Proyecto **«Dashboard - PHSPORT»**, referencia `zhuluiqpakuwehibjyva`. Es la
 ninguna automatización**: cada migración se aplica a mano, por el editor SQL o
 por la herramienta.
 
-Eso explica la trampa que ya está avisada en `CLAUDE.md` y conviene entender, no
-solo obedecer:
+Eso explica la trampa que ya está avisada en `.claude/rules/migraciones.md` y
+conviene entender, no solo obedecer:
 
 - El historial que Supabase registra usa **marcas de tiempo**, y **no coincide
   uno a uno con los archivos numerados del repo**. Al revisarlo en junio de 2026,
@@ -218,7 +220,7 @@ actuales solo leen, así que es aceptable; **en cuanto haya uno que cree o borre
 diseños, hace falta una cuenta aparte**.
 
 Las capturas de referencia son **específicas del sistema operativo**: ver la
-trampa correspondiente en `CLAUDE.md`.
+trampa correspondiente en `.claude/rules/pruebas-navegador.md`.
 
 ---
 
@@ -228,8 +230,10 @@ En orden, porque el orden importa:
 
 1. **Clonar de la dirección buena:** `PH-Sport/phsport-app`. Si reutilizas
    un clon antiguo, comprueba a dónde apunta el remoto.
-2. **Node 22.18** — `nvm use` lo coge de `.nvmrc`. No instales Node 24 aunque lo
-   diga algún documento viejo.
+2. **Node 22.18 y npm 10** — `nvm use` lo coge de `.nvmrc`. No instales Node 24 aunque lo
+   diga algún documento viejo: el proyecto nunca se ha construido sobre esa
+   versión en local. En Vercel manda lo que tenga configurado el proyecto, que
+   no tiene por qué coincidir; mirar el panel antes de culpar a la versión.
 3. **`npm install`.** No copies `node_modules` de la otra máquina: hay
    dependencias con binarios compilados que son distintos por sistema y
    arquitectura.
@@ -245,7 +249,8 @@ En orden, porque el orden importa:
 7. **Contar con que los dos tests de captura fallarán** en un sistema que no sea
    Windows. No es una regresión.
 8. **La configuración de Claude Code no viaja**: `.claude/` está excluido a
-   propósito. En el equipo nuevo hay que volver a instalar plugins y dar
+   propósito, salvo `.claude/rules/`, que sí va en git porque son instrucciones
+   del repositorio. En el equipo nuevo hay que volver a instalar plugins y dar
    permisos.
 
 **Lo que no hace falta llevarse:** nada de la base de datos ni de los paneles.

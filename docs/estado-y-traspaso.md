@@ -1,6 +1,12 @@
 # Estado del proyecto y traspaso
 
-> **Actualizado:** 2026-09-21, al mudar la app a Dublín (§5 de septiembre): el
+> **Actualizado:** 2026-09-23: el mapa de mejoras de la auditoría UX pasa a ser
+> el planeta PHSPORT del sistema solar (enlace en «Dónde está cada cosa»).
+> Antes, el 2026-09-22: el `CLAUDE.md` se reparte en reglas por zona
+> (§6 de septiembre) y `.claude/rules/` pasa a versionarse; las trampas de la
+> cabecera e iOS 26 que cerraban este documento viven ahora en la regla
+> `cabecera-y-pwa.md`. Antes, el 2026-09-21, al mudar la app a Dublín (§5 de
+> septiembre): el
 > servidor pasa de 1,3–3,5 s a 0,4–0,9 s en empezar a responder, y la clase de
 > cuenta viaja en la sesión (migración 047, aplicada). Queda lo demás que Mario
 > vio en el iPhone —la banda de la cabecera (con contorno de diagnóstico puesto),
@@ -51,6 +57,12 @@ Mario lo haya probado en staging. Antes iban a la par desde el 2026-08-22, cuand
 se subieron a producción los 95 commits que llevaban meses acumulados: el rediseño iOS 26
 entero, la fase 1.5 de contenido y voz, el chat de creación de diseños y los
 arreglos del alta por invitación. Fue un fast-forward limpio, sin merge commit.
+
+**Lo que falta por mejorar en la interfaz vive fuera del repo**, en el planeta
+PHSPORT del sistema solar: https://claude.ai/artifact/69ZnDXDpMrrTELAbLNpdXg
+(privado de Mario). Son las 76 paradas de la auditoría UX/UI del 2026-09-21, con
+su ruta y lo que ya está hecho. Allí cada parada tiene un código, como `PH-T1`,
+que sirve para citarla en commits y en este documento.
 
 **El flujo de ramas ya está por escrito** en `CLAUDE.md`, apartado «Ramas»: se
 implementa en `preview` y `main` solo recibe lo probado. Hasta ahora era un
@@ -704,6 +716,27 @@ y los despliegues se localizan por la API de GitHub (`deployments` del commit).
 
 ---
 
+### 6. El `CLAUDE.md` se reparte en reglas por zona (2026-09-22)
+
+Tenía 242 líneas y Anthropic recomienda quedarse por debajo de 200: cuanto más
+largo, menos caso hace Claude a cada línea. Se queda en él lo que aplica siempre
+(sesión, ramas, cierre, comandos, cómo se trabaja, convenciones y tres trampas
+transversales), y lo que solo importa al tocar una zona pasa a `.claude/rules/`,
+un archivo por zona con las rutas a las que aplica en cabecera: Claude Code lo
+carga solo al trabajar con esas rutas. No se ha borrado ninguna frase; cada una
+vive ahora en un solo sitio. Lo que era consulta y no regla (arrancar en un
+equipo nuevo) queda en cuatro líneas y un enlace a `docs/operaciones-y-entorno.md`,
+que ya tenía el guion completo.
+
+Dos consecuencias. `.claude/rules/` se versiona: el `.gitignore` excluía todo
+`.claude/` y ahora deja pasar solo esa carpeta, el resto sigue tapado. Y las
+tres trampas de la cabecera móvil e iOS 26 que vivían al final de este
+documento («Cosas que conviene saber») se mudan a la regla `cabecera-y-pwa.md`,
+que es donde se leen cuando toca.
+
+El criterio, para lo que venga: lo que aplica siempre va en `CLAUDE.md`; lo que
+aplica por zona, en su regla; lo que se consulta, en `docs/`.
+
 ## Qué queda pendiente
 
 ### 1. Confirmar `ANTHROPIC_API_KEY` en Vercel (Production)
@@ -999,34 +1032,10 @@ septiembre), porque sobre una app que va a tirones nada parece fluido.
 
 ## Cosas que conviene saber y no se deducen del código
 
-- **El fundido de la tab bar y el `pb` del contenido van acoplados.** Los dos
-  valen `6.5rem`: la altura del degradado en `mobile-tab-bar.tsx` y el
-  `pb-[calc(env(safe-area-inset-bottom)+6.5rem)]` de `page-container.tsx`. Si el
-  contenido termina **dentro** de la franja del degradado, la última fila se lee
-  atenuada al llegar al final del scroll. Cambiar uno obliga a cambiar el otro;
-  está comentado en ambos archivos.
-- **Safari 26 ya no lee `theme-color`.** Tinta su barra muestreando el fondo de
-  los elementos fijos o pegajosos cercanos al borde, incluso si tienen
-  `opacity: 0`. El `themeColor` de `app/layout.tsx` no hace nada en iOS 26. Si
-  aparece un tinte raro, mirar ahí. **Y si el elemento pegado no tiene fondo**
-  (la cabecera, transparente arriba del todo), cae al fondo de `html`; sin él,
-  pinta una **banda blanca** sobre la cabecera, más clara que la página, que
-  Mario vio el 2026-09-17 tocando el título, la campana y el avatar. Desde ese
-  día `html` lleva el mismo fondo que `body` (`app/globals.css`): la banda
-  sigue ahí, pero del color de la página. No se puede reproducir con el WebKit
-  de escritorio de Playwright; solo en un iPhone con iOS 26.
-- **Y en la app instalada, iOS 26 además pinta un velo de cristal** desde la
-  barra de estado hacia abajo (~24 px, se desvanece) **cuando la cabecera
-  —el elemento pegado al borde superior— es transparente**; con cualquier
-  fondo, aunque sea al 2 %, usa borde duro y no hay velo. Por eso la cabecera
-  lleva `bg-background/[0.02]` arriba del todo (`header.tsx`): invisible, el
-  título se ve a través, y iOS contento. Lo que NO funcionó, para no
-  repetirlo: reservar 24 px de hueco (funciona pero cuesta espacio), un scroll
-  de 1 px al arrancar (no era la causa) y un elemento sticky de 1 px con fondo
-  antes de la cabecera (iOS mira a la cabecera, no a un hilo). Cómo se midió:
-  muestrear una captura del iPhone columna a columna (script de Node que
-  decodifica el PNG) y ver el color del avatar aclararse hacia arriba. No se
-  reproduce con el WebKit de Playwright.
+- **Las trampas de la cabecera móvil, la tab bar y Safari/iOS 26** (el fundido
+  acoplado al `pb`, `theme-color` que ya no se lee, el velo de cristal de la app
+  instalada, `sticky` y no `fixed`) viven en `.claude/rules/cabecera-y-pwa.md`,
+  que Claude Code carga al tocar el armazón. Se mudaron ahí el 2026-09-22.
 - **Los dos «2ª PORTUGAL - J2» no son un duplicado**: son dos piezas del mismo
   partido, para jugadores distintos. El modelo lo permite y es correcto.
 - **Lo que hay detrás de la app —cuentas, claves, correo, DNS— está en

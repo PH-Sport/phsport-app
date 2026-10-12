@@ -49,7 +49,8 @@ siguiente sesión arranca convencida.
 | Si tocaste… | Actualiza |
 |---|---|
 | Cualquier cosa que cambie el estado: un merge, un pendiente resuelto, una decisión con la que habrá que convivir | `docs/estado-y-traspaso.md` |
-| Convenciones, comandos, una trampa nueva que descubriste | `CLAUDE.md` |
+| Convenciones, comandos, una trampa nueva que vale para todo el repo | `CLAUDE.md` |
+| Una trampa nueva que solo importa al tocar una zona | Su regla en `.claude/rules/` (ver «Reglas por zona») |
 | La matriz de navegadores o su cobertura | `docs/testing-navegadores.md` |
 | Qué hace el producto, o cómo se pone en marcha | `README.md` |
 | Un plan en curso (rediseño, refactor, móvil) | El plan correspondiente en `docs/` |
@@ -68,24 +69,11 @@ diagnóstico resultó falso. Eso es justo lo que evita repetir el camino largo.
 
 ## Arrancar en un equipo nuevo
 
-```bash
-nvm use                       # Node 22.18, fijado en .nvmrc
-npm install
-npx playwright install        # los motores no viajan con el repo
-npm run dev
-```
-
-Hace falta un `.env.local` que **no está versionado** (lo bloquea `.gitignore`).
-Son cuatro variables y la plantilla comentada está en `.env.example`; de dónde
-sale cada valor, en `docs/operaciones-y-entorno.md`. Sin él la app no arranca:
-pídeselas a Mario en vez de inventarlas.
-
-**Node 22.18** (`.nvmrc`), npm 10. Si algún documento dice «Node 24», está
-caducado: el proyecto nunca se ha construido sobre esa versión en local. En
-Vercel manda lo que tenga configurado el proyecto, que no tiene por qué
-coincidir — mirar el panel antes de culpar a la versión.
-
-**Al mudarse de equipo hay un guion paso a paso** en
+Node 22.18 (`nvm use` lo coge de `.nvmrc`), `npm install`, `npx playwright
+install` y `npm run dev`. Hace falta un `.env.local` que **no está versionado**:
+son cuatro variables y la plantilla comentada está en `.env.example`. Sin él la
+app no arranca: pídeselas a Mario en vez de inventarlas. El guion paso a paso
+para mudarse de equipo, la versión de Node y de dónde sale cada valor están en
 `docs/operaciones-y-entorno.md`, apartado «Mudarse a otro equipo».
 
 ## Comandos
@@ -120,30 +108,22 @@ e2e/                 Playwright
 solo hace el fetch. Ese es el patrón del proyecto: si algo necesita pruebas,
 sácalo ahí en vez de testear el componente.
 
-**Los consejos de la app se escriben en un solo sitio: `lib/help/tips.ts`.** De
-ahí salen las tres caras —el aviso en contexto (`<Tip>`), el «?» (`<HelpHint>`) y
-la página `/ayuda`—, así que añadir uno es añadir una entrada y nada más. Dos
-cosas que no se ven en el archivo:
+## Reglas por zona
 
-- **Los `id` son anclas públicas** (`/ayuda#<id>`) y a la vez la clave con la que
-  se recuerda un descarte. Renombrar uno rompe enlaces guardados y hace
-  reaparecer un aviso que alguien ya había ocultado.
-- **`<HelpHint>` no sustituye a `<Hint>`.** `Hint` es un tooltip de una línea que
-  nombra un control y necesita puntero; `HelpHint` es un popover con explicación
-  que funciona al tacto. Antes de añadir uno, mira cuál de los dos toca.
+Lo que solo hace falta saber al tocar una carpeta concreta no está aquí: está en
+`.claude/rules/`, un archivo por zona. Cada uno lleva en cabecera las rutas a las
+que aplica y Claude Code lo carga solo al trabajar con ellas. Si vas a razonar
+sobre una de estas zonas sin abrir sus archivos, léela antes.
 
-Dos criterios, y los dos son de descarte. **Entra** si explica algo que la
-pantalla no puede decir sola y que, sin saberlo, lleva a una conclusión
-equivocada: «pulsa el botón para abrir el diálogo» no entra. Y **cabe en una
-frase, dos como mucho**: si necesita más, hay dos consejos metidos en uno.
-
-**Los permisos se definen en un solo sitio: `lib/utils/access.ts`.** La base
-guarda qué roles hay y qué permisos tiene cada uno, y eso solo lo cambia una
-migración (decisión de Mario: sin pantalla de roles); el código dice qué
-permisos existen, y Ajustes → Miembros solo elige el rol de cada persona. Para
-preguntar «¿puede?»: en cliente `useAuth().access.can('…')`, en rutas de API
-`loadAccess(supabase, userId)`, y en la base `has_permission(uid, '…')` dentro
-de las políticas. Nunca comparar nombres de rol: un rol se puede renombrar.
+| Zona | Regla | De qué avisa |
+|---|---|---|
+| `components/layout/`, `app/layout.tsx`, `app/globals.css`, `app/manifest.ts` | `cabecera-y-pwa.md` | Safari 26, iOS 26, el fundido de la tab bar, `sticky` y no `fixed` |
+| `supabase/` | `migraciones.md` | El historial diverge, la base viva manda, «añadir» y «quitar», políticas del cubo |
+| `lib/utils/access.ts`, `lib/auth/`, `app/api/`, `supabase/migrations/` | `permisos.md` | Un solo sitio para los permisos; nunca comparar nombres de rol |
+| `lib/help/`, `<Tip>`, `<HelpHint>`, `/ayuda` | `consejos.md` | Los ids son públicos, qué consejo entra, tooltip frente a popover |
+| `components/` | `componentes-ui.md` | El componente de shadcn a medio controlar |
+| `e2e/`, `playwright.config.ts` | `pruebas-navegador.md` | Las capturas de referencia se hicieron en Windows |
+| `vercel.json`, `middleware.ts`, `lib/supabase/` | `region-y-middleware.md` | Por qué Dublín y qué paga cada navegación |
 
 ## Cómo se trabaja aquí
 
@@ -178,65 +158,21 @@ En la práctica:
   deja de caer en diagonal`. Describen el efecto observable, no el diff.
 - No se hace commit ni push salvo que Mario lo pida.
 
-## Trampas conocidas
+## Trampas que valen para todo el repo
+
+Las de una zona concreta están en su regla (§ Reglas por zona). Estas tres no
+son de ninguna:
 
 **Sesiones en paralelo sobre el mismo árbol.** A veces hay otra sesión de Claude
 Code trabajando en el mismo directorio y cambiando de rama. Comprueba
 `git branch --show-current` antes de commitear, y añade rutas explícitas — nunca
 `git add -A`.
 
-**El historial de migraciones diverge de los archivos locales.** Hay números
-duplicados y migraciones aplicadas a mano que no constan en el registro de
-Supabase. Antes de escribir DDL: mira el número real con un `ls` de la carpeta e
-**inspecciona el estado vivo de la base** (`pg_policies`, `pg_trigger`,
-`pg_get_functiondef`) en vez de fiarte de los archivos.
-
 **La base de datos de desarrollo es la de producción.** No hay entorno de
 staging: `.env.local` apunta al proyecto real. Todo lo que se escriba lo ven los
 diseñadores. Lee cuanto quieras; para escribir, pregunta.
-
-**Producción y preview comparten base, y `main` va por detrás.** Una migración
-que quite una columna que `main` todavía lee tumba producción. Por eso las
-migraciones se parten en «añadir» (se aplican cuando se escriben) y «quitar»
-(esperan al merge): la que borra el rol antiguo (hoy numerada 049) es el ejemplo. Antes de escribir DDL que borre algo,
-mirar qué lee `main` con `git grep <columna> main -- app lib components`.
-
-**La app corre en Dublín porque la base está en Irlanda** (`vercel.json`,
-`regions: ["dub1"]`). Sin eso Vercel la ponía en Washington y cada consulta
-desde el servidor cruzaba el Atlántico: 1,3–3,5 s en empezar a responder. Si
-algún día la base se muda, se muda esto con ella. Y **cada consulta a la base
-que se añada al middleware la pagan todas las navegaciones**: lo que el
-servidor necesite saber en cada petición debe viajar en la sesión
-(`app_metadata`, que escribe la base; nunca `user_metadata`, que lo edita el
-usuario). Para comprobar dónde corre, mirar la cabecera `x-vercel-id` de una
-respuesta: `cdg1::dub1` es «entró por París, se ejecutó en Dublín».
-
-**Una política del cubo que consulte `player_files` tiene que decir
-`storage.objects.name`, con apellido.** Las dos tablas tienen una columna
-`name`; dentro del `exists (… from player_files f where …)` un `name` a secas
-es `f.name`, la política compila, Postgres la deparsea sin quejarse y queda
-muerta (pasó en la 046; lo sacó una revisión, no un error). Al escribir o
-cambiar una política de `storage.objects`, leerla de vuelta en `pg_policies`
-y buscar `f.name`. Y probarla **como jugador**: una sesión simulada de la
-agencia no la ejercita (receta en el §4 de septiembre del estado).
 
 **Ante un fallo visual, mira la pantalla antes de teorizar.** Hay matriz de
 Playwright: se puede cargar una página, medir cajas, leer estilos calculados y
 capturar, en cuatro motores. Un fallo de maquetación se diagnosticó en minutos
 así, después de cuatro intentos fallidos razonando sobre el motor sin verlo.
-
-**Las capturas de referencia se hicieron en Windows.** Las dos que hay en
-`e2e/__capturas__/` se generaron en la máquina de Windows de Mario. macOS y Linux
-dibujan las tipografías de otra forma, así que **en otro sistema esos dos tests
-fallan sin que haya ningún fallo real**. No es una regresión: es la línea base,
-que es específica del sistema. Si se trabaja desde otro equipo, comparar el
-diff visual a ojo y, si solo cambia el grosor del texto, regenerarlas ahí con
-`npm run e2e:capturas` — asumiendo que a partir de entonces fallarán en Windows.
-
-**Un componente de shadcn no admite media controla.** Si expone
-`defaultOpen` + `open` + `onOpenChange` y solo le pasas `onOpenChange`, avisa al
-padre de cada cambio pero su estado interno nunca se mueve: se queda tieso hasta
-que recargas. O usas solo `defaultOpen` (y dejas que él persista, que casi
-siempre ya lo hace por cookie), o pasas `open` **y** `onOpenChange` y llevas tú
-el estado. Mezclar rompe el contrato. Pasó de verdad con la sidebar, que exigía
-recargar para verse el despliegue.

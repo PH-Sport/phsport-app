@@ -104,7 +104,7 @@ docs/               estado del proyecto, planes y auditorías
 
 | Documento | Para qué |
 |---|---|
-| `CLAUDE.md` | Convenciones y trampas conocidas |
+| `CLAUDE.md` | Convenciones y trampas que valen para todo el repo; las de cada zona, en `.claude/rules/` |
 | `docs/estado-y-traspaso.md` | Dónde está cada cosa, decisiones y pendientes |
 | `docs/operaciones-y-entorno.md` | Cuentas, claves, correo y DNS: lo que no vive en el código |
 | `docs/testing-navegadores.md` | Matriz de Playwright y lo que **no** cubre |

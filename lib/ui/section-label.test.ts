@@ -8,6 +8,10 @@ describe('sectionLabelFor', () => {
     expect(sectionLabelFor('/ajustes')).toBe('Ajustes');
   });
 
+  it('rotula el campograma, la entrada del departamento de Agentes', () => {
+    expect(sectionLabelFor('/campograma')).toBe('Campograma');
+  });
+
   it('mapea las dos vistas de semana al mismo rótulo', () => {
     expect(sectionLabelFor('/equipo')).toBe('Semana');
     expect(sectionLabelFor('/mi-semana')).toBe('Semana');

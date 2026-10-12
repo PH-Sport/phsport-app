@@ -38,6 +38,14 @@ describe('tipsForView', () => {
   });
 });
 
+describe('tipsForView con la cara de agente', () => {
+  it('solo pasan los consejos de la cuenta', () => {
+    const tips = tipsForView('agent');
+    expect(tips.length).toBeGreaterThan(0);
+    expect(tips.every((t) => t.section === 'cuenta')).toBe(true);
+  });
+});
+
 describe('findTip', () => {
   it('encuentra por id y devuelve undefined si no existe', () => {
     expect(findTip('rango-de-fechas')?.section).toBe('buscar');

@@ -1,7 +1,12 @@
 import { describe, it, expect } from 'vitest';
 import {
+  canSeeMembers,
+  defaultInviteRole,
   deriveAccess,
+  departmentsInvitableBy,
+  departmentsManagedBy,
   homeFor,
+  membersVisibleTo,
   normalizeProfile,
   roleBadgeLabel,
   toProfile,
@@ -143,5 +148,105 @@ describe('roleBadgeLabel', () => {
     expect(roleBadgeLabel({ roles: [gestor, disenador] })).toBe('Gestor creativo · Diseñador');
     expect(roleBadgeLabel({ roles: [] })).toBe('—');
     expect(roleBadgeLabel(null)).toBe('—');
+  });
+});
+
+const agente = {
+  id: 'r5',
+  name: 'Agente',
+  department: 'agentes' as const,
+  permissions: [] as const,
+};
+const director = {
+  id: 'r4',
+  name: 'Director',
+  department: 'agentes' as const,
+  permissions: ['invitar_agentes', 'gestionar_agentes'] as const,
+};
+
+describe('la cara de agente', () => {
+  const withRoles = (roles: ProfileWithRoles['roles']): ProfileWithRoles => ({ ...base, roles });
+
+  it('quien solo es de Agentes ve la cara de agente y entra al campograma', () => {
+    expect(viewModeFor(withRoles([agente]))).toBe('agent');
+    expect(viewModeFor(withRoles([director]))).toBe('agent');
+    expect(homeFor('agent')).toBe('/campograma');
+  });
+
+  it('quien es de los dos departamentos conserva su cara de creativo', () => {
+    expect(viewModeFor(withRoles([gestor, director]))).toBe('manager');
+    expect(viewModeFor(withRoles([disenador, agente]))).toBe('designer');
+  });
+
+  it('un rol de Agentes da el departamento aunque no traiga permisos', () => {
+    const a = deriveAccess(withRoles([agente]));
+    expect(a.inDepartment('agentes')).toBe(true);
+    expect(a.inDepartment('creativo')).toBe(false);
+  });
+
+  it('normalizeProfile ya no descarta el departamento de Agentes', () => {
+    const raw = {
+      ...base,
+      profile_roles: [
+        {
+          role: {
+            id: 'r4',
+            name: 'Director',
+            department: 'agentes',
+            role_permissions: [{ permission: 'invitar_agentes' }, { permission: 'gestionar_agentes' }],
+          },
+        },
+      ],
+    };
+    expect(normalizeProfile(raw).roles).toEqual([director]);
+  });
+});
+
+describe('Miembros e invitaciones por departamento', () => {
+  const acc = (...roles: ProfileWithRoles['roles']) => deriveAccess({ ...base, roles });
+  const senior = {
+    id: 'r2',
+    name: 'Diseñador senior',
+    department: 'creativo' as const,
+    permissions: ['invitar_personal', 'invitar_jugadores', 'recibir_asignaciones'] as const,
+  };
+
+  it('quien gestiona roles reparte e invita en los dos departamentos', () => {
+    expect(departmentsManagedBy(acc(gestor))).toEqual(['creativo', 'agentes']);
+    expect(departmentsInvitableBy(acc(gestor))).toEqual(['creativo', 'agentes']);
+  });
+
+  it('un director solo reparte e invita en Agentes', () => {
+    expect(departmentsManagedBy(acc(director))).toEqual(['agentes']);
+    expect(departmentsInvitableBy(acc(director))).toEqual(['agentes']);
+  });
+
+  it('un senior invita a creativo pero no reparte roles', () => {
+    expect(departmentsManagedBy(acc(senior))).toEqual([]);
+    expect(departmentsInvitableBy(acc(senior))).toEqual(['creativo']);
+  });
+
+  it('ver Miembros: quien invita o reparte algo; un agente o un diseñador, no', () => {
+    expect(canSeeMembers(acc(director))).toBe(true);
+    expect(canSeeMembers(acc(senior))).toBe(true);
+    expect(canSeeMembers(acc(agente))).toBe(false);
+    expect(canSeeMembers(acc(disenador))).toBe(false);
+  });
+
+  it('un director solo ve en Miembros a la gente de Agentes', () => {
+    const people = [
+      { id: 'a', roles: [disenador] },
+      { id: 'b', roles: [agente] },
+      { id: 'c', roles: [gestor, director] },
+    ];
+    expect(membersVisibleTo(people, acc(director)).map((p) => p.id)).toEqual(['b', 'c']);
+    expect(membersVisibleTo(people, acc(gestor)).map((p) => p.id)).toEqual(['a', 'b', 'c']);
+  });
+
+  it('el rol por defecto al invitar es el de menos permisos del primer departamento', () => {
+    const roles = [gestor, disenador, director, agente];
+    expect(defaultInviteRole(roles, ['creativo', 'agentes'])?.id).toBe('r3');
+    expect(defaultInviteRole(roles, ['agentes'])?.id).toBe('r5');
+    expect(defaultInviteRole([], ['agentes'])).toBeUndefined();
   });
 });

@@ -3,6 +3,7 @@ import type { PostgrestError } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/lib/auth/auth-context';
 import {
+  canSeeMembers,
   normalizeProfile,
   PROFILE_ROLES_EMBED,
   type AccountKind,
@@ -50,11 +51,10 @@ const fetchUsersData = async (): Promise<Member[]> => {
   return (data ?? []).map((raw) => normalizeProfile(raw) as Member);
 };
 
-/** Miembros de la agencia. Solo quien invita o gestiona roles lo pide. */
+/** Miembros de la agencia. Solo quien invita o reparte roles lo pide. */
 export function useUsersData(): UseUsersDataReturn {
   const { access, status } = useAuth();
-  const allowed =
-    status === 'AUTHENTICATED' && (access.can('invitar_personal') || access.can('gestionar_roles'));
+  const allowed = status === 'AUTHENTICATED' && canSeeMembers(access);
 
   const { data, error, isLoading, mutate } = useSWR<Member[]>(allowed ? 'users-data' : null, fetchUsersData);
 

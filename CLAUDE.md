@@ -93,7 +93,7 @@ ve no es lo real.
 ## Cómo está montado
 
 ```
-app/(dashboard)/     inicio · mi-semana · disenos · equipo · ajustes · ayuda
+app/(dashboard)/     inicio · mi-semana · disenos · equipo · jugadores · campograma · ajustes · ayuda
 app/api/designs/     rutas de servidor, con validación zod en lib/api/schemas.ts
 components/ui/       sistema de diseño propio (Surface, Row, PulseDot…) + shadcn
 components/layout/   shell: header, sidebar, tab bar móvil
@@ -119,7 +119,7 @@ sobre una de estas zonas sin abrir sus archivos, léela antes.
 |---|---|---|
 | `components/layout/`, `app/layout.tsx`, `app/globals.css`, `app/manifest.ts` | `cabecera-y-pwa.md` | Safari 26, iOS 26, el fundido de la tab bar, `sticky` y no `fixed` |
 | `supabase/` | `migraciones.md` | El historial diverge, la base viva manda, «añadir» y «quitar», políticas del cubo |
-| `lib/utils/access.ts`, `lib/auth/`, `app/api/`, `supabase/migrations/` | `permisos.md` | Un solo sitio para los permisos; nunca comparar nombres de rol |
+| `lib/utils/access.ts`, `lib/auth/`, `app/api/`, `supabase/migrations/` | `permisos.md` | Un solo sitio para los permisos; nunca comparar nombres de rol; Agentes va aparte |
 | `lib/help/`, `<Tip>`, `<HelpHint>`, `/ayuda` | `consejos.md` | Los ids son públicos, qué consejo entra, tooltip frente a popover |
 | `components/` | `componentes-ui.md` | El componente de shadcn a medio controlar |
 | `e2e/`, `playwright.config.ts` | `pruebas-navegador.md` | Las capturas de referencia se hicieron en Windows |

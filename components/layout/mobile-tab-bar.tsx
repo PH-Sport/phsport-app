@@ -28,11 +28,12 @@ import { SPRINGS } from '@/components/ui/animations';
 import { useAuth } from '@/lib/auth/auth-context';
 import { CreateDesignDialog } from '@/components/features/designs/dialogs/create-design-dialog';
 import { viewModeFor } from '@/lib/utils/access';
+import { showsCreative } from '@/lib/utils/navigation';
 import { buildNavItems, isItemActive } from './app-sidebar';
 import { cn } from '@/lib/utils';
 
 export function MobileTabBar() {
-  const { profile } = useAuth();
+  const { profile, access } = useAuth();
   const pathname = usePathname() ?? '';
   const { mutate } = useSWRConfig();
 
@@ -45,8 +46,11 @@ export function MobileTabBar() {
   // (useDesigners) en cada página para quien nunca toca el «+».
   const [createMounted, setCreateMounted] = useState(false);
 
-  // Solo las 3 secciones principales: Ajustes ya vive en el dropdown del perfil.
-  const items = buildNavItems(viewModeFor(profile));
+  // Solo las secciones principales: Ajustes ya vive en el dropdown del perfil.
+  const items = buildNavItems(viewModeFor(profile), access);
+  // Crear diseños es de creativo: a un agente el «+» le abriría un diálogo
+  // que la base no le deja usar.
+  const canCreateDesigns = showsCreative(access);
 
   // La ruta manda en cuanto llega; hasta entonces manda el dedo.
   const activeHref =
@@ -153,18 +157,20 @@ export function MobileTabBar() {
 
         {/* Acción separada (trailing) — el CTA primario de la app. Misma esquina
             2xl que la píldora: pieza de la misma familia, no un círculo ajeno. */}
-        <button
-          type="button"
-          onClick={openCreate}
-          aria-label="Crear diseños"
-          className={cn(
-            'flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-overlay',
-            'outline-none transition-transform duration-200 ease-out-expo active:scale-95',
-            'focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
-          )}
-        >
-          <Plus className="h-6 w-6" aria-hidden />
-        </button>
+        {canCreateDesigns && (
+          <button
+            type="button"
+            onClick={openCreate}
+            aria-label="Crear diseños"
+            className={cn(
+              'flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-overlay',
+              'outline-none transition-transform duration-200 ease-out-expo active:scale-95',
+              'focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
+            )}
+          >
+            <Plus className="h-6 w-6" aria-hidden />
+          </button>
+        )}
       </div>
 
       {createMounted && (

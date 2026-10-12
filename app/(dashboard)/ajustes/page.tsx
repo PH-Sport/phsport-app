@@ -11,7 +11,7 @@ import { SPRINGS, STAGGER } from '@/components/ui/animations';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/lib/auth/auth-context';
 import { useUserPreferences } from '@/lib/hooks/use-user-preferences';
-import { roleBadgeLabel } from '@/lib/utils/access';
+import { canSeeMembers, roleBadgeLabel } from '@/lib/utils/access';
 import { AccountTab } from '@/components/features/account/account-tab';
 import { NotificationsTab } from '@/components/features/account/notifications-tab';
 import { AppearanceTab } from '@/components/features/account/appearance-tab';
@@ -28,8 +28,8 @@ const rise = {
 
 function SettingsContent() {
   const { user, profile, access } = useAuth();
-  // La pestaña Miembros la ve quien invita compañeros o quien gestiona roles.
-  const canMembers = access.can('invitar_personal') || access.can('gestionar_roles');
+  // La pestaña Miembros la ve quien invita o reparte roles en algún departamento.
+  const canMembers = canSeeMembers(access);
   const searchParams = useSearchParams();
   const initialTab: Tab = canMembers && searchParams.get('tab') === 'miembros' ? 'miembros' : 'general';
   const [tab, setTab] = useState<Tab>(initialTab);

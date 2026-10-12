@@ -14,10 +14,15 @@ export const PERMISSIONS = [
   'invitar_jugadores',
   'gestionar_roles',
   'recibir_asignaciones',
+  // Los de Agentes van aparte de los de creativo a propósito: `gestionar_roles`
+  // abre también borrar cuentas, leer la auditoría y mandar avisos, e
+  // `invitar_personal` invita a creativo; un director no debe tener nada de eso.
+  'invitar_agentes',
+  'gestionar_agentes',
 ] as const;
 export type Permission = (typeof PERMISSIONS)[number];
 
-export const DEPARTMENTS = ['creativo'] as const;
+export const DEPARTMENTS = ['creativo', 'agentes'] as const;
 export type Department = (typeof DEPARTMENTS)[number];
 
 /** Barrera dura: un futbolista no tiene roles, tenga lo que tenga en la tabla. */
@@ -150,14 +155,19 @@ export function deriveAccess(
  * quien recibe asignaciones ve su semana y su panel; quien no, el del equipo.
  * Sin perfil resuelto, la cara de menos privilegio (igual que antes).
  */
-export type ViewMode = 'manager' | 'designer' | 'player';
+export type ViewMode = 'manager' | 'designer' | 'agent' | 'player';
 
 export function viewModeFor(
   profile: Pick<ProfileWithRoles, 'kind' | 'roles'> | null | undefined
 ): ViewMode {
   if (!profile) return 'designer';
   if (profile.kind === 'JUGADOR') return 'player';
-  return deriveAccess(profile).can('recibir_asignaciones') ? 'designer' : 'manager';
+  const access = deriveAccess(profile);
+  // Solo es «agente» quien no tiene nada en creativo: quien tiene los dos
+  // departamentos conserva su cara de creativo y ve el campograma como una
+  // entrada más de la navegación.
+  if (!access.inDepartment('creativo') && access.inDepartment('agentes')) return 'agent';
+  return access.can('recibir_asignaciones') ? 'designer' : 'manager';
 }
 
 /** Página de entrada tras iniciar sesión. */
@@ -167,6 +177,8 @@ export function homeFor(mode: ViewMode): string {
       return '/area-personal';
     case 'designer':
       return '/mi-semana';
+    case 'agent':
+      return '/campograma';
     default:
       return '/inicio';
   }
@@ -176,6 +188,7 @@ export function homeFor(mode: ViewMode): string {
 export const VIEW_MODE_ACCENT: Record<ViewMode, string> = {
   manager: 'bg-primary/15 text-primary',
   designer: 'bg-role-designer/15 text-role-designer',
+  agent: 'bg-foreground/10 text-foreground',
   player: 'bg-muted text-muted-foreground',
 };
 
@@ -183,4 +196,60 @@ export const VIEW_MODE_ACCENT: Record<ViewMode, string> = {
 export function roleBadgeLabel(profile: Pick<ProfileWithRoles, 'roles'> | null | undefined): string {
   const names = profile?.roles.map((r) => r.name) ?? [];
   return names.length ? names.join(' · ') : '—';
+}
+
+/**
+ * Departamentos cuyos roles puede repartir esta cuenta en Miembros.
+ * `gestionar_roles` es el de siempre y vale para todos; `gestionar_agentes`
+ * solo para Agentes (spec 2026-10-11 §2: un director no hace a nadie Gestor
+ * creativo).
+ */
+export function departmentsManagedBy(access: Pick<Access, 'can'>): Department[] {
+  if (access.can('gestionar_roles')) return [...DEPARTMENTS];
+  return access.can('gestionar_agentes') ? ['agentes'] : [];
+}
+
+/** Departamentos a cuyos roles puede invitar. Misma regla que la RLS de `invitations` (migración 050). */
+export function departmentsInvitableBy(access: Pick<Access, 'can'>): Department[] {
+  if (access.can('gestionar_roles')) return [...DEPARTMENTS];
+  const out: Department[] = [];
+  if (access.can('invitar_personal')) out.push('creativo');
+  if (access.can('invitar_agentes')) out.push('agentes');
+  return out;
+}
+
+export function canSeeMembers(access: Pick<Access, 'can'>): boolean {
+  return departmentsManagedBy(access).length > 0 || departmentsInvitableBy(access).length > 0;
+}
+
+/**
+ * A quién ve en Miembros. Quien gestiona roles, a todos; el resto, solo a la
+ * gente de los departamentos en los que invita o reparte. Ver nombres ajenos
+ * no es un riesgo (la base deja leer perfiles a todo el personal), pero una
+ * tarjeta que no puedes tocar es ruido.
+ */
+export function membersVisibleTo<T extends Pick<ProfileWithRoles, 'roles'>>(
+  members: T[],
+  access: Pick<Access, 'can'>
+): T[] {
+  if (access.can('gestionar_roles')) return members;
+  const depts = new Set<Department>([...departmentsManagedBy(access), ...departmentsInvitableBy(access)]);
+  return members.filter((m) => m.roles.some((r) => depts.has(r.department)));
+}
+
+/**
+ * Rol que viene marcado al invitar: el de menos permisos del primer
+ * departamento que tenga roles. Así sale «Diseñador» para creativo y «Agente»
+ * para Agentes sin comparar nombres (un rol se puede renombrar).
+ */
+export function defaultInviteRole<
+  R extends { id: string; department: Department; permissions: readonly Permission[] },
+>(roles: R[], departments: Department[]): R | undefined {
+  for (const d of departments) {
+    const inDept = roles.filter((r) => r.department === d);
+    if (inDept.length) {
+      return inDept.reduce((least, r) => (r.permissions.length < least.permissions.length ? r : least));
+    }
+  }
+  return undefined;
 }

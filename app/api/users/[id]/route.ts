@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createClient } from '@/lib/supabase/server';
 import { loadAccess } from '@/lib/api/access';
+import { DEPARTMENTS, departmentsManagedBy } from '@/lib/utils/access';
 import {
   validationErrorResponse,
   internalErrorResponse,
@@ -16,22 +17,29 @@ const updateUserSchema = z
     given_name: z.string().trim().min(1, 'El nombre no puede estar vacío').max(80).optional(),
     family_name: z.string().trim().max(80).nullable().optional(),
     alias: z.string().trim().max(80).nullable().optional(),
-    role_ids: z.array(z.string().uuid()).min(1, 'Elige un rol').optional(),
+    // El rol de UN departamento. Antes era «que le queden exactamente estos
+    // roles», y con dos departamentos eso borraba el del otro al cambiar uno.
+    department_role: z
+      .object({ department: z.enum(DEPARTMENTS), role_id: z.string().uuid() })
+      .optional(),
   })
   .refine(
     (d) =>
       d.given_name !== undefined ||
       d.family_name !== undefined ||
       d.alias !== undefined ||
-      d.role_ids !== undefined,
+      d.department_role !== undefined,
     { message: 'Nada que actualizar' }
   );
 
 /**
- * PATCH /api/users/[id] — renombrar a un miembro y/o dejarle exactamente estos roles.
- * Requiere `gestionar_roles`: quien gestiona los roles gestiona también la
- * ficha del compañero. La RLS de `profiles` y de `profile_roles` exige lo
- * mismo, así que no hace falta service-role. La guardia de la base impide
+ * PATCH /api/users/[id] — renombrar a un miembro y/o cambiarle el rol de un
+ * departamento.
+ * - Renombrar exige `gestionar_roles`: es la ficha del compañero.
+ * - El rol exige poder repartir en ESE departamento (`departmentsManagedBy`):
+ *   un director cambia entre Agente y Director, nada de creativo.
+ * La RLS de `profiles` y `profile_roles` exige lo mismo (migraciones 045 y
+ * 050), así que no hace falta service-role. La guardia de la base impide
  * quedarse sin nadie que gestione roles; aquí solo se traduce su error.
  */
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -50,7 +58,11 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   if (userError || !user) return unauthorizedResponse();
 
   const access = await loadAccess(supabase, user.id);
-  if (!access.can('gestionar_roles')) return forbiddenResponse();
+  const hasNameChange = body.given_name !== undefined || body.family_name !== undefined || body.alias !== undefined;
+  if (hasNameChange && !access.can('gestionar_roles')) return forbiddenResponse();
+  if (body.department_role && !departmentsManagedBy(access).includes(body.department_role.department)) {
+    return forbiddenResponse();
+  }
 
   const { data: target, error: targetError } = await supabase
     .from('profiles')
@@ -59,19 +71,19 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     .single();
   if (targetError || !target) return notFoundResponse('Usuario');
 
-  if (body.role_ids !== undefined) {
+  if (body.department_role) {
     // No te cambias tu propio rol (evita autobloqueo; la guardia de la base cubre el resto).
     if (id === user.id) {
       return NextResponse.json({ error: 'No puedes cambiar tu propio rol' }, { status: 403 });
     }
-    const { error: rolesError } = await supabase.rpc('set_profile_roles', {
+    const { error: rolesError } = await supabase.rpc('set_department_role', {
       p_profile_id: id,
-      p_role_ids: body.role_ids,
+      p_department: body.department_role.department,
+      p_role_id: body.department_role.role_id,
     });
-    if (rolesError) return conflictFromDbError(rolesError) ?? internalErrorResponse(rolesError, 'set roles', reqId);
+    if (rolesError) return conflictFromDbError(rolesError) ?? internalErrorResponse(rolesError, 'set role', reqId);
   }
 
-  const hasNameChange = body.given_name !== undefined || body.family_name !== undefined || body.alias !== undefined;
   if (!hasNameChange) return NextResponse.json({ ok: true });
 
   const updateData: Record<string, unknown> = {};

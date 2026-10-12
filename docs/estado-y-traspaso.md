@@ -1,11 +1,12 @@
 # Estado del proyecto y traspaso
 
-> **Actualizado:** 2026-10-11, al llegar en código el departamento de Agentes,
+> **Actualizado:** 2026-10-12: la migración 050 de Agentes está aplicada y
+> comprobada en la base, con permiso de Mario (§1 de octubre). Queda mirar el
+> diálogo de invitar e integrar la rama en `preview` (pendiente 13). Antes, el
+> 2026-10-11, al llegar en código el departamento de Agentes,
 > primera fase del campograma dentro de la app (§1 de octubre): roles, cara y
 > navegación propios, y Miembros e invitaciones acotados. Vive en la rama
-> `feat/campograma`, sin integrar en `preview`, y **no debe integrarse hasta
-> que se aplique la migración 050**: está escrita y revisada, pero espera el
-> permiso de Mario (pendiente 13). Antes, el 2026-09-21, al mudar la app a Dublín
+> `feat/campograma`, sin integrar en `preview`. Antes, el 2026-09-21, al mudar la app a Dublín
 > (§5 de septiembre): el
 > servidor pasa de 1,3–3,5 s a 0,4–0,9 s en empezar a responder, y la clase de
 > cuenta viaja en la sesión (migración 047, aplicada). Queda lo demás que Mario
@@ -762,21 +763,44 @@ spec y el plan (`21388c3` → `ec998d2`). No se ha integrado en `preview`.
   se puede invitar, con el de menos permisos marcado (se elige por permisos, no
   por nombre).
 
-**La migración 050 está escrita y revisada, y NO está aplicada**
-(`supabase/migrations/050_agentes_roles_y_permisos.sql`). Necesita el permiso
-expreso de Mario, porque la base es la de producción. Solo añade: el valor
+**La migración 050 está aplicada desde el 2026-10-12**
+(`supabase/migrations/050_agentes_roles_y_permisos.sql`, registrada como
+`agentes_roles_y_permisos`), con permiso expreso de Mario, porque la base es la
+de producción. Solo añade: el valor
 `AGENTE` en `role_enum`, los dos roles con sus permisos, `role_department()`,
 la política de `profile_roles` para repartir roles de Agentes,
 `set_department_role()`, `can_manage_invitation()` con las cuatro políticas de
 `invitations`, y `use_invitation` v4. Lo que sustituye se comporta igual para
 todo lo que ya existe: una invitación sin `role_id`, que es la que crea `main`,
-cuenta como de creativo. Aplicada, la base volverá a ir por delante del código,
-a propósito y con la misma razón que con la 044 (ver «Cuidado» arriba).
+cuenta como de creativo. La base va por delante del código, a propósito y con
+la misma razón que con la 044 (ver «Cuidado» arriba).
 
-**Hasta que se aplique, esta rama no se integra en `preview`.** Sin la 050 la
-función `set_department_role` no existe en la base, y cambiar un rol desde
-Ajustes → Miembros falla. Dejarlo en `preview` sería dejar roto ese botón en
+**Se aplicó antes de integrar la rama en `preview`, y tenía que ser así.** Sin
+la 050 la función `set_department_role` no existe en la base, y cambiar un rol
+desde Ajustes → Miembros falla: integrar antes habría dejado roto ese botón en
 staging.
+
+**Qué se comprobó al aplicarla (2026-10-12).** Leída de vuelta: cinco roles
+(Director con `invitar_agentes` y `gestionar_agentes`, Agente sin permisos),
+`AGENTE` en `role_enum` y en `use_invitation`, y `anon` sin `execute` en las
+tres funciones nuevas. Sesiones simuladas como Loren de Director: no ve diseños
+ni invitaciones de creativo, invita a Agentes y da el rol de Agente; invitar a
+creativo y dar un rol de creativo fallan con 42501, y el `UPDATE` que movería
+su Director deja 0 filas. Como Mario: pasar a alguien a Director le conserva su
+rol de creativo, y una invitación sin `role_id`, como las de `main`, pasa.
+Después, ni invitaciones de prueba ni filas de Agentes en la base. Los avisos de
+seguridad de Supabase suben de 9 a 11 en «funciones privilegiadas que puede
+ejecutar quien tiene sesión»: son `role_department` y `can_manage_invitation`,
+el mismo caso que `has_permission`, y es lo esperado.
+
+**Cómo se hicieron las sesiones simuladas, para repetirlo:** cada tanda va en un
+bloque `do $$ … $$` que apunta cada resultado en un texto y termina con
+`raise exception` con ese texto. El error deshace todo lo escrito, haya pasado
+lo que haya pasado dentro, y los resultados vuelven en el mensaje. Lo que tiene
+que fallar va en su propio `begin … exception when others … end` dentro del
+bloque, para que no corte el resto. No se usó el `begin … rollback` del plan,
+tarea 6: por el MCP lo previsible es recibir solo el resultado de la última
+sentencia, que es el `rollback`; no se llegó a probar.
 
 **Por qué un agente nace `AGENTE` en la casilla antigua `profiles.role`.**
 `main` comparte base con esta rama y toma por diseñador a todo `DESIGNER`: lo
@@ -835,8 +859,8 @@ una sesión de Gestor creativo, en iPhone 15 (WebKit) y en Chrome de escritorio,
 creativo se ve exactamente igual que antes: cuatro entradas más el «+», sin
 Campograma, y `/campograma` tecleado a mano devuelve al inicio. En Miembros, la
 ventana del miembro enseña «Rol en creativo» y un «Rol en Agentes» vacío, y el
-diálogo de invitar los tres roles de creativo con «Diseñador» marcado (serán
-cinco cuando esté la 050). **Lo que no se ha visto nunca es una cuenta de agente
+diálogo de invitar los tres roles de creativo con «Diseñador» marcado (con la
+050 aplicada deberían ser cinco; sin mirar aún, pendiente 13). **Lo que no se ha visto nunca es una cuenta de agente
 real:** todo lo de la cara de agente está comprobado solo sobre la lógica pura.
 Eso es el pendiente 13.
 
@@ -1049,7 +1073,7 @@ una por MCP con el nombre sin prefijo, que es como están las últimas.
 - **Instalar Xcode** para probar iOS real (18 y 26) sin depender del móvil de
   Mario. No está instalado; se maneja con `xcrun simctl`, no con Playwright.
 
-### 11. Aplicar la 049 tras el merge a `main` (la 045, la 046, la 047 y la 048 ya están)
+### 11. Aplicar la 049 tras el merge a `main` (la 045, la 046, la 047, la 048 y la 050 ya están)
 
 **La 045 y la 046 se aplicaron el 2026-09-17** por MCP, registradas como
 `politicas_por_permiso` y `jugadores_y_archivos`, con permiso expreso de Mario
@@ -1068,8 +1092,8 @@ Está descrita en el plan de permisos, tarea 11 (allí se llamaba 046; el númer
 lo ocupó la de jugadores), con el relleno previo de `invitations.role_id` para
 las invitaciones antiguas. Aplicarla antes tumba producción. Con el merge va
 también el despliegue de la función de borrar cuentas (`admin-delete-user`),
-cuyo código ya está en el repo. **La 050 de Agentes va en otro momento: antes
-de integrar su rama en `preview`, no tras el merge a `main`** (pendiente 13).
+cuyo código ya está en el repo. **La 050 de Agentes no esperó al merge:** se
+aplicó el 2026-10-12, antes de integrar su rama en `preview` (§1 de octubre).
 
 ### 12. Rodar jugadores en el iPhone y pulir la fluidez
 
@@ -1142,20 +1166,15 @@ septiembre), porque sobre una app que va a tirones nada parece fluido.
    a petición de Mario**; sin fecha. Después, decidir el merge (pendiente
    11), que Mario quiere que espere.
 
-### 13. Departamento de Agentes: aplicar la 050 y probar con una cuenta de agente
+### 13. Departamento de Agentes: mirar el diálogo de invitar, integrar y probar con una cuenta de agente
 
-Lo hecho y por qué, en el §1 de octubre. Esto es lo que falta, **en este orden**:
+Lo hecho y por qué, en el §1 de octubre. **La 050 ya está aplicada y
+comprobada en la base (2026-10-12).** Esto es lo que falta, **en este orden**:
 
-1. **Aplicar la 050** (`agentes_roles_y_permisos`), con permiso expreso de Mario.
-   Plan, tarea 6: aplicar con el MCP de Supabase, leer de vuelta roles y
-   permisos, sesiones simuladas dentro de transacciones que se deshacen y
-   comprobar que nada se quedó escrito. Entre las sesiones simuladas va el
-   `UPDATE` de un director sobre su propia fila de Director, que tiene que dejar
-   0 filas (la política ya está partida en `INSERT` y `DELETE`; §1 de octubre).
-   Después, repetir la comprobación que quedó a medias
-   en la tarea 7: el diálogo de invitar tiene que ofrecer **cinco** roles (los
-   tres de creativo, Agente y Director).
-2. **Integrar `feat/campograma` en `preview`**, solo con la 050 aplicada. Ahí el
+1. **Repetir la comprobación que quedó a medias en la tarea 7 del plan:** el
+   diálogo de invitar tiene que ofrecer **cinco** roles (los tres de creativo,
+   Agente y Director), con la sesión de Mario.
+2. **Integrar `feat/campograma` en `preview`**. Ahí el
    párrafo de `CLAUDE.md` sobre los permisos de Agentes se muda a
    `.claude/rules/permisos.md`.
 3. **Una cuenta de agente de prueba (tarea 9, la hace Mario).** En staging,

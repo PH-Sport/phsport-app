@@ -40,7 +40,6 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   Settings,
-  Users,
 } from 'lucide-react';
 import { Hint } from '@/components/ui/tooltip';
 import { useAuth } from '@/lib/auth/auth-context';
@@ -154,8 +153,6 @@ const NAV_ITEMS: Record<NavKey, (mode: ViewMode) => NavItem> = {
       ? { href: '/equipo', label: 'Semana', icon: CalendarRange }
       : { href: '/mi-semana', label: 'Semana', icon: CalendarRange },
   disenos: () => ({ href: '/disenos', label: 'Diseños', icon: Palette }),
-  // La cartera de fichas es de todo el departamento creativo (spec §5).
-  jugadores: () => ({ href: '/jugadores', label: 'Jugadores', icon: Users }),
   campograma: () => ({ href: '/campograma', label: 'Campograma', icon: Goal }),
 };
 

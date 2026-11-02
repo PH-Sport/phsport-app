@@ -11,8 +11,8 @@ const role = (department: 'creativo' | 'agentes'): ProfileRole => ({
 const accessWith = (...roles: ProfileRole[]) => deriveAccess({ kind: 'AGENCIA', roles });
 
 describe('routeDepartment', () => {
-  it('las pantallas de diseños y fichas son de creativo', () => {
-    for (const p of ['/inicio', '/mi-semana', '/equipo', '/equipo/abc', '/disenos', '/jugadores/x']) {
+  it('las pantallas de diseños son de creativo', () => {
+    for (const p of ['/inicio', '/mi-semana', '/equipo', '/equipo/abc', '/disenos']) {
       expect(routeDepartment(p)).toBe('creativo');
     }
   });
@@ -48,8 +48,8 @@ describe('canEnterRoute', () => {
 });
 
 describe('navKeysFor', () => {
-  it('creativo ve sus cuatro entradas', () => {
-    expect(navKeysFor(accessWith(role('creativo')))).toEqual(['inicio', 'semana', 'disenos', 'jugadores']);
+  it('creativo ve sus tres entradas', () => {
+    expect(navKeysFor(accessWith(role('creativo')))).toEqual(['inicio', 'semana', 'disenos']);
   });
   it('un agente solo ve el campograma', () => {
     expect(navKeysFor(accessWith(role('agentes')))).toEqual(['campograma']);
@@ -59,12 +59,11 @@ describe('navKeysFor', () => {
       'inicio',
       'semana',
       'disenos',
-      'jugadores',
       'campograma',
     ]);
   });
   it('sin roles (o con la sesión aún cargando) se ve lo de creativo, como hasta ahora', () => {
     expect(showsCreative(accessWith())).toBe(true);
-    expect(navKeysFor(accessWith())).toEqual(['inicio', 'semana', 'disenos', 'jugadores']);
+    expect(navKeysFor(accessWith())).toEqual(['inicio', 'semana', 'disenos']);
   });
 });

@@ -1,8 +1,8 @@
 import { Surface } from '@/components/ui/surface';
 
 /**
- * Subapartado (concepto D): rótulo eyebrow + descripción, placa debajo. Lo
- * usan Ajustes y las pantallas de Jugadores; antes cada uno tenía su copia.
+ * Subapartado (concepto D): rótulo eyebrow + descripción, placa debajo. Lo usa
+ * Ajustes.
  */
 export function Section({
   label,

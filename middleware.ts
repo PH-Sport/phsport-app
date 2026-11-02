@@ -16,7 +16,6 @@ export const config = {
     '/ajustes/:path*',
     '/equipo/:path*',
     '/ayuda/:path*',
-    '/jugadores/:path*',
     '/campograma/:path*',
   ],
 }

@@ -14,7 +14,6 @@ const ROUTE_DEPARTMENTS: ReadonlyArray<readonly [string, Department]> = [
   ['/mi-semana', 'creativo'],
   ['/equipo', 'creativo'],
   ['/disenos', 'creativo'],
-  ['/jugadores', 'creativo'],
   ['/campograma', 'agentes'],
 ];
 
@@ -42,11 +41,11 @@ export function canEnterRoute(pathname: string, access: DepartmentAccess): boole
   return access.inDepartment(department);
 }
 
-export type NavKey = 'inicio' | 'semana' | 'disenos' | 'jugadores' | 'campograma';
+export type NavKey = 'inicio' | 'semana' | 'disenos' | 'campograma';
 
 export function navKeysFor(access: DepartmentAccess): NavKey[] {
   const keys: NavKey[] = [];
-  if (showsCreative(access)) keys.push('inicio', 'semana', 'disenos', 'jugadores');
+  if (showsCreative(access)) keys.push('inicio', 'semana', 'disenos');
   if (access.inDepartment('agentes')) keys.push('campograma');
   return keys;
 }

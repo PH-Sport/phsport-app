@@ -3,7 +3,9 @@
 **Fecha:** 2026-10-11, decisiones tomadas con Mario el 2026-10-10 y el 2026-10-11
 **Estado:** diseño cerrado. Fases 1 (Agentes) y 2 (la cartera en la base)
 hechas el 2026-10-11 y el 2026-10-12; ver §1 y §2 de octubre en
-`docs/estado-y-traspaso.md`. Siguiente: fase 3.
+`docs/estado-y-traspaso.md`. La fase 5 (autocompletado) se adelantó y está
+hecha el 2026-11-02 (§1 de noviembre). Siguiente: fase 3, junto con la cabina
+de desarrollador (pendientes 14 y 6 del estado).
 **Alcance:** el departamento de Agentes, la cartera de jugadores con su campograma
 y su edición, y el autocompletado de nombres al crear diseños.
 

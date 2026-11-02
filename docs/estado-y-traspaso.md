@@ -1,6 +1,10 @@
 # Estado del proyecto y traspaso
 
-> **Actualizado:** 2026-10-12 (noche): la cartera de Agentes está en la base
+> **Actualizado:** 2026-11-02: el autocompletado de jugadores al crear diseños
+> está en código, sin commit (fase 5 del campograma, §1 de noviembre). Mario
+> fija el orden de lo que viene: quitar Jugadores de la app, subir a `main`, el
+> campograma junto con la cabina de desarrollador y Mochi al final
+> (pendiente 14). Antes, el 2026-10-12 (noche): la cartera de Agentes está en la base
 > (fase 2 del campograma, §2 de octubre): migración 051 aplicada, 165 jugadores
 > cargados desde el campograma suelto y comprobados uno a uno, sin datos de
 > jugadores en el repo. Siguiente, la fase 3 (pendiente 13). Antes, ese mismo
@@ -987,6 +991,51 @@ cambia nada visible hasta la fase 3.
 
 ---
 
+## Qué se hizo en noviembre de 2026, y por qué
+
+### 1. Autocompletado de jugadores al crear diseños (fase 5 del campograma, 2026-11-02)
+
+El campo «Jugador» de cada tarjeta, al crear y al editar, sugiere jugadores de
+la cartera de Agentes con su equipo al lado. Se elige con el ratón, con el dedo
+o con las flechas y Enter. El campo sigue admitiendo cualquier texto, y el
+diseño guarda el nombre como texto, sin enlazarlo a la cartera (spec del
+campograma, §7). Se adelantó a las fases 3 y 4 porque Mario lo puso primero y
+solo necesitaba la consulta `portfolio_names()`, que ya estaba en la base desde
+la 051.
+
+**Criterios que no se ven en el código a primera vista:**
+
+- **Desde dos letras.** Con una sola sale media cartera y estorba más que ayuda.
+- **Por principio de palabra, no por trozos.** Así «an» no saca a todos los
+  «Juan». Primero van los que empiezan por lo escrito y luego el resto. No
+  distingue tildes ni mayúsculas, y el guion separa palabras.
+- **Con comas, solo el último nombre.** Un diseño de conjunto lleva varios
+  nombres separados por coma: se sugiere y se sustituye solo el que está a
+  medias.
+- **Máximo seis, y «Club sin confirmar»** cuando la cartera no tiene equipo.
+- **Si la consulta falla, no se avisa**: crear el diseño no depende de esto.
+
+**Un rodeo:** el popover de Radix se anuncia como diálogo. La prueba de
+navegador lo destapó al encontrar dos diálogos abiertos. Ahora la caja
+entera es la lista de opciones que controla el campo.
+
+**Limitación:** la cartera es la copia cargada el 2026-10-10. Los jugadores que
+se den de alta después en el campograma suelto no salen hasta cuadrarla
+(pendiente 13.3) o hasta que la edición viva en la app (fase 4).
+
+**Comprobado:** pruebas de la lógica (11 nuevas, 229 en total), tipos, lint y
+build. Además, un recorrido con la sesión de e2e contra el build de producción,
+en Chrome de escritorio y en WebKit con formato de iPhone 15. Se comprobó que la
+lista sale con dos letras y no con una; que se elige con flechas y Enter, con
+clic y en una lista con comas; que Escape cierra la lista y no el diálogo; que
+sin coincidencias no hay lista; que el texto libre se queda; y que no hay
+errores de consola. **Sin comprobar:** un toque real en el iPhone con el teclado
+en pantalla (Playwright no lo simula) y un lector de pantalla.
+
+**A los diseñadores no les llega hasta subir a `main`** (pendiente 11).
+
+---
+
 ## Qué queda pendiente
 
 ### 1. Confirmar `ANTHROPIC_API_KEY` en Vercel (Production)
@@ -1100,6 +1149,13 @@ y las crean disparadores de base de datos más una ruta de alta en lote.
 **La pregunta de alcance, sin responder:** ¿solo el banco de notificaciones
 (recomendado: resuelve el problema real, riesgo bajo, y crece después), o una
 cabina de desarrollador completa de una vez? Retomar por ahí.
+
+**2026-10-14 y 2026-11-02:** entra en el plan junto con el campograma
+(pendiente 14), con una pieza nueva que va primero: que Mario vea y gestione
+cualquier departamento sin tener rol en él, porque no tendrá rol de Agentes
+(pendiente 13.4). Toca permisos sobre la base de producción, así que lleva
+migración con su permiso y revisión con contexto limpio. La pregunta de
+alcance sigue abierta para el resto del menú.
 
 ### 7. Un sistema de ayuda para toda la app — HECHO el 2026-09-08
 
@@ -1275,11 +1331,9 @@ septiembre), porque sobre una app que va a tirones nada parece fluido.
 4. Transiciones entre páginas (entrar en una ficha desliza, volver retira,
    las pestañas se funden): hoy Next cambia de pantalla de golpe y el
    movimiento que hay es solo dentro de cada página.
-5. El recorrido entero de jugadores desde el iPhone (crear ficha → enlace →
-   alta con otro correo, sin sesión abierta → subir desde el móvil → mover,
-   entregar, borrar desde la agencia). **Anotado el 2026-09-21 como pendiente
-   a petición de Mario**; sin fecha. Después, decidir el merge (pendiente
-   11), que Mario quiere que espere.
+5. ~~El recorrido entero de jugadores desde el iPhone.~~ **Descartado el
+   2026-11-02:** Mario para Jugadores «de momento» y sale de la app antes de
+   subir a `main` (pendiente 14). El merge ya no espera a este recorrido.
 
 ### 13. Campograma en la app: fases 3 a 6, y el rol de Agentes de Mario
 
@@ -1302,23 +1356,20 @@ Lo que falta, **en este orden**:
    entrenadores. Lee de `portfolio_*`. Antes de portar el campo, leer las
    trampas de geometría y de datos del campograma suelto
    (`campograma-ph/docs/work/active/handoff-2026-09-03.md`, «Trampas»).
-2. **Fases 4 a 6:** editar (alta, edición, baja y recuperación, aviso de
-   duplicado e historial), autocompletado en la tarjeta del chat de creación
-   (con `portfolio_names()`) y retirada del campograma suelto.
+2. **Fases 4 y 6:** editar (alta, edición, baja y recuperación, aviso de
+   duplicado e historial) y retirada del campograma suelto. La fase 5, el
+   autocompletado, se adelantó y está hecha (§1 de noviembre).
 3. **Antes de pasar el campograma a los agentes:** cuadrar la cartera con el
    campograma suelto si ha cambiado desde el 2026-10-10 (§2, «Desde la carga
    hay dos copias»).
-4. **Para que Mario vea el campograma** necesita un rol de Agentes, y por la
-   interfaz no hay cómo dárselo: nadie se cambia el suyo (la ruta responde 403) y
-   Miembros oculta su cuenta por ser `is_dev`. **Decisión pendiente con Mario**,
-   dos vías: (a) una fila en `profile_roles` a mano, con su permiso expreso (es
-   una escritura en producción); (b) mostrar las cuentas `is_dev` en Miembros a
-   quien tenga `gestionar_roles` (revierte una decisión de la 035; es de
-   producto). El 2026-10-12 Mario estaba haciendo en otra sesión un perfil de
-   depuración (pendiente 6) que puede cubrirlo; la decisión espera a eso.
-   Mientras no tenga rol de Director, Mario no puede dar de baja jugadores (spec
-   §5 dice «solo directores y Mario»: se resuelve con el rol, sin excepción por
-   nombre). Con los dos departamentos tendrá cinco entradas en la tab bar del
+4. **Mario no tendrá rol de Agentes** (decidido el 2026-10-14). Verá y
+   gestionará el campograma desde la cabina de desarrollador (pendiente 6), que
+   va junto con las fases 3 y 4 (pendiente 14). Se descartan las dos vías que
+   se barajaban: una fila a mano en `profile_roles` y enseñar las cuentas
+   `is_dev` en Miembros. Ojo: el spec §5 dice que dan de baja «solo directores y
+   Mario». Para Mario eso pasa ahora por la cabina, que tendrá que cumplir el
+   doble cerrojo del pendiente 6, nunca una excepción por nombre. Si la cabina
+   le enseña los dos departamentos, tendrá cinco entradas en la tab bar del
    iPhone: mirar que caben.
 
 **No se invita a ningún agente real hasta el merge de `preview` a `main`**:
@@ -1328,6 +1379,37 @@ sin validar del todo (pendientes 11 y 12). Mario quiere que ese merge espere.
 **Fase 3:** Ajustes → General sigue enseñando a un agente las preferencias de
 diseños (vista por defecto, avisos de asignación). Se ajusta cuando el
 campograma tenga contenido.
+
+### 14. El orden de trabajo que fija Mario (2026-11-02)
+
+Mario lo quiere todo «cuanto antes», en este orden:
+
+1. ~~Autocompletado de jugadores al crear diseños.~~ HECHO el 2026-11-02, sin
+   commit (§1 de noviembre).
+2. **Quitar Jugadores de la app**: las fichas, sus carpetas para subir fotos,
+   el alta del jugador por enlace y su área personal (§4 de septiembre).
+   Mario lo para «de momento», y quitarlo es mejor que esconderlo. **Solo el
+   código.** La base se queda como está hasta la limpieza tras el merge
+   (pendiente 11): tablas de la 046, reglas del cubo de la 048, dos fichas,
+   ningún archivo, ninguna cuenta de jugador ni invitación (contado el
+   2026-11-02). Quitarla ahora obligaría a tocar en producción la función del
+   alta por invitación, la que ya falló en verano. Jugadores está enganchado
+   al alta por invitación, a la navegación y a los permisos: hay que soltarlo
+   con cuidado y comprobar después el alta del equipo. **No confundir con la
+   cartera de Agentes**, que no se toca.
+3. **Subir `preview` a `main`** (pendiente 11), ya sin Jugadores que esconder.
+4. **Campograma, fases 3, 4 y 6, junto con la cabina de desarrollador**
+   (pendientes 13 y 6), empezando por la pieza que deja a Mario verlo con su
+   cuenta.
+5. **Mochi al final**, cuando todo lo nuevo esté hecho. Mario asume el coste:
+   el campograma se hace con las piezas de hoy y pasa a Mochi con el resto de
+   la app.
+
+**Supabase Pro, aparcado a propósito.** Lo frena dirección y Mario lo sabe.
+Cuando llegue, lo primero es el pendiente 9.
+
+**La cola del mapa no recoge todavía este orden:** el mapa vive en la rama
+`feat/mapa`, que no se ha juntado con `preview`.
 
 ---
 

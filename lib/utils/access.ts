@@ -11,7 +11,8 @@
 
 export const PERMISSIONS = [
   'invitar_personal',
-  'invitar_jugadores',
+  // `invitar_jugadores` existió con la sección Jugadores y se retiró con ella
+  // (migración 052). Si vuelve, vuelve aquí y en una migración.
   'gestionar_roles',
   'recibir_asignaciones',
   // Los de Agentes van aparte de los de creativo a propósito: `gestionar_roles`

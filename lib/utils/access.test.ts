@@ -28,13 +28,13 @@ const gestor = {
   id: 'r1',
   name: 'Gestor creativo',
   department: 'creativo' as const,
-  permissions: ['invitar_personal', 'invitar_jugadores', 'gestionar_roles'] as const,
+  permissions: ['invitar_personal', 'gestionar_roles'] as const,
 };
 const disenador = {
   id: 'r3',
   name: 'Diseñador',
   department: 'creativo' as const,
-  permissions: ['invitar_jugadores', 'recibir_asignaciones'] as const,
+  permissions: ['recibir_asignaciones'] as const,
 };
 
 describe('normalizeProfile', () => {
@@ -47,7 +47,7 @@ describe('normalizeProfile', () => {
             id: 'r3',
             name: 'Diseñador',
             department: 'creativo',
-            role_permissions: [{ permission: 'invitar_jugadores' }, { permission: 'recibir_asignaciones' }],
+            role_permissions: [{ permission: 'recibir_asignaciones' }],
           },
         },
       ],
@@ -68,7 +68,9 @@ describe('normalizeProfile', () => {
     expect(p.roles).toEqual([]);
   });
 
-  it('ignora permisos que el código no conoce', () => {
+  // `invitar_jugadores` se retiró con Jugadores (migración 052): si alguien
+  // vuelve a meter la fila en la base, no debe dar nada.
+  it('ignora permisos que el código no conoce, también los retirados', () => {
     const raw = {
       ...base,
       profile_roles: [
@@ -77,7 +79,11 @@ describe('normalizeProfile', () => {
             id: 'r9',
             name: 'Raro',
             department: 'creativo',
-            role_permissions: [{ permission: 'volar' }, { permission: 'gestionar_roles' }],
+            role_permissions: [
+              { permission: 'volar' },
+              { permission: 'invitar_jugadores' },
+              { permission: 'gestionar_roles' },
+            ],
           },
         },
       ],
@@ -208,7 +214,7 @@ describe('Miembros e invitaciones por departamento', () => {
     id: 'r2',
     name: 'Diseñador senior',
     department: 'creativo' as const,
-    permissions: ['invitar_personal', 'invitar_jugadores', 'recibir_asignaciones'] as const,
+    permissions: ['invitar_personal', 'recibir_asignaciones'] as const,
   };
 
   it('quien gestiona roles reparte e invita en los dos departamentos', () => {

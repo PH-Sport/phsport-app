@@ -1,0 +1,24 @@
+-- 052 · Fuera el permiso de invitar jugadores
+--
+-- La sección Jugadores (fichas, carpetas de fotos, alta del jugador por enlace
+-- y su área personal) sale de la app el 2026-11-02: Mario la deja parada. Sin
+-- esta migración, cualquier rol de creativo seguiría pudiendo crear una
+-- invitación de jugador por la API aunque la app ya no tenga botón, y esa
+-- cuenta nacería sin sitio al que ir. Quitar el permiso cierra a la vez
+-- `can_manage_invitation` y las cuatro políticas de `invitations` de la 046,
+-- que piden `invitar_jugadores` para las invitaciones con ficha.
+--
+-- Solo se borran filas de `role_permissions`. Las tablas, el cubo, las
+-- funciones y la clase de cuenta JUGADOR se quedan: la limpieza, si toca, va
+-- después del merge (pendiente 11 de docs/estado-y-traspaso.md).
+--
+-- `main` no lee permisos (sigue con el rol antiguo), así que producción no lo
+-- nota.
+--
+-- Para revertirlo, volver a dar el permiso a los tres roles que lo tenían:
+--
+--   insert into public.role_permissions (role_id, permission)
+--   select id, 'invitar_jugadores' from public.roles
+--   where name in ('Gestor creativo', 'Diseñador senior', 'Diseñador');
+
+delete from public.role_permissions where permission = 'invitar_jugadores';

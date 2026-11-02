@@ -4,9 +4,10 @@
 -- y su área personal) sale de la app el 2026-11-02: Mario la deja parada. Sin
 -- esta migración, cualquier rol de creativo seguiría pudiendo crear una
 -- invitación de jugador por la API aunque la app ya no tenga botón, y esa
--- cuenta nacería sin sitio al que ir. Quitar el permiso cierra a la vez
--- `can_manage_invitation` y las cuatro políticas de `invitations` de la 046,
--- que piden `invitar_jugadores` para las invitaciones con ficha.
+-- cuenta nacería sin sitio al que ir. Las cuatro políticas de `invitations`
+-- (las de la 050) deciden con `can_manage_invitation`, y esa función pide
+-- `invitar_jugadores` para las invitaciones con ficha: sin el permiso, nadie
+-- puede crearlas, verlas, cambiarlas ni borrarlas.
 --
 -- Solo se borran filas de `role_permissions`. Las tablas, el cubo, las
 -- funciones y la clase de cuenta JUGADOR se quedan: la limpieza, si toca, va

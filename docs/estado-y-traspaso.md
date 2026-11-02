@@ -1342,8 +1342,12 @@ Jugadores no vuelve (§2 de noviembre):
 - El cubo `jugadores` y sus reglas (048).
 - La rama de jugador de `use_invitation`, `get_invitation_by_token` y
   `can_manage_invitation`.
+- La función `own_player_id()` (046), que solo usan las reglas del jugador.
 - Que `handle_new_user` dé la clase JUGADOR si el alta la pide, y el valor
-  `JUGADOR` de `account_kind`.
+  `JUGADOR` de `account_kind`. **Ojo:** `set_department_role` y
+  `set_profile_roles` comparan con `'JUGADOR'` para negarle roles. Quitar el
+  valor del tipo sin quitar antes esa comparación rompe el reparto de roles de
+  todo el personal en Miembros, y no avisa al migrar: falla al usarlo.
 - La clase de cuenta en la sesión (047): la escribe un trigger, pero ya no la
   lee nadie.
 - Datos: dos fichas sin cuenta (una, de prueba, la creó Mario), ningún

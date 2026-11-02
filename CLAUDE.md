@@ -93,7 +93,7 @@ ve no es lo real.
 ## Cómo está montado
 
 ```
-app/(dashboard)/     inicio · mi-semana · disenos · equipo · jugadores · campograma · ajustes · ayuda
+app/(dashboard)/     inicio · mi-semana · disenos · equipo · campograma · ajustes · ayuda
 app/api/designs/     rutas de servidor, con validación zod en lib/api/schemas.ts
 components/ui/       sistema de diseño propio (Surface, Row, PulseDot…) + shadcn
 components/layout/   shell: header, sidebar, tab bar móvil

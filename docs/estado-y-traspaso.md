@@ -1,10 +1,14 @@
 # Estado del proyecto y traspaso
 
-> **Actualizado:** 2026-11-02: el autocompletado de jugadores al crear diseños
-> está en código, sin commit (fase 5 del campograma, §1 de noviembre). Mario
-> fija el orden de lo que viene: quitar Jugadores de la app, subir a `main`, el
-> campograma junto con la cabina de desarrollador y Mochi al final
-> (pendiente 14). Antes, el 2026-10-12 (noche): la cartera de Agentes está en la base
+> **Actualizado:** 2026-11-02 (tarde): Jugadores sale de la app (§2 de
+> noviembre). Fuera las fichas, sus carpetas, el alta del jugador por enlace y
+> su área personal; la migración 052, aplicada, quita el permiso de invitar
+> jugadores. El resto de la base se queda hasta la limpieza tras el merge
+> (pendiente 11). Lo siguiente es subir a `main` (pendiente 14). Antes, ese
+> mismo día: el autocompletado de jugadores al crear diseños (fase 5 del
+> campograma, §1 de noviembre), y Mario fija el orden de lo que viene: quitar
+> Jugadores de la app, subir a `main`, el campograma junto con la cabina de
+> desarrollador y Mochi al final (pendiente 14). Antes, el 2026-10-12 (noche): la cartera de Agentes está en la base
 > (fase 2 del campograma, §2 de octubre): migración 051 aplicada, 165 jugadores
 > cargados desde el campograma suelto y comprobados uno a uno, sin datos de
 > jugadores en el repo. Siguiente, la fase 3 (pendiente 13). Antes, ese mismo
@@ -505,6 +509,10 @@ invitación y ver el rol, cambiar un rol desde Miembros, repartir—. Lo automá
 sí: tipos, lint, 178 tests y build en verde el 2026-09-17.
 
 ### 4. Jugadores, carpetas y almacén: los puntos 2, 3 y 4, en código
+
+> **Retirado de la app el 2026-11-02** (§2 de noviembre): Mario lo para «de
+> momento». Lo que sigue describe lo que se construyó, no lo que hay. Las
+> tablas, el cubo y sus reglas siguen en la base.
 
 **El plan está en
 `docs/superpowers/plans/2026-09-17-jugadores-carpetas-y-almacen.md`**, con las
@@ -1034,6 +1042,64 @@ en pantalla (Playwright no lo simula) y un lector de pantalla.
 
 **A los diseñadores no les llega hasta subir a `main`** (pendiente 11).
 
+### 2. Jugadores sale de la app (2026-11-02)
+
+Mario para «de momento» la idea de una carpeta por jugador para subirle sus
+fotos, y prefiere quitarla a esconderla antes de subir a `main`. Salen las
+pantallas de `/jugadores` (fichas, carpetas, entregas), el área personal del
+futbolista (`/area-personal`), la rama de jugador del alta por invitación, la
+entrada del menú (la tab bar del iPhone pasa a Inicio, Semana y Diseños, más
+el «+») y la sección de Ayuda «Jugadores y sus carpetas» con sus dos consejos,
+cuyas anclas solo existieron en staging. **No se toca la cartera de Agentes**,
+que es otra cosa con nombre parecido. El plan, con el orden y el porqué, está
+en `docs/superpowers/plans/2026-11-02-quitar-jugadores.md`.
+
+**Lo que cambia por dentro:**
+
+- **Migración 052, aplicada** con permiso de Mario: quita `invitar_jugadores` a
+  los tres roles de creativo que lo tenían. Sin ella, cualquier diseñador podía
+  seguir creando invitaciones de jugador por la API aunque la app ya no tuviera
+  botón. El código deja de conocer el permiso, así que una fila que reaparezca
+  no da nada. Se revierte volviendo a insertar las tres filas; la 052 lo
+  explica.
+- **El middleware deja de mirar la clase de cuenta.** Con sesión, solo `/login`
+  y `/invite` leen el perfil para mandar a cada uno a su inicio. El camino
+  normal sigue sin consultar la base. La comprobación de «marco equivocado» del
+  §5 de septiembre se fue con el área personal.
+- **Una cuenta JUGADOR, si existiera, no tiene cara propia**: cae como una
+  cuenta sin roles, en un panel vacío, porque la base no le da datos. Hoy no
+  hay ninguna, no se pueden invitar y el alta por invitación ya no manda la
+  clase. Se mantiene el tipo y la barrera de `deriveAccess` porque la base
+  sigue teniendo esa clase de cuenta.
+- **El alta por invitación queda como la de personal de antes de septiembre**,
+  con dos cosas que se quedan: el texto «Crear cuenta» y que al terminar se
+  cierra la sesión y se recarga `/login`. Lo segundo vale también para el
+  personal: el cliente podía quedarse con el perfil leído antes de que la
+  invitación le diera el rol.
+
+**Un rodeo:** el plan inicial era no tocar la base, para no meter mano en
+producción a la función del alta, la que falló en verano. Al prepararlo salió
+el permiso abierto de arriba. Se cerró quitando filas de permisos, sin tocar
+la función: es pequeño, reversible y `main` no lee permisos.
+
+**Un diagnóstico falso que no hay que repetir:** tras borrar las pantallas,
+`npx tsc --noEmit` falló con errores en `.next/types` que nombraban las páginas
+borradas. No era el código: son tipos que deja el build anterior, y el
+siguiente `npm run build` los regenera. Con el build hecho, tipos en verde.
+
+**Comprobado:** tipos, lint, 215 pruebas (las 14 de la lógica de Jugadores se
+fueron con ella) y build, tras cada fase. En la base: cero filas con el
+permiso; un gestor ya no puede invitar a una ficha y sí al personal. Recorrido
+con la sesión de e2e contra el build de producción, en Chrome de escritorio y
+WebKit con formato de iPhone 15: `/login` con sesión lleva a `/inicio`;
+`/area-personal` y `/jugadores` dan «no encontrado» con y sin sesión; un enlace
+de invitación inventado enseña su aviso; el menú enseña Inicio, Semana y
+Diseños; Ayuda ya no tiene la sección. La fase del alta y el middleware pasó
+una revisión con contexto limpio, sin hallazgos. **Sin comprobar:** el
+formulario de una invitación de personal real. Mario lo mira en staging creando
+una desde Ajustes → Miembros, sin completar el alta (crearía una cuenta real).
+Tampoco una cuenta de Agentes de verdad: la lógica la cubren las pruebas.
+
 ---
 
 ## Qué queda pendiente
@@ -1244,7 +1310,7 @@ una por MCP con el nombre sin prefijo, que es como están las últimas.
 - **Instalar Xcode** para probar iOS real (18 y 26) sin depender del móvil de
   Mario. No está instalado; se maneja con `xcrun simctl`, no con Playwright.
 
-### 11. Aplicar la 049 tras el merge a `main` (la 045, la 046, la 047, la 048, la 050 y la 051 ya están)
+### 11. Aplicar la 049 tras el merge a `main` (la 045, la 046, la 047, la 048, la 050, la 051 y la 052 ya están)
 
 **La 045 y la 046 se aplicaron el 2026-09-17** por MCP, registradas como
 `politicas_por_permiso` y `jugadores_y_archivos`, con permiso expreso de Mario
@@ -1265,38 +1331,35 @@ las invitaciones antiguas. Aplicarla antes tumba producción. Con el merge va
 también el despliegue de la función de borrar cuentas (`admin-delete-user`),
 cuyo código ya está en el repo. **La 050 de Agentes no esperó al merge:** se
 aplicó el 2026-10-12, antes de integrar su rama en `preview` (§1 de octubre).
+La 052 tampoco: solo quita filas de permisos, que `main` no lee (§2 de
+noviembre).
 
-### 12. Rodar jugadores en el iPhone y pulir la fluidez
+**Lo que queda de Jugadores en la base**, para borrar tras el merge si
+Jugadores no vuelve (§2 de noviembre):
 
-Mario recorrió `preview` el 2026-09-17 (antes de que existieran las tablas de
-jugadores) y señaló tres cosas, **las tres atendidas ese mismo día** (commit
-siguiente al `5529cc5`):
+- Las tablas `players` y `player_files`, y la columna `invitations.player_id`
+  con su restricción (046).
+- El cubo `jugadores` y sus reglas (048).
+- La rama de jugador de `use_invitation`, `get_invitation_by_token` y
+  `can_manage_invitation`.
+- Que `handle_new_user` dé la clase JUGADOR si el alta la pide, y el valor
+  `JUGADOR` de `account_kind`.
+- La clase de cuenta en la sesión (047): la escribe un trigger, pero ya no la
+  lee nadie.
+- Datos: dos fichas sin cuenta (una, de prueba, la creó Mario), ningún
+  archivo, ninguna cuenta de jugador ni invitación (contado el 2026-11-02).
 
-- **La banda clara sobre la cabecera** en el iPhone (PWA instalada).
-  **Resuelta el 2026-09-21 (`842993e`), confirmada por Mario.** Seis pasadas;
-  el detalle, en «Cosas que conviene saber». En corto: (1) sin fondo en
-  `html`, Safari 26 pintaba blanco la barra de estado — arreglado el 18; (2)
-  seguía «parte de la barra borrosa»: un contorno fucsia de diagnóstico y las
-  capturas de Mario demostraron un velo de cristal de iOS 26 que baja ~24 px
-  y desenfoca lo que pilla (la burbuja del avatar, medido píxel a píxel); (3)
-  bajar la cabecera 24 px lo escondía, a costa de espacio; (4) un empujón de
-  scroll al arrancar no hizo nada; (5) un hilo de 1 px con fondo antes de la
-  cabecera, tampoco; (6) **Mario dio la pista** —el velo desaparece justo
-  cuando la cabecera se vuelve opaca al desplazar— y la cabecera pasa a
-  llevar el color de la página **al 2 %** arriba del todo: invisible, pero
-  para iOS «tiene fondo».
-- **El perfil se abre en una hoja desde abajo en móvil** (`cccb72c`), la
-  misma pieza que Notificaciones (asa, arrastrar o tocar fuera para cerrar),
-  a petición de Mario: nombre, correo y rol arriba; Ajustes, Miembros, Ayuda;
-  «Ver como» plegable para cuentas dev; Cerrar sesión. En escritorio el
-  desplegable no cambia.
-- **Iconos junto al título** en las pantallas de Jugadores: fuera, como en el
-  resto de la app (criterio de hace tiempo: título desnudo).
-- **Navegación plana y brusca:** las pantallas de Jugadores entran ahora como
-  Ajustes y Equipo (bloques que se asientan uno detrás de otro), los botones
-  del enlace y el panel de mover se despliegan con la extensión suave de la
-  app, las filas de una entrega entran y salen con fundido y se recolocan con
-  muelle, y las miniaturas y portadas se funden al cargar en vez de saltar.
+Quitarlo es tocar en producción la función del alta, la que falló en verano:
+va aparte y con revisión.
+
+### 12. Pulir la fluidez en el iPhone
+
+Mario recorrió `preview` en el iPhone el 2026-09-17 y el 2026-09-21. De lo que
+señaló queda resuelto: la banda clara sobre la cabecera (`842993e`, confirmada
+por él; el detalle, en `.claude/rules/cabecera-y-pwa.md`), el perfil en una
+hoja desde abajo en móvil (`cccb72c`) y el rendimiento del servidor (§5 de
+septiembre). El pulido y el recorrido de las pantallas de Jugadores se fueron
+con ellas el 2026-11-02 (§2 de noviembre).
 
 Para revisarlo con navegador hay credenciales en `.env.local` como
 `USER_EMAIL` / `USER_PASSWORD` (Mario, 2026-09-17); el setup de e2e espera
@@ -1305,35 +1368,17 @@ Para revisarlo con navegador hay credenciales en `.env.local` como
 PLAYWRIGHT_PASS="$USER_PASSWORD" npx playwright test --project=sesion`, y luego
 `npx playwright screenshot --browser=webkit --device="iPhone 15"
 --load-storage=e2e/.sesion/usuario.json <url> <png>` contra `next start -p 3100`.
-Es la cuenta de Mario (gestor): mira y crea datos de prueba que luego hay que
-borrar (hoy existe la ficha «Juan Cruz», sin cuenta, creada por él).
+Es la cuenta de Mario (gestor): lo que se cree con ella se ve en producción y
+hay que borrarlo después.
 
-**El 2026-09-21 Mario amplió la lista** al volver tras unos días: la banda
-sigue; en Jugadores nota una tipografía distinta y le falta pulido; las
-animaciones no se le notan; y, sobre todo, **la app va lenta incluso en un
-iPhone de última generación**. El rendimiento se atacó primero (§5 de
-septiembre), porque sobre una app que va a tirones nada parece fluido.
+**Queda:**
 
-**Queda, en este orden:**
-
-1. ~~La banda de la cabecera.~~ Resuelta y confirmada por Mario el 2026-09-21.
-2. ~~Medir el rendimiento tras la mudanza a Dublín; si sigue lenta, el
-   siguiente escalón es el arranque en el propio teléfono.~~ Hecho el mismo
-   día (§5): el esqueleto se iba con muelle y retenía el contenido medio
-   segundo en cada página; Inicio pedía tarde a los diseñadores. Falta que
-   Mario lo note en la PWA; si aún no, lo siguiente es el código que se
-   descarga (Diseños carga el calendario, 333 kB) y el segundo `getUser` del
-   layout raíz.
-3. ~~Pulido de Jugadores: la fuente monoespaciada solo para cifras y fechas.~~
-   Hecho (`c208bcf`): las frases van en la fuente normal; la mono queda en
-   iniciales, fechas y tamaños, como en Equipo. Queda la pasada pantalla a
-   pantalla contra Ajustes y Equipo si Mario ve algo más.
-4. Transiciones entre páginas (entrar en una ficha desliza, volver retira,
+1. Que Mario note la mejora de velocidad en la PWA. Si aún no, lo siguiente es
+   el código que se descarga (Diseños carga el calendario, 333 kB) y el segundo
+   `getUser` del layout raíz.
+2. Transiciones entre páginas (entrar en un detalle desliza, volver retira,
    las pestañas se funden): hoy Next cambia de pantalla de golpe y el
    movimiento que hay es solo dentro de cada página.
-5. ~~El recorrido entero de jugadores desde el iPhone.~~ **Descartado el
-   2026-11-02:** Mario para Jugadores «de momento» y sale de la app antes de
-   subir a `main` (pendiente 14). El merge ya no espera a este recorrido.
 
 ### 13. Campograma en la app: fases 3 a 6, y el rol de Agentes de Mario
 
@@ -1373,8 +1418,8 @@ Lo que falta, **en este orden**:
    iPhone: mirar que caben.
 
 **No se invita a ningún agente real hasta el merge de `preview` a `main`**:
-usan producción, y `preview` va por delante con la tanda de roles y jugadores
-sin validar del todo (pendientes 11 y 12). Mario quiere que ese merge espere.
+usan producción, y `preview` va por delante con la tanda de roles sin validar
+del todo (pendiente 11). Mario quiere que ese merge espere.
 
 **Fase 3:** Ajustes → General sigue enseñando a un agente las preferencias de
 diseños (vista por defecto, avisos de asignación). Se ajusta cuando el
@@ -1384,19 +1429,12 @@ campograma tenga contenido.
 
 Mario lo quiere todo «cuanto antes», en este orden:
 
-1. ~~Autocompletado de jugadores al crear diseños.~~ HECHO el 2026-11-02, sin
-   commit (§1 de noviembre).
-2. **Quitar Jugadores de la app**: las fichas, sus carpetas para subir fotos,
-   el alta del jugador por enlace y su área personal (§4 de septiembre).
-   Mario lo para «de momento», y quitarlo es mejor que esconderlo. **Solo el
-   código.** La base se queda como está hasta la limpieza tras el merge
-   (pendiente 11): tablas de la 046, reglas del cubo de la 048, dos fichas,
-   ningún archivo, ninguna cuenta de jugador ni invitación (contado el
-   2026-11-02). Quitarla ahora obligaría a tocar en producción la función del
-   alta por invitación, la que ya falló en verano. Jugadores está enganchado
-   al alta por invitación, a la navegación y a los permisos: hay que soltarlo
-   con cuidado y comprobar después el alta del equipo. **No confundir con la
-   cartera de Agentes**, que no se toca.
+1. ~~Autocompletado de jugadores al crear diseños.~~ HECHO el 2026-11-02
+   (§1 de noviembre).
+2. ~~Quitar Jugadores de la app.~~ HECHO el 2026-11-02 (§2 de noviembre):
+   fuera el código y el permiso de invitar jugadores (052); el resto de la base
+   espera a la limpieza tras el merge (pendiente 11). Falta que Mario abra en
+   staging un enlace de invitación de personal, sin completar el alta.
 3. **Subir `preview` a `main`** (pendiente 11), ya sin Jugadores que esconder.
 4. **Campograma, fases 3, 4 y 6, junto con la cabina de desarrollador**
    (pendientes 13 y 6), empezando por la pieza que deja a Mario verlo con su

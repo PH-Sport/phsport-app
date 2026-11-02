@@ -2,7 +2,11 @@
 
 > **Para agentes:** se ejecuta en la sesión principal, tarea a tarea (Mario
 > prefiere que implemente la sesión principal y que los subagentes revisen).
-> Los pasos usan casillas (`- [ ]`) para seguir el avance.
+> Los pasos usan casillas para seguir el avance.
+>
+> **Estado: hecho el 2026-11-02**, en cuatro commits sobre `preview`. Lo que
+> resultó y lo que quedó sin comprobar está en el §2 de noviembre de
+> `docs/estado-y-traspaso.md`.
 
 **Objetivo:** que la sección Jugadores (fichas, carpetas para subir fotos, alta
 del jugador por enlace y su área personal) desaparezca de la app antes de subir
@@ -64,19 +68,19 @@ de los roles; el resto de la base no se toca.
 - Modificar: `lib/utils/access.test.ts` (los ejemplos que lo usan pasan a otro
   permiso que siga existiendo)
 
-- [ ] **Paso 1:** leer el estado vivo: filas de `role_permissions` con
+- [x] **Paso 1:** leer el estado vivo: filas de `role_permissions` con
   `invitar_jugadores` (hoy, tres) y la definición de `can_manage_invitation`.
-- [ ] **Paso 2:** escribir la migración: un `delete from public.role_permissions
+- [x] **Paso 2:** escribir la migración: un `delete from public.role_permissions
   where permission = 'invitar_jugadores'`, con un comentario que diga por qué,
   que `main` no lee permisos y cómo se revierte (volver a insertar las tres
   filas).
-- [ ] **Paso 3:** quitar el permiso de `PERMISSIONS` y ajustar los tests.
+- [x] **Paso 3:** quitar el permiso de `PERMISSIONS` y ajustar los tests.
   `normalizeProfile` ya descarta los permisos que el código no conoce.
-- [ ] **Paso 4:** tipos, lint, tests y build.
-- [ ] **Paso 5:** con el permiso de Mario, aplicar la 052 por MCP y comprobar:
+- [x] **Paso 4:** tipos, lint, tests y build.
+- [x] **Paso 5:** con el permiso de Mario, aplicar la 052 por MCP y comprobar:
   cero filas con `invitar_jugadores`, y `can_manage_invitation(<id de un
   gestor>, null, <id de una ficha>)` devuelve `false`.
-- [ ] **Paso 6:** commit.
+- [x] **Paso 6:** commit.
 
 ### Tarea 2: el lado del jugador y el alta
 
@@ -104,17 +108,17 @@ algo se rompe, se sabe dónde.
 - Modificar: comentarios que hablan del jugador en
   `lib/services/invitations/token.ts` y `e2e/sesion.setup.ts`.
 
-- [ ] **Paso 1:** ajustar los tests de `access` y verlos fallar.
-- [ ] **Paso 2:** cambiar `access.ts` y verlos pasar.
-- [ ] **Paso 3:** borrar y modificar el resto de la lista.
-- [ ] **Paso 4:** tipos, lint, tests y build.
-- [ ] **Paso 5:** recorrido con la sesión de e2e contra `npm start`.
+- [x] **Paso 1:** ajustar los tests de `access` y verlos fallar.
+- [x] **Paso 2:** cambiar `access.ts` y verlos pasar.
+- [x] **Paso 3:** borrar y modificar el resto de la lista.
+- [x] **Paso 4:** tipos, lint, tests y build.
+- [x] **Paso 5:** recorrido con la sesión de e2e contra `npm start`.
   Comprobar: entrar en `/login` con sesión lleva a la página de inicio;
   `/area-personal` da «no encontrado»; `/invite/<token inventado>` enseña «Esta
   invitación no existe o ha sido eliminada».
-- [ ] **Paso 6:** revisión con contexto limpio del diff de esta tarea (alta y
+- [x] **Paso 6:** revisión con contexto limpio del diff de esta tarea (alta y
   middleware), pidiendo expresamente los puntos 1, 2 y 5 de «Dónde mirar».
-- [ ] **Paso 7:** commit.
+- [x] **Paso 7:** commit.
 
 **Comprobación que solo puede hacer Mario:** crear una invitación de personal
 desde Ajustes → Miembros en staging, abrir el enlace en una ventana privada y
@@ -147,18 +151,18 @@ para estas pantallas y sale con ellas.
 - Modificar: el comentario de `components/ui/section.tsx`, que nombra las
   pantallas de Jugadores.
 
-- [ ] **Paso 1:** ajustar los tests de navegación y verlos fallar.
-- [ ] **Paso 2:** cambiar `navigation.ts` y verlos pasar.
-- [ ] **Paso 3:** borrar y modificar el resto.
-- [ ] **Paso 4:** comprobar que no queda nada colgando:
+- [x] **Paso 1:** ajustar los tests de navegación y verlos fallar.
+- [x] **Paso 2:** cambiar `navigation.ts` y verlos pasar.
+- [x] **Paso 3:** borrar y modificar el resto.
+- [x] **Paso 4:** comprobar que no queda nada colgando:
   `grep -rn -E "players|jugador|area-personal|use-thumb-urls|useRequireDepartment" app components lib middleware.ts e2e`.
   Solo deben salir la cartera (`portfolio`, `dar_de_baja_jugadores`), el
   campo «jugador» de los diseños y el autocompletado.
-- [ ] **Paso 5:** tipos, lint, tests y build.
-- [ ] **Paso 6:** recorrido con la sesión de e2e en escritorio e iPhone:
+- [x] **Paso 5:** tipos, lint, tests y build.
+- [x] **Paso 6:** recorrido con la sesión de e2e en escritorio e iPhone:
   la barra lateral y la tab bar enseñan Inicio, Semana y Diseños; `/jugadores`
   da «no encontrado»; `/ayuda` no tiene la sección. Captura de la tab bar.
-- [ ] **Paso 7:** commit.
+- [x] **Paso 7:** commit.
 
 ### Tarea 4: documentación y staging
 
@@ -171,6 +175,6 @@ para estas pantallas y sale con ellas.
 - `CLAUDE.md`: fuera `jugadores` del árbol de `app/(dashboard)/`.
 - El mapa (`feat/mapa`) se pone al día cuando esa rama se junte con `preview`.
 
-- [ ] **Paso 1:** escribir lo anterior.
-- [ ] **Paso 2:** commit y, con el visto bueno de Mario, subir a `preview` y
+- [x] **Paso 1:** escribir lo anterior.
+- [x] **Paso 2:** commit y, con el visto bueno de Mario, subir a `preview` y
   comprobar que Vercel sale en verde.

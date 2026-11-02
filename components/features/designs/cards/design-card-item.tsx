@@ -30,6 +30,7 @@ import { autoTitleFor, effectiveTitle, type DesignCard } from '@/lib/utils/desig
 import type { Designer } from '@/lib/hooks/use-designers';
 import { WEIGHT_COLORS } from './weight-chip';
 import { CardSummaryRow } from './card-summary-row';
+import { PlayerInput } from './player-input';
 
 export interface DesignCardItemProps {
   card: DesignCard;
@@ -137,12 +138,10 @@ export function DesignCardItem({
 
             <div className="space-y-1.5">
               <Label htmlFor={`player-${card.id}`} className="text-xs">Jugador</Label>
-              <Input
+              <PlayerInput
                 id={`player-${card.id}`}
-                className="h-10 md:h-9"
                 value={card.player}
-                onChange={(e) => onChange({ player: e.target.value })}
-                placeholder="Nombre del jugador"
+                onChange={(player) => onChange({ player })}
               />
             </div>
 

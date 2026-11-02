@@ -18,6 +18,5 @@ export const config = {
     '/ayuda/:path*',
     '/jugadores/:path*',
     '/campograma/:path*',
-    '/area-personal/:path*',
   ],
 }

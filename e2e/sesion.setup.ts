@@ -32,7 +32,7 @@ setup('iniciar sesión', async ({ page }) => {
   await page.getByRole('button', { name: /iniciar sesión/i }).click();
 
   // El destino depende de la cara que ve la cuenta (mánager → /inicio,
-  // diseñador → /mi-semana, jugador → /area-personal), así que esperamos a
+  // diseñador → /mi-semana, agente → /campograma), así que esperamos a
   // salir de /login en vez de a una ruta concreta.
   await expect(page).not.toHaveURL(/\/login/, { timeout: 30_000 });
 

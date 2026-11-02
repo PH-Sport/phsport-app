@@ -139,9 +139,12 @@ describe('viewModeFor / homeFor', () => {
     expect(viewModeFor(withRoles([senior]))).toBe('designer');
   });
 
-  it('un futbolista va a su área', () => {
-    expect(viewModeFor({ ...base, kind: 'JUGADOR', roles: [] })).toBe('player');
-    expect(homeFor('player')).toBe('/area-personal');
+  // Jugadores salió de la app (2026-11-02) y ya no nacen cuentas JUGADOR (052).
+  // Si queda alguna, no tiene cara propia: es una cuenta sin permisos.
+  it('un futbolista cae en la cara de una cuenta sin roles, tenga lo que tenga', () => {
+    expect(viewModeFor({ ...base, kind: 'JUGADOR', roles: [disenador] })).toBe(
+      viewModeFor({ ...base, roles: [] })
+    );
   });
 
   it('sin perfil, la cara de menos privilegio (como hasta ahora)', () => {

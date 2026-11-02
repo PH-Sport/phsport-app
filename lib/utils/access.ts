@@ -159,13 +159,14 @@ export function deriveAccess(
  * quien recibe asignaciones ve su semana y su panel; quien no, el del equipo.
  * Sin perfil resuelto, la cara de menos privilegio (igual que antes).
  */
-export type ViewMode = 'manager' | 'designer' | 'agent' | 'player';
+export type ViewMode = 'manager' | 'designer' | 'agent';
 
 export function viewModeFor(
   profile: Pick<ProfileWithRoles, 'kind' | 'roles'> | null | undefined
 ): ViewMode {
   if (!profile) return 'designer';
-  if (profile.kind === 'JUGADOR') return 'player';
+  // Una cuenta JUGADOR (ya no nacen: Jugadores salió de la app, migración 052)
+  // no tiene cara propia: deriveAccess no le da nada y cae como una sin roles.
   const access = deriveAccess(profile);
   // Solo es «agente» quien no tiene nada en creativo: quien tiene los dos
   // departamentos conserva su cara de creativo y ve el campograma como una
@@ -177,8 +178,6 @@ export function viewModeFor(
 /** Página de entrada tras iniciar sesión. */
 export function homeFor(mode: ViewMode): string {
   switch (mode) {
-    case 'player':
-      return '/area-personal';
     case 'designer':
       return '/mi-semana';
     case 'agent':
@@ -193,7 +192,6 @@ export const VIEW_MODE_ACCENT: Record<ViewMode, string> = {
   manager: 'bg-primary/15 text-primary',
   designer: 'bg-role-designer/15 text-role-designer',
   agent: 'bg-foreground/10 text-foreground',
-  player: 'bg-muted text-muted-foreground',
 };
 
 /** Texto del distintivo bajo el nombre: los roles, o un guion si no hay. */

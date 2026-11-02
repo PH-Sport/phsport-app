@@ -68,42 +68,19 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
-  if (user && !isAuthHandler) {
-    // La clase de cuenta viene en la propia sesión (`app_metadata.kind`, que
-    // escribe la base y el usuario no puede tocar; migración 047). Así la
-    // decisión de cada navegación no cuesta una consulta: con la base en otro
-    // continente, esa consulta era la mitad del retraso de cada página.
-    const isPlayer = user.app_metadata?.kind === 'JUGADOR'
-
-    // Cada clase de cuenta tiene su marco (spec §1): un futbolista no pisa el
-    // panel de la agencia, y la agencia no tiene área personal. Los marcos lo
-    // repiten en el cliente; aquí se decide antes de servir nada.
-    const isPlayerArea = path.startsWith('/area-personal')
-    const wrongFrame = isPlayer !== isPlayerArea
-
-    // Solo en los casos raros —entrar en /login con sesión, o pisar el marco
-    // equivocado— hace falta saber qué cara de la agencia toca (mánager o
-    // diseñador), y eso sí exige leer el perfil. El camino normal no pasa por aquí.
-    if (isPublicRoute || wrongFrame) {
-      const url = request.nextUrl.clone()
-      if (isPlayer) {
-        url.pathname = homeFor('player')
-      } else {
-        const { data: raw } = await supabase
-          .from('profiles')
-          .select(PROFILE_WITH_ROLES_SELECT)
-          .eq('id', user.id)
-          .maybeSingle()
-        const mode = viewModeFor(raw ? toProfile(raw) : null)
-        // Si la sesión y el perfil discrepan (claim sin poner, o editado a
-        // mano), manda el perfil: es lo que leen la RLS y los marcos del
-        // cliente. Sin esto, un perfil de jugador con la sesión diciendo
-        // «agencia» rebotaba entre /area-personal y sí mismo sin fin.
-        if (!isPublicRoute && (mode === 'player') === isPlayerArea) return response
-        url.pathname = homeFor(mode)
-      }
-      return NextResponse.redirect(url)
-    }
+  if (user && isPublicRoute && !isAuthHandler) {
+    // Solo en el caso raro —entrar en /login o en una invitación con sesión
+    // abierta— hace falta saber qué cara toca (mánager, diseñador o agente), y
+    // eso sí exige leer el perfil. El camino normal no pasa por aquí ni toca
+    // la base: cada consulta de este archivo la paga cada navegación.
+    const { data: raw } = await supabase
+      .from('profiles')
+      .select(PROFILE_WITH_ROLES_SELECT)
+      .eq('id', user.id)
+      .maybeSingle()
+    const url = request.nextUrl.clone()
+    url.pathname = homeFor(viewModeFor(raw ? toProfile(raw) : null))
+    return NextResponse.redirect(url)
   }
 
   return response

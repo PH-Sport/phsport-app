@@ -1,7 +1,6 @@
 /**
  * El enlace de invitación: un token corto y aleatorio que caduca a las 24 h
- * y sirve una vez. Lo usan igual las invitaciones de personal y las de
- * jugador; lo que las distingue es qué lleva la fila (rol o ficha).
+ * y sirve una vez.
  */
 
 const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';

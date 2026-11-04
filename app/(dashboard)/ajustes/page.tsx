@@ -12,6 +12,7 @@ import { cn } from '@/lib/utils';
 import { useAuth } from '@/lib/auth/auth-context';
 import { useUserPreferences } from '@/lib/hooks/use-user-preferences';
 import { canSeeMembers, roleBadgeLabel } from '@/lib/utils/access';
+import { showsCreative } from '@/lib/utils/navigation';
 import { AccountTab } from '@/components/features/account/account-tab';
 import { NotificationsTab } from '@/components/features/account/notifications-tab';
 import { AppearanceTab } from '@/components/features/account/appearance-tab';
@@ -30,6 +31,7 @@ function SettingsContent() {
   const { user, profile, access } = useAuth();
   // La pestaña Miembros la ve quien invita o reparte roles en algún departamento.
   const canMembers = canSeeMembers(access);
+  const showsDesign = showsCreative(access);
   const searchParams = useSearchParams();
   const initialTab: Tab = canMembers && searchParams.get('tab') === 'miembros' ? 'miembros' : 'general';
   const [tab, setTab] = useState<Tab>(initialTab);
@@ -115,12 +117,20 @@ function SettingsContent() {
           </Section>
 
           <Section label="Apariencia" hint="Cómo se ve la app en este dispositivo">
-            <AppearanceTab defaultView={defaultView} onDefaultViewChange={setDefaultView} />
+            <AppearanceTab
+              defaultView={defaultView}
+              onDefaultViewChange={setDefaultView}
+              showDesignPreferences={showsDesign}
+            />
           </Section>
 
-          <Section label="Notificaciones" hint="Qué te avisa la app y por dónde">
-            <NotificationsTab preferences={preferences} onToggle={togglePreference} />
-          </Section>
+          {/* Los tres avisos son de diseños y un agente hoy no recibe ninguno: si un día
+              los recibe, esta sección vuelve para él. */}
+          {showsDesign && (
+            <Section label="Notificaciones" hint="Qué te avisa la app y por dónde">
+              <NotificationsTab preferences={preferences} onToggle={togglePreference} />
+            </Section>
+          )}
 
           <div className="flex justify-end">
             <Button onClick={save} disabled={saving} className="min-w-[150px]">

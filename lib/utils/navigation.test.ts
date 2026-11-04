@@ -47,6 +47,13 @@ describe('canEnterRoute', () => {
   });
 });
 
+describe('showsCreative', () => {
+  it('quien solo es de Agentes no ve lo de creativo, y la cuenta de desarrollador sí', () => {
+    expect(showsCreative(accessWith(role('agentes')))).toBe(false);
+    expect(showsCreative(deriveAccess({ kind: 'AGENCIA', is_dev: true, roles: [] }))).toBe(true);
+  });
+});
+
 describe('navKeysFor', () => {
   it('creativo ve sus tres entradas', () => {
     expect(navKeysFor(accessWith(role('creativo')))).toEqual(['inicio', 'semana', 'disenos']);

@@ -19,13 +19,15 @@ import type { DefaultView } from '@/lib/hooks/use-user-preferences';
 
 interface AppearanceTabProps {
   defaultView: DefaultView;
+  /** A quien solo es de Agentes no le dice nada cómo se abre Diseños: no lo ve. */
+  showDesignPreferences: boolean;
   onDefaultViewChange: (v: DefaultView) => void;
 }
 
 // Los tres modos viven en lib/theme/theme-modes.ts: aquí y en el menú de
 // perfil se pintan los mismos, sin duplicar la lista.
 
-export function AppearanceTab({ defaultView, onDefaultViewChange }: AppearanceTabProps) {
+export function AppearanceTab({ defaultView, onDefaultViewChange, showDesignPreferences }: AppearanceTabProps) {
   const { theme, setTheme, resolvedTheme } = useTheme();
   const { accent, setAccent, options: accentOptions } = useAccentColor();
   // Evita mismatch de hidratación: ni el tema ni el acento se conocen en SSR
@@ -108,24 +110,26 @@ export function AppearanceTab({ defaultView, onDefaultViewChange }: AppearanceTa
         </p>
       </div>
 
-      <div className="space-y-3">
-        <Label>Vista predeterminada de Diseños</Label>
-        <Select
-          value={defaultView}
-          onValueChange={(value) => onDefaultViewChange(value as DefaultView)}
-        >
-          <SelectTrigger className="w-full">
-            <SelectValue placeholder="Selecciona una vista" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="list">Lista</SelectItem>
-            <SelectItem value="calendar">Calendario</SelectItem>
-          </SelectContent>
-        </Select>
-        <p className="text-sm text-muted-foreground">
-          Cómo se abre la página de Diseños por defecto.
-        </p>
-      </div>
+      {showDesignPreferences && (
+        <div className="space-y-3">
+          <Label>Vista predeterminada de Diseños</Label>
+          <Select
+            value={defaultView}
+            onValueChange={(value) => onDefaultViewChange(value as DefaultView)}
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Selecciona una vista" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="list">Lista</SelectItem>
+              <SelectItem value="calendar">Calendario</SelectItem>
+            </SelectContent>
+          </Select>
+          <p className="text-sm text-muted-foreground">
+            Cómo se abre la página de Diseños por defecto.
+          </p>
+        </div>
+      )}
     </div>
   );
 }

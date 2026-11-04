@@ -108,6 +108,20 @@ const config: Config = {
           info: 'hsl(var(--status-info))',
         },
         'role-designer': 'hsl(var(--role-designer))',
+        pitch: {
+          a: 'hsl(var(--pitch-a))',
+          b: 'hsl(var(--pitch-b))',
+        },
+        position: {
+          por: 'hsl(var(--position-por))',
+          def: 'hsl(var(--position-def))',
+          med: 'hsl(var(--position-med))',
+          ata: 'hsl(var(--position-ata))',
+        },
+        situation: {
+          loaned: 'hsl(var(--situation-loaned))',
+          pending: 'hsl(var(--situation-pending))',
+        },
       },
       borderRadius: {
         lg: 'var(--radius)',

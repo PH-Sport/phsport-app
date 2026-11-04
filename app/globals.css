@@ -75,6 +75,19 @@
     --status-info: 217 80% 42%;
     /* Color por rol — Diseñador (azul); Mánager usa --primary (dorado) */
     --role-designer: 217 80% 42%;
+
+    /* Campograma. El césped y las líneas del campo; los colores de demarcación y
+       de situación son DATO, no marca: se leen de un vistazo en el campo y por eso
+       no siguen la paleta dorada. Salen del campograma suelto, que PH dio por bueno. */
+    --pitch-a: 100 23% 92%;
+    --pitch-b: 104 19% 88%;
+    --pitch-line-opacity: 0.9;
+    --position-por: 262 35% 47%;
+    --position-def: 207 58% 40%;
+    --position-med: 153 47% 33%;
+    --position-ata: 7 55% 45%;
+    --situation-loaned: 39 85% 36%;
+    --situation-pending: 185 81% 29%;
   }
 
   .dark {
@@ -130,6 +143,16 @@
     --status-error: 0 65% 56%;
     --status-info: 217 80% 60%;
     --role-designer: 217 80% 60%;
+
+    --pitch-a: 150 17% 9%;
+    --pitch-b: 154 20% 7%;
+    --pitch-line-opacity: 0.13;
+    --position-por: 262 53% 74%;
+    --position-def: 208 46% 65%;
+    --position-med: 148 38% 64%;
+    --position-ata: 9 61% 69%;
+    --situation-loaned: 37 72% 56%;
+    --situation-pending: 185 55% 55%;
   }
 }
 

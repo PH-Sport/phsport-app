@@ -1,14 +1,36 @@
 'use client';
 
+import { useState } from 'react';
+import { Pitch } from '@/components/features/campograma/pitch';
+import { CampogramaSkeleton } from '@/components/skeletons/campograma-skeleton';
 import { DashboardPage } from '@/components/ui/dashboard-page';
+import { EmptyState } from '@/components/ui/empty-state';
+import { ErrorState } from '@/components/ui/error-state';
 import { useAuth } from '@/lib/auth/auth-context';
+import { usePortfolio } from '@/lib/hooks/use-portfolio';
 
-/** Entrada del departamento de Agentes. El campograma llega en la fase 3. */
+/** La cartera de Agentes: campo, lista y ficha. Por ahora, solo consulta (spec §4). */
 export default function CampogramaPage() {
   const { status } = useAuth();
+  const { players, categories, isLoading, error, retry } = usePortfolio();
+  const [categoryId] = useState<string | null>(null);
+
+  const category = categories.find((c) => c.id === categoryId) ?? categories[0];
+  const inCategory = players.filter((p) => p.categoryId === category?.id);
+
   return (
-    <DashboardPage title="Campograma" loading={status === 'INITIALIZING'} skeleton={null}>
-      {null}
+    <DashboardPage
+      title="Campograma"
+      loading={status === 'INITIALIZING' || isLoading}
+      skeleton={<CampogramaSkeleton />}
+    >
+      {error ? (
+        <ErrorState title="No se pudo cargar la cartera" onRetry={retry} />
+      ) : players.length === 0 ? (
+        <EmptyState title="La cartera está vacía" />
+      ) : (
+        <Pitch players={inCategory} query="" onOpenPosition={() => {}} />
+      )}
     </DashboardPage>
   );
 }

@@ -7,7 +7,7 @@ import { DetailPanel, type DetailView } from '@/components/features/campograma/d
 import { Legend } from '@/components/features/campograma/legend';
 import { Pitch } from '@/components/features/campograma/pitch';
 import { PlayerList, type PlayerSort } from '@/components/features/campograma/player-list';
-import { NoResults, Toolbar } from '@/components/features/campograma/toolbar';
+import { SearchElsewhere, Toolbar } from '@/components/features/campograma/toolbar';
 import { CampogramaSkeleton } from '@/components/skeletons/campograma-skeleton';
 import { DashboardPage } from '@/components/ui/dashboard-page';
 import { EmptyState } from '@/components/ui/empty-state';
@@ -15,7 +15,12 @@ import { ErrorState } from '@/components/ui/error-state';
 import { Tabs, TabsList, TabsTriggerSliding } from '@/components/ui/tabs';
 import { useAuth } from '@/lib/auth/auth-context';
 import { usePortfolio } from '@/lib/hooks/use-portfolio';
-import { countByCategory, matchesSearch, signalPlayers } from '@/lib/utils/campograma';
+import {
+  countByCategory,
+  matchesSearch,
+  otherCategoriesWithHits,
+  signalPlayers,
+} from '@/lib/utils/campograma';
 
 type View = 'field' | 'list';
 
@@ -48,7 +53,9 @@ export default function CampogramaPage() {
       loading={status === 'INITIALIZING' || isLoading}
       skeleton={<CampogramaSkeleton />}
     >
-      {error ? (
+      {/* Solo sin datos: SWR conserva lo cargado y marca el error si falla al
+          revalidar, y con mala cobertura taparía una cartera que se está viendo bien. */}
+      {error && players.length === 0 ? (
         <ErrorState title="No se pudo cargar la cartera" onRetry={retry} />
       ) : players.length === 0 ? (
         <EmptyState title="La cartera está vacía" />
@@ -81,10 +88,11 @@ export default function CampogramaPage() {
               </Tabs>
             }
           />
-          {matching.length === 0 && (
-            <NoResults
+          {query.trim() !== '' && (
+            <SearchElsewhere
               category={category}
-              categories={categories}
+              activeHits={matching.length}
+              others={otherCategoriesWithHits(categories, counts, category?.id)}
               counts={counts}
               onJump={changeCategory}
             />

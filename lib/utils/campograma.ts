@@ -163,6 +163,15 @@ export function countByCategory(players: PortfolioPlayer[], query: string): Reco
   return counts;
 }
 
+/** Las demás categorías con coincidencias: a ellas se ofrece saltar. */
+export function otherCategoriesWithHits(
+  categories: PortfolioCategory[],
+  counts: Record<string, number>,
+  activeId: string | undefined
+): PortfolioCategory[] {
+  return categories.filter((c) => c.id !== activeId && (counts[c.id] ?? 0) > 0);
+}
+
 export type Signal = 'loaned' | 'pending' | 'noClub';
 
 /** Los contadores de cabecera no filtran el campo (decisión de PH): abren su lista. */

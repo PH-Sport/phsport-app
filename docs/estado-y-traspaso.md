@@ -1191,7 +1191,17 @@ recibe ninguno. Si un día los recibe, la sección vuelve.
   algo se salía de ancho, pero no sale en todas, ni nada mide más de 393. También
   salía en `/inicio`, antes de existir esta pantalla. Es cosa de la captura.
 
-**Comprobado.** Tipos, lint, 244 pruebas y build. Prueba de navegador nueva
+**La cartera no se guarda en el equipo.** Toda la caché de la app se guardaba en
+`localStorage` y ahí sigue legible aunque la sesión caduque. Para la cartera, con
+datos de menores, ya no: `persistent-cache.ts` deja fuera `portfolio` y
+`portfolio-names`, que llevaba igual desde la fase 5. Cuesta un esqueleto al abrir
+en frío. Lo sacó la revisión final.
+
+**La prueba de navegador sirve una cartera inventada** cuando hay que probar lo que
+ningún dato real dispara hoy (un jugador sin año, una búsqueda que coincide en dos
+categorías): `page.route` responde en lugar de la base, sin datos de nadie en el repo.
+
+**Comprobado.** Tipos, lint, 247 pruebas y build. Prueba de navegador nueva
 (`e2e/campograma.spec.ts`) en verde en los cuatro motores, con la sesión guardada.
 Midiendo con la sesión de Mario, en iPhone SE, iPhone 15, iPad Mini, 1024 y 1280 de
 ancho: once discos dentro del campo y sin solaparse, LI arriba y LD abajo al
@@ -1203,8 +1213,9 @@ la lista en el repo). En oscuro se ve bien en escritorio; la vista de móvil en
 oscuro no se ha mirado.
 
 **Sin comprobar:** cómo se siente la hoja en un iPhone de verdad, que el fondo no se
-mueva con ella abierta (el motor de Playwright no es Safari de iOS), y lo que ve un
-agente en Ajustes, porque no hay sesión de agente en las pruebas: lo mira Mario con
+mueva con ella abierta y que la lupa saque el teclado de una vez (el motor de
+Playwright no es Safari de iOS: lo que se prueba es que el foco llega dentro del
+toque), y lo que ve un agente en Ajustes, porque no hay sesión de agente en las pruebas: lo mira Mario con
 la cuenta de prueba, en staging.
 
 ---
@@ -1536,6 +1547,10 @@ Lo que falta, **en este orden**:
    campograma suelto si ha cambiado desde el 2026-10-10 (§2, «Desde la carga
    hay dos copias»). A 2026-11-04 no ha cambiado: su último commit sigue siendo
    el de la carga y no hay nada sin guardar. Volver a mirarlo justo antes.
+
+Para la fase 4, de la revisión de la fase 3: con la ficha abierta, si otra persona da
+de baja a ese jugador, la hoja se queda en blanco al revalidar. Hoy no se puede dar
+de baja desde la app; al añadirlo, volver a la lista o cerrar.
 4. **Mario no tendrá rol de Agentes** (decidido el 2026-10-14). HECHO el
    2026-11-04: ve y gestiona el campograma con la cuenta de desarrollador (§3 de
    noviembre). Se descartaron dos vías: una fila a mano en `profile_roles` y

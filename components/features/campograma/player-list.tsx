@@ -115,8 +115,8 @@ export function PlayerList({ players, sort, onSort, onOpenPlayer }: PlayerListPr
                 className="grid w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1 px-4 py-2.5 text-left transition-colors hover:bg-accent"
               >
                 <span className="truncate text-sm font-medium">{p.name}</span>
-                <span className="text-xs tabular-nums text-muted-foreground">
-                  {p.birthYear === null ? '' : yearLabel(p.birthYear)}
+                <span className={cn('text-xs tabular-nums text-muted-foreground', p.birthYear === null && 'italic')}>
+                  {yearLabel(p.birthYear)}
                 </span>
                 <span className="flex min-w-0 items-center gap-2">
                   <span className={cn('truncate text-xs text-muted-foreground', !p.ownerClub && 'italic')}>

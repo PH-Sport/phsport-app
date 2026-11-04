@@ -105,7 +105,7 @@ Lo que el spec implica y es más probable que falle a quien use esto. Cada líne
 
 **Decisiones ya tomadas:**
 - **Orientación:** de pie por debajo de `lg` y tumbado desde `lg` (1024 px), con clases de Tailwind sobre variables CSS (`left-[var(--x)] lg:left-[var(--xh)]`). El corte del suelto (820 px) no sirve: allí el campo llega a ocupar el 60 % de la ventana y aquí vive en la columna de contenido, junto a la barra lateral.
-- **Tamaño:** de pie, ancho máximo 620 px y proporción 3/4. Tumbado, proporción 3/2 con `max-h-[calc(100dvh-250px)]`, para que el delantero no se salga en un portátil.
+- **Tamaño:** de pie, ancho máximo 620 px y proporción 3/4. Tumbado, proporción 3/2 con el ancho sacado de `100dvh - 300px`, para que el delantero no se salga en un portátil.
 - **El SVG lleva `preserveAspectRatio="none"` a propósito:** el círculo central es una elipse. Comentarlo, o alguien lo «arreglará».
 - **Discos:** sin rótulo debajo. El nombre largo va en `title` y `aria-label`, con su contador. Vacío: borde discontinuo, sin contador. Con búsqueda: apagado si no coincide nadie.
 - **Colores por línea (portero, defensa, medio, ataque):** se conservan como dato, con tokens propios en claro y en oscuro.
@@ -174,7 +174,7 @@ Lo que el spec implica y es más probable que falle a quien use esto. Cada líne
 ### Task 7: Ajustes para un agente
 
 **Archivos:**
-- Modificar: `app/(dashboard)/ajustes/page.tsx`, `components/features/account/appearance-tab.tsx`, `components/features/account/notifications-tab.tsx`
+- Modificar: `app/(dashboard)/ajustes/page.tsx`, `components/features/account/appearance-tab.tsx`
 
 Hoy un agente ve en Ajustes → General «Vista predeterminada de Diseños» y los avisos de asignación y de plazos, que no le dicen nada (pendiente 13).
 

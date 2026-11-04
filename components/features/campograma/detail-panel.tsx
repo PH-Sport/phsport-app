@@ -89,8 +89,8 @@ function PlayerRow({ player, onOpen }: { player: PortfolioPlayer; onOpen: () => 
           className={cn('h-4 w-[3px] rounded-full bg-current', LINE_TEXT[POSITION_LINE[player.position]])}
         />
         <span className="truncate font-medium">{player.name}</span>
-        <span className="text-xs tabular-nums text-muted-foreground">
-          {player.birthYear === null ? '' : yearLabel(player.birthYear)}
+        <span className={cn('text-xs tabular-nums text-muted-foreground', player.birthYear === null && 'italic')}>
+          {yearLabel(player.birthYear)}
         </span>
         <span className={cn('truncate text-xs text-muted-foreground', !player.ownerClub && 'italic')}>
           {clubLabel(player.ownerClub)}

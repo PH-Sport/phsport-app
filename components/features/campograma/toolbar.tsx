@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef, useState } from 'react';
+import { flushSync } from 'react-dom';
 import { ChevronDown, Search, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsList, TabsTriggerSliding } from '@/components/ui/tabs';
@@ -134,10 +135,10 @@ export function Toolbar({
           aria-label="Buscar"
           aria-expanded={searchOpen}
           onClick={() => {
-            setSearchOpen(true);
-            // El campo acaba de dejar de estar oculto: hasta el siguiente pintado no
-            // se le puede dar el foco.
-            requestAnimationFrame(() => inputRef.current?.focus());
+            // Safari de iOS solo saca el teclado si el foco llega dentro del propio
+            // toque: flushSync deja el campo ya visible en esta misma línea.
+            flushSync(() => setSearchOpen(true));
+            inputRef.current?.focus();
           }}
           className={cn(
             'grid h-10 w-10 shrink-0 place-items-center rounded-lg border border-input bg-card text-muted-foreground lg:hidden',
@@ -187,40 +188,49 @@ export function Toolbar({
   );
 }
 
-/** Sin coincidencias en la categoría elegida: se ofrece saltar a las que sí tienen. */
-export function NoResults({
+/**
+ * Buscando, qué hay en las demás categorías, con un botón para saltar a cada una.
+ * Sin coincidencias en la elegida sale siempre. Con ellas, solo por debajo de `lg`:
+ * ahí el desplegable se oculta al buscar y nada más diría que hay otras; desde `lg`
+ * ya lo dicen las pestañas.
+ */
+export function SearchElsewhere({
   category,
-  categories,
+  activeHits,
+  others,
   counts,
   onJump,
 }: {
   category: PortfolioCategory | undefined;
-  categories: PortfolioCategory[];
+  activeHits: number;
+  others: PortfolioCategory[];
   counts: Record<string, number>;
   onJump: (id: string) => void;
 }) {
-  const others = categories.filter((c) => c.id !== category?.id && (counts[c.id] ?? 0) > 0);
+  const empty = activeHits === 0;
+  if (!empty && others.length === 0) return null;
+
   return (
     <div
-      data-no-results
-      className="flex flex-wrap items-center gap-2 rounded-xl border border-border bg-card px-4 py-3 text-sm"
-    >
-      <b className="font-semibold">Sin resultados en {category?.shortName}</b>
-      {others.length > 0 ? (
-        others.map((c) => (
-          <button
-            key={c.id}
-            type="button"
-            data-jump={c.id}
-            onClick={() => onJump(c.id)}
-            className="rounded-full border border-border px-2.5 py-1 text-xs font-medium transition-colors hover:bg-accent"
-          >
-            {c.shortName} <span className="tabular-nums text-primary">{counts[c.id]}</span>
-          </button>
-        ))
-      ) : (
-        <span className="text-muted-foreground">Prueba con otro nombre o club.</span>
+      data-no-results={empty ? '' : undefined}
+      className={cn(
+        'flex flex-wrap items-center gap-2 rounded-xl border border-border bg-card px-4 py-3 text-sm',
+        !empty && 'lg:hidden'
       )}
+    >
+      <b className="font-semibold">{empty ? `Sin resultados en ${category?.shortName}` : 'También en'}</b>
+      {others.map((c) => (
+        <button
+          key={c.id}
+          type="button"
+          data-jump={c.id}
+          onClick={() => onJump(c.id)}
+          className="rounded-full border border-border px-2.5 py-1 text-xs font-medium transition-colors hover:bg-accent"
+        >
+          {c.shortName} <span className="tabular-nums text-primary">{counts[c.id]}</span>
+        </button>
+      ))}
+      {others.length === 0 && <span className="text-muted-foreground">Prueba con otro nombre o club.</span>}
     </div>
   );
 }

@@ -4,6 +4,7 @@ import {
   countByCategory,
   isActiveRow,
   matchesSearch,
+  otherCategoriesWithHits,
   PITCH_XY,
   POSITION_LABEL,
   POSITION_LINE,
@@ -186,5 +187,17 @@ describe('las filas de la base', () => {
   it('un jugador de baja no está activo, y uno recuperado sí', () => {
     expect(isActiveRow(row)).toBe(true);
     expect(isActiveRow({ ...row, deactivated_at: '2026-11-04T10:00:00Z' })).toBe(false);
+  });
+});
+
+describe('otherCategoriesWithHits', () => {
+  const categories = ['cat_a', 'cat_b', 'cat_c'].map((id) => ({ id, name: id, shortName: id, coach: null }));
+
+  it('se queda con las demás categorías que tienen coincidencias, sin la elegida', () => {
+    const others = otherCategoriesWithHits(categories, { cat_a: 1, cat_b: 3, cat_c: 0 }, 'cat_a');
+    expect(others.map((c) => c.id)).toEqual(['cat_b']);
+  });
+  it('sin coincidencias fuera no hay nada que ofrecer', () => {
+    expect(otherCategoriesWithHits(categories, { cat_a: 2 }, 'cat_a')).toEqual([]);
   });
 });

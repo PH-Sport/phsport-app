@@ -28,6 +28,17 @@ const TS_KEY = 'phsport-swr-ts';
 const KEY_PREFIX = 'phsport-swr'; // clearSwrCache borra todo lo que empiece así
 const MAX_AGE_MS = 24 * 60 * 60 * 1000; // 24h
 
+/**
+ * La cartera de jugadores nunca se guarda en el equipo: lleva datos de menores, y
+ * lo que hay en localStorage sigue ahí legible aunque la sesión caduque (el TTL
+ * impide hidratarlo, pero no lo borra). Cuesta un esqueleto al abrir en frío.
+ */
+const NEVER_PERSISTED = new Set(['portfolio', 'portfolio-names']);
+
+export function persistableEntries(map: Map<string, unknown>): [string, unknown][] {
+  return Array.from(map.entries()).filter(([key]) => !NEVER_PERSISTED.has(key));
+}
+
 function cacheKey(ownerId: string) {
   return `${KEY_PREFIX}:${CACHE_VERSION}:${ownerId}`;
 }
@@ -88,7 +99,9 @@ export function localStorageProvider(): Cache {
       const raw = window.localStorage.getItem(cacheKey(ownerId));
       if (raw) {
         const entries = JSON.parse(raw) as [string, unknown][];
-        for (const [k, v] of entries) map.set(k, v);
+        // El filtro también aquí: una caché guardada antes de existir esta regla
+        // no vuelve a la memoria, y se reescribe sin ella en cuanto se persista.
+        for (const [k, v] of entries) if (!NEVER_PERSISTED.has(k)) map.set(k, v);
       }
     }
   } catch {
@@ -101,7 +114,7 @@ export function localStorageProvider(): Cache {
     try {
       const ownerId = window.localStorage.getItem(OWNER_KEY);
       if (!ownerId) return; // solo persistimos para usuarios autenticados
-      window.localStorage.setItem(cacheKey(ownerId), JSON.stringify(Array.from(map.entries())));
+      window.localStorage.setItem(cacheKey(ownerId), JSON.stringify(persistableEntries(map)));
       window.localStorage.setItem(TS_KEY, String(Date.now()));
     } catch {
       /* localStorage lleno / no disponible → ignorar */

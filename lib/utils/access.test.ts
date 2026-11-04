@@ -289,3 +289,48 @@ describe('la cartera', () => {
     expect(deriveAccess({ ...base, roles: [gestor] }).can('dar_de_baja_jugadores')).toBe(false);
   });
 });
+
+// La cuenta de desarrollador es el «admin absoluto» (pendiente 6, 2026-11-02):
+// todos los departamentos y todos los poderes sin tener rol en ellos. La base
+// decide lo mismo con `is_dev` (migración 053); esto es su espejo en la app.
+describe('la cuenta de desarrollador', () => {
+  const dev = { ...base, is_dev: true, roles: [gestor] };
+
+  it('ve y gestiona los dos departamentos sin tener rol en Agentes', () => {
+    const a = deriveAccess(dev);
+    expect(a.inDepartment('creativo')).toBe(true);
+    expect(a.inDepartment('agentes')).toBe(true);
+    expect(a.can('gestionar_roles')).toBe(true);
+    expect(a.can('invitar_agentes')).toBe(true);
+    expect(a.can('gestionar_agentes')).toBe(true);
+    expect(a.can('dar_de_baja_jugadores')).toBe(true);
+  });
+
+  it('no se convierte en diseñador: no recibe asignaciones ni cambia de cara', () => {
+    expect(deriveAccess(dev).can('recibir_asignaciones')).toBe(false);
+    expect(viewModeFor(dev)).toBe('manager');
+  });
+
+  it('sin ningún rol también lo ve todo y entra por la cara de gestión', () => {
+    const solo = { ...base, is_dev: true, roles: [] };
+    expect(deriveAccess(solo).inDepartment('agentes')).toBe(true);
+    expect(deriveAccess(solo).can('gestionar_agentes')).toBe(true);
+    expect(viewModeFor(solo)).toBe('manager');
+  });
+
+  it('la marca suma y no quita: un rol que recibe asignaciones sigue valiendo', () => {
+    const conDisenador = { ...base, is_dev: true, roles: [disenador] };
+    expect(deriveAccess(conDisenador).can('recibir_asignaciones')).toBe(true);
+    expect(viewModeFor(conDisenador)).toBe('designer');
+  });
+
+  it('el distintivo enseña sus roles de verdad, no uno inventado', () => {
+    expect(deriveAccess(dev).roleNames).toEqual(['Gestor creativo']);
+  });
+
+  it('la marca no vale en una cuenta de futbolista', () => {
+    const a = deriveAccess({ ...base, kind: 'JUGADOR', is_dev: true, roles: [] });
+    expect(a.inDepartment('agentes')).toBe(false);
+    expect(a.can('gestionar_agentes')).toBe(false);
+  });
+});

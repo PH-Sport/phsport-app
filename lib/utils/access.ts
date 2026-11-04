@@ -130,9 +130,22 @@ const NO_ACCESS: Access = {
   inDepartment: () => false,
 };
 
-/** Une los permisos de todos los roles. Un JUGADOR no obtiene nada. */
+/**
+ * Lo que la cuenta de desarrollador tiene por su marca, sin rol (pendiente 6
+ * del estado): todos los departamentos y todos los poderes. Todos menos
+ * `recibir_asignaciones`, que no es un poder sino «ser diseñador»: con él la
+ * cuenta tomaría la cara de diseñador y entraría en /mi-semana. La base hace lo
+ * mismo con `is_dev` en `has_permission` e `in_department` (migración 053);
+ * si esto cambia, cambia allí también.
+ */
+const DEV_PERMISSIONS: readonly Permission[] = PERMISSIONS.filter((p) => p !== 'recibir_asignaciones');
+
+/**
+ * Une los permisos de todos los roles, más los de la marca de desarrollador,
+ * que suma y nunca quita. Un JUGADOR no obtiene nada, tenga la marca o no.
+ */
 export function deriveAccess(
-  profile: Pick<ProfileWithRoles, 'kind' | 'roles'> | null | undefined
+  profile: Pick<ProfileWithRoles, 'kind' | 'roles' | 'is_dev'> | null | undefined
 ): Access {
   if (!profile) return NO_ACCESS;
   if (profile.kind !== 'AGENCIA') {
@@ -143,6 +156,10 @@ export function deriveAccess(
   for (const role of profile.roles) {
     departments.add(role.department);
     for (const p of role.permissions) permissions.add(p);
+  }
+  if (profile.is_dev) {
+    for (const d of DEPARTMENTS) departments.add(d);
+    for (const p of DEV_PERMISSIONS) permissions.add(p);
   }
   return {
     kind: profile.kind,
@@ -162,7 +179,7 @@ export function deriveAccess(
 export type ViewMode = 'manager' | 'designer' | 'agent';
 
 export function viewModeFor(
-  profile: Pick<ProfileWithRoles, 'kind' | 'roles'> | null | undefined
+  profile: Pick<ProfileWithRoles, 'kind' | 'roles' | 'is_dev'> | null | undefined
 ): ViewMode {
   if (!profile) return 'designer';
   // Una cuenta JUGADOR (ya no nacen: Jugadores salió de la app, migración 052)

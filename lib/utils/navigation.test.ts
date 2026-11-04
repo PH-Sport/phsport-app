@@ -66,4 +66,9 @@ describe('navKeysFor', () => {
     expect(showsCreative(accessWith())).toBe(true);
     expect(navKeysFor(accessWith())).toEqual(['inicio', 'semana', 'disenos']);
   });
+  it('la cuenta de desarrollador ve las cuatro entradas y entra en todo', () => {
+    const dev = deriveAccess({ kind: 'AGENCIA', is_dev: true, roles: [role('creativo')] });
+    expect(navKeysFor(dev)).toEqual(['inicio', 'semana', 'disenos', 'campograma']);
+    expect(canEnterRoute('/campograma', dev)).toBe(true);
+  });
 });

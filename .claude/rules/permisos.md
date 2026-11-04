@@ -25,6 +25,14 @@ que la app no lo llama. Qué ruta es de qué departamento lo dice
 `lib/utils/navigation.ts`, y de ahí salen la navegación y la puerta de cada
 pantalla.
 
+**La cuenta de desarrollador (`is_dev`) es admin absoluto** (migración 053):
+todos los departamentos y todos los permisos que tenga algún rol, menos
+`recibir_asignaciones`, sin tener rol en ellos. Lo deciden `has_permission`,
+`in_department` e `is_staff` en la base y `deriveAccess` en la app: si cambias
+uno, cambia el otro. La marca solo se pone desde el panel de Supabase; no abras
+nunca una vía para escribirla desde el cliente (columna, función, ruta o una
+política de INSERT en `profiles`, que hoy no tiene), porque es la llave de todo.
+
 **La cartera de Agentes** (`portfolio_*`, migración 051): verla, dar de alta y
 editar es de todo el departamento (`in_department(…, 'agentes')`); dar de baja
 y recuperar es `dar_de_baja_jugadores`, de Director. Esa diferencia la guarda un

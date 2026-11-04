@@ -29,3 +29,7 @@ tocar. Antes de buscar el culpable, mide: `scrollWidth` y quién pasa de 393.
 **Para repetir pruebas con la sesión guardada,** sin volver a iniciar sesión:
 `PLAYWRIGHT_USER=x PLAYWRIGHT_PASS=x npx playwright test <archivo> --no-deps`. Los
 valores solo encienden las pruebas con sesión; quien entra es `e2e/.sesion/usuario.json`.
+Con un archivo concreto, no con toda la suite: sin archivo, `sesion` intenta entrar con
+esos valores y falla. Y si a media pasada caen a `/login` con `Request rate limit
+reached` en el registro, es el límite de Supabase Auth por repetir tanto la misma
+sesión, no un fallo de la app: espera y repite solo las que cayeron.

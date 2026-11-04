@@ -1202,7 +1202,10 @@ ningún dato real dispara hoy (un jugador sin año, una búsqueda que coincide e
 categorías): `page.route` responde en lugar de la base, sin datos de nadie en el repo.
 
 **Comprobado.** Tipos, lint, 247 pruebas y build. Prueba de navegador nueva
-(`e2e/campograma.spec.ts`) en verde en los cuatro motores, con la sesión guardada.
+(`e2e/campograma.spec.ts`) en verde en los cuatro motores, con la sesión guardada. La
+matriz entera, a la primera, dio 62 en verde y dos caídas en `titulos.spec.ts` por el
+límite de peticiones de Supabase Auth (la app mandó a `/login`), más el arranque de
+sesión, que falla sin credenciales reales. Repetidas solas, esas dos pasan.
 Midiendo con la sesión de Mario, en iPhone SE, iPhone 15, iPad Mini, 1024 y 1280 de
 ancho: once discos dentro del campo y sin solaparse, LI arriba y LD abajo al
 tumbarlo, nada se sale de ancho, y la hoja mide el 60 % del alto. Se cierra con

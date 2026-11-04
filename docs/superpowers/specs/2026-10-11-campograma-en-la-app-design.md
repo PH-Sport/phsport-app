@@ -4,8 +4,8 @@
 **Estado:** diseño cerrado. Fases 1 (Agentes) y 2 (la cartera en la base)
 hechas el 2026-10-11 y el 2026-10-12; ver §1 y §2 de octubre en
 `docs/estado-y-traspaso.md`. La fase 5 (autocompletado) se adelantó y está
-hecha el 2026-11-02 (§1 de noviembre). Siguiente: fase 3, junto con la cabina
-de desarrollador (pendientes 14 y 6 del estado).
+hecha el 2026-11-02 (§1 de noviembre). El acceso de Mario, el 2026-11-04 (§3 de
+noviembre). Siguiente: fase 3 (pendientes 13 y 14 del estado).
 **Alcance:** el departamento de Agentes, la cartera de jugadores con su campograma
 y su edición, y el autocompletado de nombres al crear diseños.
 
@@ -51,7 +51,9 @@ distintas (Tomás Mendes y Tomás Méndez, los hermanos Buyla, los Stassin).
 | **Director** | Ángel y Julio | Todo lo de Agente, más invitar agentes, dar el rol de Agente o Director, dar de baja y recuperar jugadores |
 | **Agente** | El resto | Ver toda la cartera, dar de alta y editar jugadores |
 
-Mario también invita agentes. Mario podrá tener roles de los dos departamentos
+Mario también invita agentes. **Cambiado el 2026-10-14:** Mario no tiene rol de
+Agentes; hace todo esto con la cuenta de desarrollador (migración 053, §3 de
+noviembre del estado). Otra persona sí puede tener roles de los dos departamentos
 a la vez, como ya preveía el spec de septiembre.
 
 «Otras opciones» para los directores quedan por concretar: se añadirán como

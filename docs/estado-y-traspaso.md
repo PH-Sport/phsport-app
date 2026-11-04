@@ -1,11 +1,14 @@
 # Estado del proyecto y traspaso
 
-> **Actualizado:** 2026-11-02 (tarde): Jugadores sale de la app (§2 de
-> noviembre). Fuera las fichas, sus carpetas, el alta del jugador por enlace y
-> su área personal; la migración 052, aplicada, quita el permiso de invitar
-> jugadores. El resto de la base se queda hasta la limpieza tras el merge
-> (pendiente 11). Lo siguiente es subir a `main` (pendiente 14). Antes, ese
-> mismo día: el autocompletado de jugadores al crear diseños (fase 5 del
+> **Actualizado:** 2026-11-04: la cuenta de desarrollador ya es admin absoluto
+> (§3 de noviembre), con la migración 053 aplicada. Sigue la fase 3 del campograma
+> (pendiente 13). Antes, el 2026-11-02 (noche): Mario cambia el orden: antes de
+> subir a `main` se termina el campograma con la cabina de desarrollador, y Mochi
+> va después de producción (pendiente 14). Antes, por la tarde: Jugadores sale de
+> la app (§2 de noviembre). Fuera las fichas, sus carpetas, el alta del jugador
+> por enlace y su área personal; la migración 052, aplicada, quita el permiso de
+> invitar jugadores. El resto de la base se queda hasta la limpieza tras el
+> merge (pendiente 11). Antes, ese mismo día: el autocompletado de jugadores al crear diseños (fase 5 del
 > campograma, §1 de noviembre), y Mario fija el orden de lo que viene: quitar
 > Jugadores de la app, subir a `main`, el campograma junto con la cabina de
 > desarrollador y Mochi al final (pendiente 14). Antes, el 2026-10-12 (noche): la cartera de Agentes está en la base
@@ -1100,6 +1103,59 @@ formulario de una invitación de personal real. Mario lo mira en staging creando
 una desde Ajustes → Miembros, sin completar el alta (crearía una cuenta real).
 Tampoco una cuenta de Agentes de verdad: la lógica la cubren las pruebas.
 
+### 3. La cuenta de desarrollador, admin absoluto (2026-11-04)
+
+Mario no tendrá rol de Agentes y tenía que poder ver y gestionar el campograma.
+Pidió un perfil de debug «de toda la vida»: admin absoluto más herramientas de
+prueba. **Solo se hace lo primero;** las herramientas esperan a Supabase Pro
+(pendiente 6), porque sin base de pruebas una notificación de prueba le suena en
+el móvil a un diseñador de verdad.
+
+**Qué hace.** La cuenta con `is_dev` tiene todos los departamentos y todos los
+permisos sin tener rol en ellos, y lo decide la base (migración 053, en
+`has_permission`, `in_department` e `is_staff`), con su espejo en `deriveAccess`.
+La marca suma y nunca quita. La regla está en `.claude/rules/permisos.md`.
+
+**Dos límites, y los dos evitan un fallo concreto:**
+
+- **`recibir_asignaciones` queda fuera.** Es «ser diseñador», no un poder. Con él,
+  la cuenta tomaría la cara de diseñador y entraría en `/mi-semana`, y la ruta de
+  reasignar la aceptaría como destino: es el único sitio que pregunta por otra
+  persona.
+- **Solo cuentan los permisos que tiene hoy algún rol.** La primera idea era
+  «cualquier permiso menos ese», pero reabría `invitar_jugadores`, retirado en la
+  052, porque `can_manage_invitation` aún lo consulta.
+
+**Por qué es una marca y no un rol.** Lo de la fila a mano en `profile_roles` y
+enseñar las cuentas `is_dev` en Miembros se descartó el 2026-10-14 (pendiente
+13.4). Y «Ver como» no servía: es un disfraz de pantalla y la base sigue viendo
+la cuenta real. La simulación tampoco hereda estos poderes, porque el perfil
+simulado no lleva la marca.
+
+**Por qué la marca aguanta como llave.** Desde el cliente no se puede escribir:
+`authenticated` no tiene UPDATE sobre esa columna (045), `profiles` no tiene
+políticas de INSERT ni DELETE, y ninguna función ni ruta la toca.
+
+**Comprobado.** Tipos, lint, pruebas y build. Revisión con contexto limpio, sin
+fallos. En la base, antes y después de aplicar: de las nueve cuentas, las ocho sin
+la marca dan exactamente lo mismo en cada permiso y departamento (misma huella), y
+la que la tiene cambia solo cuatro valores (`invitar_agentes`,
+`gestionar_agentes`, `dar_de_baja_jugadores` y el departamento de Agentes). Con
+sesiones simuladas, en una transacción que se deshizo: la cuenta ve los 165
+jugadores, da de alta, de baja y recupera, y no puede tocar su marca; otra persona
+de creativo ve 0 jugadores, no da de alta, no se pone la marca, y sigue viendo sus
+diseños y autocompletando. Después de deshacerla quedan 165 jugadores y ninguna
+prueba. Con la sesión real de Mario, la app enseña las cuatro entradas en iPhone y
+en escritorio y entra en `/campograma`.
+
+**Un defecto visual que queda.** Con cuatro entradas, «Campograma» mide 69 px y
+cada hueco de la barra de abajo, 54 px en un iPhone de 375 de ancho (SE o mini):
+se corta y se pega a «Diseños». En un iPhone 15 cabe por poco (72 px). Hoy solo le
+pasa a quien tenga los dos departamentos. Sin arreglar: pendiente 13.4.
+
+**Sin comprobar:** el campograma con datos en pantalla, porque todavía no existe
+(fase 3). Y que Mario lo vea en su iPhone.
+
 ---
 
 ## Qué queda pendiente
@@ -1220,8 +1276,25 @@ cabina de desarrollador completa de una vez? Retomar por ahí.
 (pendiente 14), con una pieza nueva que va primero: que Mario vea y gestione
 cualquier departamento sin tener rol en él, porque no tendrá rol de Agentes
 (pendiente 13.4). Toca permisos sobre la base de producción, así que lleva
-migración con su permiso y revisión con contexto limpio. La pregunta de
-alcance sigue abierta para el resto del menú.
+migración con su permiso y revisión con contexto limpio.
+
+**Alcance decidido el 2026-11-02 (noche).** Mario quiere un perfil de debug
+«de toda la vida»: admin absoluto más herramientas de prueba. Se parte en dos:
+
+- **Ahora, con el campograma: el admin absoluto.** La cuenta con `is_dev` ve
+  y gestiona todos los departamentos con todos sus permisos sin tener rol en
+  ellos, y lo decide la base, no solo la pantalla. Comprobado en la base ese
+  día: todas las políticas y funciones que usan `has_permission`,
+  `in_department` o `is_staff` preguntan por quien llama (`auth.uid()`);
+  ninguna recorre personas, así que no aparece en ninguna lista ajena. Una
+  excepción a propósito: `recibir_asignaciones` no es un poder sino «ser
+  diseñador»; si la cuenta lo tuviera, la app le pondría la cara de diseñador
+  y entraría en `/mi-semana`. HECHO el 2026-11-04 (§3 de noviembre), con la
+  migración 053 aplicada.
+- **Después, con Supabase Pro: las herramientas de prueba** (el menú de
+  arriba: notificaciones, asignaciones, eventos, datos de prueba). Sin base de
+  pruebas, una notificación de prueba suena en el móvil de un diseñador de
+  verdad. Van detrás de la línea base del pendiente 9.
 
 ### 7. Un sistema de ayuda para toda la app — HECHO el 2026-09-08
 
@@ -1310,7 +1383,7 @@ una por MCP con el nombre sin prefijo, que es como están las últimas.
 - **Instalar Xcode** para probar iOS real (18 y 26) sin depender del móvil de
   Mario. No está instalado; se maneja con `xcrun simctl`, no con Playwright.
 
-### 11. Aplicar la 049 tras el merge a `main` (la 045, la 046, la 047, la 048, la 050, la 051 y la 052 ya están)
+### 11. Aplicar la 049 tras el merge a `main` (la 045, la 046, la 047, la 048, la 050, la 051, la 052 y la 053 ya están)
 
 **La 045 y la 046 se aplicaron el 2026-09-17** por MCP, registradas como
 `politicas_por_permiso` y `jugadores_y_archivos`, con permiso expreso de Mario
@@ -1332,7 +1405,8 @@ también el despliegue de la función de borrar cuentas (`admin-delete-user`),
 cuyo código ya está en el repo. **La 050 de Agentes no esperó al merge:** se
 aplicó el 2026-10-12, antes de integrar su rama en `preview` (§1 de octubre).
 La 052 tampoco: solo quita filas de permisos, que `main` no lee (§2 de
-noviembre).
+noviembre). Ni la 053, que solo cambia lo que tiene la cuenta de desarrollador
+(§3 de noviembre).
 
 **Lo que queda de Jugadores en la base**, para borrar tras el merge si
 Jugadores no vuelve (§2 de noviembre):
@@ -1407,19 +1481,19 @@ Lo que falta, **en este orden**:
    (`campograma-ph/docs/work/active/handoff-2026-09-03.md`, «Trampas»).
 2. **Fases 4 y 6:** editar (alta, edición, baja y recuperación, aviso de
    duplicado e historial) y retirada del campograma suelto. La fase 5, el
-   autocompletado, se adelantó y está hecha (§1 de noviembre).
+   autocompletado, se adelantó y está hecha (§1 de noviembre). **La retirada
+   no puede cerrarse antes del merge:** el spec §8 la ata a que los que usan
+   el campograma suelto pasen a la app, y los agentes no entran hasta
+   entonces. Antes del merge, de la fase 6 solo cabe el punto 3.
 3. **Antes de pasar el campograma a los agentes:** cuadrar la cartera con el
    campograma suelto si ha cambiado desde el 2026-10-10 (§2, «Desde la carga
    hay dos copias»).
-4. **Mario no tendrá rol de Agentes** (decidido el 2026-10-14). Verá y
-   gestionará el campograma desde la cabina de desarrollador (pendiente 6), que
-   va junto con las fases 3 y 4 (pendiente 14). Se descartan las dos vías que
-   se barajaban: una fila a mano en `profile_roles` y enseñar las cuentas
-   `is_dev` en Miembros. Ojo: el spec §5 dice que dan de baja «solo directores y
-   Mario». Para Mario eso pasa ahora por la cabina, que tendrá que cumplir el
-   doble cerrojo del pendiente 6, nunca una excepción por nombre. Si la cabina
-   le enseña los dos departamentos, tendrá cinco entradas en la tab bar del
-   iPhone: mirar que caben.
+4. **Mario no tendrá rol de Agentes** (decidido el 2026-10-14). HECHO el
+   2026-11-04: ve y gestiona el campograma con la cuenta de desarrollador (§3 de
+   noviembre). Se descartaron dos vías: una fila a mano en `profile_roles` y
+   enseñar las cuentas `is_dev` en Miembros. Queda un defecto: en un iPhone de
+   375 de ancho (SE o mini), «Campograma» se corta en la barra de abajo. Hoy solo
+   le pasa a quien tenga los dos departamentos.
 
 **No se invita a ningún agente real hasta el merge de `preview` a `main`**:
 usan producción, y `preview` va por delante con la tanda de roles sin validar
@@ -1431,7 +1505,14 @@ campograma tenga contenido.
 
 ### 14. El orden de trabajo que fija Mario (2026-11-02)
 
-Mario lo quiere todo «cuanto antes», en este orden:
+Mario lo quiere todo «cuanto antes». **El mismo día por la noche cambió el
+orden:** antes de pasar a producción se termina todo lo pendiente, salvo Mochi,
+que va después: el campograma pasa delante del merge. El motivo de dejar Mochi fuera: cambia el aspecto de toda la app y, en el mismo
+salto que los roles y el campograma, subiría a producción mucho sin validar
+mezclado. El precio de esperar: ningún agente real usa el campograma hasta el
+merge (pendiente 13).
+
+El orden, tal como quedó:
 
 1. ~~Autocompletado de jugadores al crear diseños.~~ HECHO el 2026-11-02
    (§1 de noviembre).
@@ -1439,16 +1520,19 @@ Mario lo quiere todo «cuanto antes», en este orden:
    fuera el código y el permiso de invitar jugadores (052); el resto de la base
    espera a la limpieza tras el merge (pendiente 11). Falta que Mario abra en
    staging un enlace de invitación de personal, sin completar el alta.
-3. **Subir `preview` a `main`** (pendiente 11), ya sin Jugadores que esconder.
-4. **Campograma, fases 3, 4 y 6, junto con la cabina de desarrollador**
-   (pendientes 13 y 6), empezando por la pieza que deja a Mario verlo con su
-   cuenta.
-5. **Mochi al final**, cuando todo lo nuevo esté hecho. Mario asume el coste:
-   el campograma se hace con las piezas de hoy y pasa a Mochi con el resto de
-   la app.
+3. **Campograma, fases 3 y 4, junto con el admin absoluto de la cabina**
+   (pendientes 13 y 6). El admin absoluto está HECHO el 2026-11-04 (§3 de
+   noviembre); sigue la fase 3. De la fase 6, antes del merge solo se cuadra la cartera; la
+   retirada del campograma suelto va después (pendiente 13.2). Las
+   herramientas de prueba de la cabina esperan a Supabase Pro (pendiente 6).
+4. **Subir `preview` a `main`** (pendiente 11), cuando el campograma esté
+   hecho y probado.
+5. **Mochi, después de producción.** Mario asume el coste: el campograma se
+   hace con las piezas de hoy y pasa a Mochi con el resto de la app.
 
 **Supabase Pro, aparcado a propósito.** Lo frena dirección y Mario lo sabe.
-Cuando llegue, lo primero es el pendiente 9.
+Cuando llegue, lo primero es el pendiente 9, y detrás, las herramientas de
+prueba de la cabina (pendiente 6).
 
 **La cola del mapa no recoge todavía este orden:** el mapa vive en la rama
 `feat/mapa`, que no se ha juntado con `preview`.

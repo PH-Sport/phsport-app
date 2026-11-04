@@ -1,8 +1,9 @@
 # Estado del proyecto y traspaso
 
-> **Actualizado:** 2026-11-04: la cuenta de desarrollador ya es admin absoluto
-> (§3 de noviembre), con la migración 053 aplicada. Sigue la fase 3 del campograma
-> (pendiente 13). Antes, el 2026-11-02 (noche): Mario cambia el orden: antes de
+> **Actualizado:** 2026-11-04 (tarde): el campograma ya se consulta en la app
+> (fase 3, §4 de noviembre). Sigue la fase 4, editar (pendiente 13). Antes, ese
+> mismo día: la cuenta de desarrollador ya es admin absoluto (§3 de noviembre),
+> con la migración 053 aplicada. Antes, el 2026-11-02 (noche): Mario cambia el orden: antes de
 > subir a `main` se termina el campograma con la cabina de desarrollador, y Mochi
 > va después de producción (pendiente 14). Antes, por la tarde: Jugadores sale de
 > la app (§2 de noviembre). Fuera las fichas, sus carpetas, el alta del jugador
@@ -1153,8 +1154,58 @@ cada hueco de la barra de abajo, 54 px en un iPhone de 375 de ancho (SE o mini):
 se corta y se pega a «Diseños». En un iPhone 15 cabe por poco (72 px). Hoy solo le
 pasa a quien tenga los dos departamentos. Sin arreglar: pendiente 13.4.
 
-**Sin comprobar:** el campograma con datos en pantalla, porque todavía no existe
-(fase 3). Y que Mario lo vea en su iPhone.
+**Sin comprobar:** que Mario lo vea en su iPhone.
+
+### 4. El campograma, solo consulta (fase 3, 2026-11-04)
+
+`/campograma` enseña la cartera real: el campo con sus once puestos y contadores,
+la lista ordenable, la lista de cada puesto y la ficha, la búsqueda en toda la
+cartera, los contadores de cedidos, pendientes y sin club, y los entrenadores. No
+se edita nada todavía (fase 4) y no hizo falta migración. La lógica está en
+`lib/utils/campograma.ts`, con sus pruebas; los componentes, en
+`components/features/campograma/`. Plan:
+`docs/superpowers/plans/2026-11-04-campograma-fase-3-consulta.md`.
+
+**Lo que cambia respecto al suelto, a propósito:**
+
+- **El corte entre móvil y escritorio es `lg` (1024 px), no 820.** Afecta al campo
+  de pie o tumbado, a pestañas o desplegable y a tabla o filas. Allí el campo
+  ocupaba el 60 % de la ventana; aquí vive en la columna de contenido, junto a la
+  barra lateral, y entre 768 y 1024 no caben ni el campo tumbado ni las cinco
+  columnas.
+- **El arrastre de la hoja es el de la pieza de la app**, no el del suelto.
+- **El desplegable ocupa el hueco que queda** en vez de ceñirse a su texto y
+  animar el ancho: el mismo resultado, sin medir nada.
+- **Fuera las rayas del césped:** apenas se veían. Los colores por línea
+  (portero, defensa, medio, ataque) se quedan porque son dato, no marca.
+
+**Para quien solo es de Agentes, Ajustes pierde** la vista predeterminada de
+Diseños y la sección de Notificaciones: sus tres avisos son de diseños, y no
+recibe ninguno. Si un día los recibe, la sección vuelve.
+
+**Dos diagnósticos falsos, para no repetirlos** (los dos en `.claude/rules/pruebas-navegador.md`):
+
+- **«La hoja no se cierra con Escape».** Sí se cerraba. El aviso de «Instala
+  PHSPORT» también es `role="dialog"`, y la prueba contaba ese.
+- **Una franja vacía de 11 px a la derecha en las capturas de iPhone.** Parecía que
+  algo se salía de ancho, pero no sale en todas, ni nada mide más de 393. También
+  salía en `/inicio`, antes de existir esta pantalla. Es cosa de la captura.
+
+**Comprobado.** Tipos, lint, 244 pruebas y build. Prueba de navegador nueva
+(`e2e/campograma.spec.ts`) en verde en los cuatro motores, con la sesión guardada.
+Midiendo con la sesión de Mario, en iPhone SE, iPhone 15, iPad Mini, 1024 y 1280 de
+ancho: once discos dentro del campo y sin solaparse, LI arriba y LD abajo al
+tumbarlo, nada se sale de ancho, y la hoja mide el 60 % del alto. Se cierra con
+Escape y arrastrando el asa. Buscar una palabra sin tilde con coincidencias solo en
+otra categoría ofrece saltar a ella. Ningún nombre de los 166 de la cartera y los
+entrenadores está en lo escrito en esta fase (comprobado con un guion, sin escribir
+la lista en el repo). En oscuro se ve bien en escritorio; la vista de móvil en
+oscuro no se ha mirado.
+
+**Sin comprobar:** cómo se siente la hoja en un iPhone de verdad, que el fondo no se
+mueva con ella abierta (el motor de Playwright no es Safari de iOS), y lo que ve un
+agente en Ajustes, porque no hay sesión de agente en las pruebas: lo mira Mario con
+la cuenta de prueba, en staging.
 
 ---
 
@@ -1474,11 +1525,7 @@ es de creativo y la base no le dejaría).
 
 Lo que falta, **en este orden**:
 
-1. **Fase 3: el campograma, solo consulta** (spec §4): campo, lista, panel,
-   ficha, búsqueda sin acentos sobre toda la cartera, contadores y
-   entrenadores. Lee de `portfolio_*`. Antes de portar el campo, leer las
-   trampas de geometría y de datos del campograma suelto
-   (`campograma-ph/docs/work/active/handoff-2026-09-03.md`, «Trampas»).
+1. ~~Fase 3: el campograma, solo consulta.~~ HECHA el 2026-11-04 (§4 de noviembre).
 2. **Fases 4 y 6:** editar (alta, edición, baja y recuperación, aviso de
    duplicado e historial) y retirada del campograma suelto. La fase 5, el
    autocompletado, se adelantó y está hecha (§1 de noviembre). **La retirada
@@ -1487,7 +1534,8 @@ Lo que falta, **en este orden**:
    entonces. Antes del merge, de la fase 6 solo cabe el punto 3.
 3. **Antes de pasar el campograma a los agentes:** cuadrar la cartera con el
    campograma suelto si ha cambiado desde el 2026-10-10 (§2, «Desde la carga
-   hay dos copias»).
+   hay dos copias»). A 2026-11-04 no ha cambiado: su último commit sigue siendo
+   el de la carga y no hay nada sin guardar. Volver a mirarlo justo antes.
 4. **Mario no tendrá rol de Agentes** (decidido el 2026-10-14). HECHO el
    2026-11-04: ve y gestiona el campograma con la cuenta de desarrollador (§3 de
    noviembre). Se descartaron dos vías: una fila a mano en `profile_roles` y
@@ -1498,10 +1546,6 @@ Lo que falta, **en este orden**:
 **No se invita a ningún agente real hasta el merge de `preview` a `main`**:
 usan producción, y `preview` va por delante con la tanda de roles sin validar
 del todo (pendiente 11). Mario quiere que ese merge espere.
-
-**Fase 3:** Ajustes → General sigue enseñando a un agente las preferencias de
-diseños (vista por defecto, avisos de asignación). Se ajusta cuando el
-campograma tenga contenido.
 
 ### 14. El orden de trabajo que fija Mario (2026-11-02)
 
@@ -1521,8 +1565,8 @@ El orden, tal como quedó:
    espera a la limpieza tras el merge (pendiente 11). Falta que Mario abra en
    staging un enlace de invitación de personal, sin completar el alta.
 3. **Campograma, fases 3 y 4, junto con el admin absoluto de la cabina**
-   (pendientes 13 y 6). El admin absoluto está HECHO el 2026-11-04 (§3 de
-   noviembre); sigue la fase 3. De la fase 6, antes del merge solo se cuadra la cartera; la
+   (pendientes 13 y 6). El admin absoluto y la fase 3 están HECHOS el 2026-11-04
+   (§3 y §4 de noviembre); sigue la fase 4. De la fase 6, antes del merge solo se cuadra la cartera; la
    retirada del campograma suelto va después (pendiente 13.2). Las
    herramientas de prueba de la cabina esperan a Supabase Pro (pendiente 6).
 4. **Subir `preview` a `main`** (pendiente 11), cuando el campograma esté
@@ -1536,6 +1580,29 @@ prueba de la cabina (pendiente 6).
 
 **La cola del mapa no recoge todavía este orden:** el mapa vive en la rama
 `feat/mapa`, que no se ha juntado con `preview`.
+
+### 15. Tocar fuera no cierra las hojas de la app
+
+Encontrado el 2026-11-04 al probar el campograma. **Ya pasaba antes** y no es de esa
+pantalla.
+
+- **Entrada:** en móvil, abrir la hoja de Notificaciones o la del campograma y tocar
+  el velo oscuro de arriba.
+- **Esperado:** se cierra. Es lo que dice el comentario de `DialogContent` («el
+  cierre es asa/gesto/scrim»).
+- **Real:** no pasa nada. Se cierra con el asa o el gesto.
+
+**La causa:** `DialogContent` monta una capa `pointer-events-none fixed inset-0`
+para centrar el panel, y Radix le pone `pointer-events: auto` en línea. El toque cae
+en esa capa, que cuenta como dentro del diálogo, y nunca llega al velo. Comprobado
+en iPhone con `elementFromPoint`. Por lo que dice el código, en escritorio tiene que
+pasar igual con los diálogos centrados; eso no se ha probado.
+
+**No se arregló de paso, y esta es la razón:** esa pieza la usan también la hoja del
+perfil, el detalle de un diseño, las confirmaciones y los diálogos de escritorio.
+Hoy nadie pierde lo que está escribiendo por tocar fuera. Si se arregla para todos,
+crear un diseño a medias se podría cerrar de un toque. Lo sensato es hacerlo solo
+para `mobileSheet`, y lo decide Mario.
 
 ---
 

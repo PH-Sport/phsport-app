@@ -2,7 +2,7 @@
 
 > **Para agentes:** SUB-SKILL OBLIGATORIA: usar superpowers:executing-plans (recomendado aquí) o superpowers:subagent-driven-development para ejecutar este plan tarea por tarea. Los pasos usan casillas (`- [ ]`) para el seguimiento.
 
-**Estado:** propuesto el 2026-11-04, pendiente de que Mario lo confirme.
+**Estado:** hecho el 2026-11-04. Lo que se hizo y lo que no se comprobó, en el §4 de noviembre del estado.
 
 **Objetivo:** que la pantalla `/campograma` enseñe la cartera real: campo, lista, panel con ficha, búsqueda, contadores y entrenadores. Sin editar nada.
 
@@ -55,7 +55,7 @@ Lo que el spec implica y es más probable que falle a quien use esto. Cada líne
 - `yearLabel(year): string` (`'03` o `sin confirmar`) y `clubLabel(club): string`.
 - `splitCoach(coach): { name: string; team: string | null }`, que parte por `—`.
 
-- [ ] **Paso 1: escribir las pruebas que fallan.** Con jugadores inventados:
+- [x] **Paso 1: escribir las pruebas que fallan.** Con jugadores inventados:
   - `matchesSearch` encuentra «munoz» en un jugador inventado llamado «Prueba Muñoz», en un club y en el destino de la cesión. Una consulta vacía encuentra a todos.
   - `countByCategory` cuenta por categoría con y sin búsqueda, y da 0 en la que no tiene coincidencias.
   - `rotate(PITCH_XY.LI)` queda por encima de `rotate(PITCH_XY.LD)` (y menor) y `rotate(PITCH_XY.DEL)` a la derecha de `rotate(PITCH_XY.POR)` (x mayor).
@@ -65,13 +65,13 @@ Lo que el spec implica y es más probable que falle a quien use esto. Cada líne
   - `splitCoach` sin `—` da `team: null`.
   - `signalPlayers(…, 'noClub')` solo devuelve a quien no tiene club.
 
-- [ ] **Paso 2: ejecutarlas y verlas fallar.** `npx vitest run lib/utils/campograma.test.ts`. Esperado: fallan porque el módulo no existe.
+- [x] **Paso 2: ejecutarlas y verlas fallar.** `npx vitest run lib/utils/campograma.test.ts`. Esperado: fallan porque el módulo no existe.
 
-- [ ] **Paso 3: implementar el módulo.** Sin React.
+- [x] **Paso 3: implementar el módulo.** Sin React.
 
-- [ ] **Paso 4: ejecutarlas y verlas pasar.** Esperado: todas en verde, más tipos y lint.
+- [x] **Paso 4: ejecutarlas y verlas pasar.** Esperado: todas en verde, más tipos y lint.
 
-- [ ] **Paso 5: commit.** `feat(campograma): la lógica del campo, la búsqueda y los contadores`.
+- [x] **Paso 5: commit.** `feat(campograma): la lógica del campo, la búsqueda y los contadores`.
 
 ---
 
@@ -85,13 +85,13 @@ Lo que el spec implica y es más probable que falle a quien use esto. Cada líne
 - Consume: los tipos de la tarea 1.
 - Produce: `usePortfolio(): { players: PortfolioPlayer[]; categories: PortfolioCategory[]; isLoading: boolean; error: unknown; retry: () => void }`.
 
-- [ ] **Paso 1: prueba que falla de `toPortfolioPlayer(row)`.** Traduce la fila de la base a `PortfolioPlayer`, y `isActiveRow(row)` descarta las filas con `deactivated_at`.
+- [x] **Paso 1: prueba que falla de `toPortfolioPlayer(row)`.** Traduce la fila de la base a `PortfolioPlayer`, y `isActiveRow(row)` descarta las filas con `deactivated_at`.
 
-- [ ] **Paso 2: implementarla y verla pasar.**
+- [x] **Paso 2: implementarla y verla pasar.**
 
-- [ ] **Paso 3: el hook.** Una sola clave SWR, `'portfolio'`, con `Promise.all` de las dos consultas (`.is('deactivated_at', null)` y `.order('name')`; categorías por `sort_order`). Además del filtro de la consulta, pasa cada fila por `isActiveRow`, para que un jugador de baja nunca llegue a la pantalla. Patrón: `lib/hooks/use-portfolio-names.ts`.
+- [x] **Paso 3: el hook.** Una sola clave SWR, `'portfolio'`, con `Promise.all` de las dos consultas (`.is('deactivated_at', null)` y `.order('name')`; categorías por `sort_order`). Además del filtro de la consulta, pasa cada fila por `isActiveRow`, para que un jugador de baja nunca llegue a la pantalla. Patrón: `lib/hooks/use-portfolio-names.ts`.
 
-- [ ] **Paso 4: comprobar.** Tipos, lint y pruebas. Commit `feat(campograma): la pantalla lee la cartera de la base`.
+- [x] **Paso 4: comprobar.** Tipos, lint y pruebas. Commit `feat(campograma): la pantalla lee la cartera de la base`.
 
 ---
 
@@ -110,11 +110,11 @@ Lo que el spec implica y es más probable que falle a quien use esto. Cada líne
 - **Discos:** sin rótulo debajo. El nombre largo va en `title` y `aria-label`, con su contador. Vacío: borde discontinuo, sin contador. Con búsqueda: apagado si no coincide nadie.
 - **Colores por línea (portero, defensa, medio, ataque):** se conservan como dato, con tokens propios en claro y en oscuro.
 
-- [ ] **Paso 1: tokens en `globals.css` y `tailwind.config.ts`.**
-- [ ] **Paso 2: `Pitch({ players, query, onOpenPosition })`.** Once botones colocados con `PITCH_XY` y `rotate`.
-- [ ] **Paso 3: la página.** `DashboardPage` con el esqueleto, `ErrorState` con reintento y `EmptyState` si no hay cartera. Muestra la primera categoría.
-- [ ] **Paso 4: comprobar en pantalla.** `npm run build` y servidor `phsport-prod`; guion de Playwright en el scratchpad con `e2e/.sesion/usuario.json`, en iPhone 15, iPad Mini y Desktop Chrome. Esperado: once discos dentro del campo, sin solaparse (medir cajas), de pie en iPhone y tumbado en escritorio, con LI arriba y LD abajo. **Las capturas no se versionan: llevan datos reales.**
-- [ ] **Paso 5: commit.** `feat(campograma): el campo con las once demarcaciones`.
+- [x] **Paso 1: tokens en `globals.css` y `tailwind.config.ts`.**
+- [x] **Paso 2: `Pitch({ players, query, onOpenPosition })`.** Once botones colocados con `PITCH_XY` y `rotate`.
+- [x] **Paso 3: la página.** `DashboardPage` con el esqueleto, `ErrorState` con reintento y `EmptyState` si no hay cartera. Muestra la primera categoría.
+- [x] **Paso 4: comprobar en pantalla.** `npm run build` y servidor `phsport-prod`; guion de Playwright en el scratchpad con `e2e/.sesion/usuario.json`, en iPhone 15, iPad Mini y Desktop Chrome. Esperado: once discos dentro del campo, sin solaparse (medir cajas), de pie en iPhone y tumbado en escritorio, con LI arriba y LD abajo. **Las capturas no se versionan: llevan datos reales.**
+- [x] **Paso 5: commit.** `feat(campograma): el campo con las once demarcaciones`.
 
 ---
 
@@ -130,9 +130,9 @@ Lo que el spec implica y es más probable que falle a quien use esto. Cada líne
 - **La hoja mide siempre lo mismo en móvil** (`h-[60dvh]`), para que cerrar y volver caigan siempre en el mismo sitio, como en el suelto.
 - **La ficha** enseña foto (si hay), demarcación, año, club propietario, categoría y la nota de cesión con su destino, o de movimiento pendiente.
 
-- [ ] **Paso 1: implementar** lista de demarcación, ficha, volver y cerrar. Conectarlo a los discos.
-- [ ] **Paso 2: comprobar en pantalla** en iPhone 15 y escritorio: abrir un disco, entrar en un jugador, volver, cerrar. Con la hoja abierta el fondo no se mueve. Sin errores de consola.
-- [ ] **Paso 3: commit.** `feat(campograma): la lista de cada puesto y la ficha del jugador`.
+- [x] **Paso 1: implementar** lista de demarcación, ficha, volver y cerrar. Conectarlo a los discos.
+- [x] **Paso 2: comprobar en pantalla** en iPhone 15 y escritorio: abrir un disco, entrar en un jugador, volver, cerrar. Con la hoja abierta el fondo no se mueve. Sin errores de consola.
+- [x] **Paso 3: commit.** `feat(campograma): la lista de cada puesto y la ficha del jugador`.
 
 ---
 
@@ -148,9 +148,9 @@ Lo que el spec implica y es más probable que falle a quien use esto. Cada líne
 - **La búsqueda no dispara el fundido.** Repinta en cada tecla y sería un parpadeo.
 - **Contadores:** Jugadores, En cesión, Pte. mov. y Sin club, de la categoría activa. Pulsarlos abre el panel con esa lista; a cero quedan desactivados.
 
-- [ ] **Paso 1: implementar.** Sin coincidencias en la activa: aviso con botones hacia las categorías que sí tienen, cada una con su número.
-- [ ] **Paso 2: comprobar en pantalla.** Buscar una palabra sin tilde con coincidencias en otra categoría: el aviso ofrece saltar y el salto funciona. En un iPhone de 375 de ancho la barra no se desborda.
-- [ ] **Paso 3: commit.** `feat(campograma): categorías, búsqueda en toda la cartera y contadores`.
+- [x] **Paso 1: implementar.** Sin coincidencias en la activa: aviso con botones hacia las categorías que sí tienen, cada una con su número.
+- [x] **Paso 2: comprobar en pantalla.** Buscar una palabra sin tilde con coincidencias en otra categoría: el aviso ofrece saltar y el salto funciona. En un iPhone de 375 de ancho la barra no se desborda.
+- [x] **Paso 3: commit.** `feat(campograma): categorías, búsqueda en toda la cartera y contadores`.
 
 ---
 
@@ -165,9 +165,9 @@ Lo que el spec implica y es más probable que falle a quien use esto. Cada líne
 - **Entrenadores:** apartado propio al final, plegable, con los técnicos de todas las categorías (`Collapse`). Fuera del campo: el entrenador no ocupa demarcación, y se probaron tres formas de meterlo y ninguna encajó. La ficha sale en el mismo panel.
 - **Leyenda** bajo el campo: las cuatro líneas y las dos situaciones.
 
-- [ ] **Paso 1: implementar.**
-- [ ] **Paso 2: comprobar en pantalla** en los tres formatos: ordenar por cada columna, pulsar una fila abre la ficha, y el apartado de entrenadores se pliega y se despliega.
-- [ ] **Paso 3: commit.** `feat(campograma): la lista ordenable y los entrenadores`.
+- [x] **Paso 1: implementar.**
+- [x] **Paso 2: comprobar en pantalla** en los tres formatos: ordenar por cada columna, pulsar una fila abre la ficha, y el apartado de entrenadores se pliega y se despliega.
+- [x] **Paso 3: commit.** `feat(campograma): la lista ordenable y los entrenadores`.
 
 ---
 
@@ -180,10 +180,10 @@ Hoy un agente ve en Ajustes → General «Vista predeterminada de Diseños» y l
 
 No hace falta función nueva: `showsCreative(access)` de `lib/utils/navigation.ts` ya responde esta pregunta.
 
-- [ ] **Paso 1: prueba** en `lib/utils/navigation.test.ts`: `showsCreative` es falso para quien solo es de Agentes, y verdadero para la cuenta de desarrollador. Si ya pasa, es la prueba de lo que se va a usar.
-- [ ] **Paso 2: ocultar** con `showsCreative(access)` la «Vista predeterminada de Diseños» y la sección entera de Notificaciones: sus tres avisos son de diseños, y un agente hoy no recibe ninguno. Si un día los recibe, la sección vuelve. Lo demás de Apariencia (tema, color) no se toca.
-- [ ] **Paso 3: comprobar.** Pruebas en verde. No hay una sesión de agente en Playwright: lo comprueba Mario con la cuenta de agente de prueba, en staging.
-- [ ] **Paso 4: commit.** `fix(ajustes): un agente deja de ver las preferencias de diseños`.
+- [x] **Paso 1: prueba** en `lib/utils/navigation.test.ts`: `showsCreative` es falso para quien solo es de Agentes, y verdadero para la cuenta de desarrollador. Si ya pasa, es la prueba de lo que se va a usar.
+- [x] **Paso 2: ocultar** con `showsCreative(access)` la «Vista predeterminada de Diseños» y la sección entera de Notificaciones: sus tres avisos son de diseños, y un agente hoy no recibe ninguno. Si un día los recibe, la sección vuelve. Lo demás de Apariencia (tema, color) no se toca.
+- [x] **Paso 3: comprobar.** Pruebas en verde. No hay una sesión de agente en Playwright: lo comprueba Mario con la cuenta de agente de prueba, en staging.
+- [x] **Paso 4: commit.** `fix(ajustes): un agente deja de ver las preferencias de diseños`.
 
 ---
 
@@ -193,12 +193,12 @@ No hace falta función nueva: `showsCreative(access)` de `lib/utils/navigation.t
 - Crear: `e2e/campograma.spec.ts`
 - Modificar: `docs/estado-y-traspaso.md`, el spec del campograma (estado), `README.md` si cambia lo que hace el producto, `docs/testing-navegadores.md` si cambia la cobertura
 
-- [ ] **Paso 1: `e2e/campograma.spec.ts`.** Se salta sin sesión, como `titulos.spec.ts`. Comprueba solo la estructura y no compara nombres: once discos, abrir uno, cerrar, cambiar a Lista. No guarda capturas.
-- [ ] **Paso 2: ejecutarla** con el guion del pendiente 12. Esperado: en verde en los motores de la matriz.
-- [ ] **Paso 3: comprobar que no se ha colado ningún dato.** Leer los nombres de la cartera con una consulta y buscarlos en el diff de toda la fase con un guion en el scratchpad. La lista no se escribe en ningún archivo del repo. Esperado: cero coincidencias. Después `npm run build`.
-- [ ] **Paso 4: documentación.** §4 de noviembre del estado con lo hecho, los rodeos y lo no comprobado; pendiente 13 y 14 al día; estado del spec.
-- [ ] **Paso 5: revisión final con contexto limpio** y una tanda de arreglos si hace falta.
-- [ ] **Paso 6: commit,** y subir a `preview` cuando Mario lo pida.
+- [x] **Paso 1: `e2e/campograma.spec.ts`.** Se salta sin sesión, como `titulos.spec.ts`. Comprueba solo la estructura y no compara nombres: once discos, abrir uno, cerrar, cambiar a Lista. No guarda capturas.
+- [x] **Paso 2: ejecutarla** con el guion del pendiente 12. Esperado: en verde en los motores de la matriz.
+- [x] **Paso 3: comprobar que no se ha colado ningún dato.** Leer los nombres de la cartera con una consulta y buscarlos en el diff de toda la fase con un guion en el scratchpad. La lista no se escribe en ningún archivo del repo. Esperado: cero coincidencias. Después `npm run build`.
+- [x] **Paso 4: documentación.** §4 de noviembre del estado con lo hecho, los rodeos y lo no comprobado; pendiente 13 y 14 al día; estado del spec.
+- [x] **Paso 5: revisión final con contexto limpio** y una tanda de arreglos si hace falta.
+- [x] **Paso 6: commit,** y subir a `preview` cuando Mario lo pida.
 
 ---
 

@@ -19,6 +19,9 @@ semana a la que pertenece cada entrega, y reasignación manual desde el detalle.
 **Vistas por rol.** Mánager: dashboard de equipo, carga y vencimientos. Diseñador:
 «Mi semana», con lo pendiente y lo entregado agrupado por semanas.
 
+**Campograma.** La cartera de jugadores del departamento de Agentes, por demarcación
+y categoría: campo, lista ordenable, ficha y búsqueda. De momento, solo consulta.
+
 **Avisos.** Notificaciones dentro de la app, por correo y push, cuando te asignan
 trabajo o se acerca una entrega.
 

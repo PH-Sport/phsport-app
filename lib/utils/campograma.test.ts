@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   clubLabel,
   countByCategory,
+  isActiveRow,
   matchesSearch,
   PITCH_XY,
   POSITION_LABEL,
@@ -13,8 +14,10 @@ import {
   signalPlayers,
   sortPlayers,
   splitCoach,
+  toPortfolioPlayer,
   yearLabel,
   type PortfolioPlayer,
+  type PortfolioPlayerRow,
 } from './campograma';
 
 // Jugadores inventados: el repo es público y aquí no entra ningún dato real.
@@ -149,5 +152,39 @@ describe('splitCoach', () => {
   });
   it('sin raya no hay equipo', () => {
     expect(splitCoach('Técnico Inventado')).toEqual({ name: 'Técnico Inventado', team: null });
+  });
+});
+
+describe('las filas de la base', () => {
+  const row: PortfolioPlayerRow = {
+    id: 'id-1',
+    name: 'Prueba Uno',
+    birth_year: 2003,
+    owner_club: 'Club Alfa',
+    situation: 'loaned',
+    loaned_to: 'Club Beta',
+    position: 'MC',
+    category_id: 'cat_a',
+    photo_url: null,
+    deactivated_at: null,
+  };
+
+  it('toPortfolioPlayer traduce la fila', () => {
+    expect(toPortfolioPlayer(row)).toEqual({
+      id: 'id-1',
+      name: 'Prueba Uno',
+      birthYear: 2003,
+      ownerClub: 'Club Alfa',
+      situation: 'loaned',
+      loanedTo: 'Club Beta',
+      position: 'MC',
+      categoryId: 'cat_a',
+      photoUrl: null,
+    });
+  });
+
+  it('un jugador de baja no está activo, y uno recuperado sí', () => {
+    expect(isActiveRow(row)).toBe(true);
+    expect(isActiveRow({ ...row, deactivated_at: '2026-11-04T10:00:00Z' })).toBe(false);
   });
 });

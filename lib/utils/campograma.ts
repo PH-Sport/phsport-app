@@ -114,6 +114,39 @@ export interface PortfolioCategory {
   coach: string | null;
 }
 
+/** Una fila de `portfolio_players`, solo con lo que usa la pantalla. */
+export interface PortfolioPlayerRow {
+  id: string;
+  name: string;
+  birth_year: number | null;
+  owner_club: string | null;
+  situation: 'loaned' | 'pending' | null;
+  loaned_to: string | null;
+  position: Position;
+  category_id: string;
+  photo_url: string | null;
+  deactivated_at: string | null;
+}
+
+export function toPortfolioPlayer(row: PortfolioPlayerRow): PortfolioPlayer {
+  return {
+    id: row.id,
+    name: row.name,
+    birthYear: row.birth_year,
+    ownerClub: row.owner_club,
+    situation: row.situation,
+    loanedTo: row.loaned_to,
+    position: row.position,
+    categoryId: row.category_id,
+    photoUrl: row.photo_url,
+  };
+}
+
+/** Un jugador de baja sale del campo, de la lista, de la búsqueda y de los contadores. */
+export function isActiveRow(row: Pick<PortfolioPlayerRow, 'deactivated_at'>): boolean {
+  return row.deactivated_at === null;
+}
+
 /** Busca en nombre, club y destino de la cesión, con o sin acentos («munoz» encuentra a Muñoz). */
 export function matchesSearch(player: PortfolioPlayer, query: string): boolean {
   const q = normalizeName(query.trim());

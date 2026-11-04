@@ -91,7 +91,7 @@ export function Pitch({ players, query, onOpenPosition }: PitchProps) {
       className={cn(
         'relative mx-auto aspect-[3/4] w-full max-w-[620px] overflow-hidden rounded-surface border border-border',
         'bg-gradient-to-b from-pitch-a to-pitch-b',
-        'lg:aspect-[3/2] lg:w-[min(100%,calc((100dvh-250px)*1.5))] lg:max-w-none'
+        'lg:aspect-[3/2] lg:w-[min(100%,calc((100dvh-300px)*1.5))] lg:max-w-none'
       )}
     >
       <PitchLines wide={false} />
